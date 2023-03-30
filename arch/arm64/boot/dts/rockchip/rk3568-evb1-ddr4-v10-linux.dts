@@ -15,3 +15,22 @@
 &vp1 {
 	cursor-win-id = <ROCKCHIP_VOP2_CLUSTER1>;
 };
+
+&pmu_io_domains {
+	status = "okay";
+	pmuio2-supply = <&vcc_3v3>;
+	vccio1-supply = <&vccio_acodec>;
+	vccio3-supply = <&vccio_sd>;
+	vccio4-supply = <&vcc_1v8>;
+	vccio5-supply = <&vcc_3v3>;
+	vccio6-supply = <&vcc_1v8>;
+	vccio7-supply = <&vcc_3v3>;
+};
+
+&rknpu {
+	status = "disabled";
+};
+
+&rknpu_mmu {
+	status = "disabled";
+};
