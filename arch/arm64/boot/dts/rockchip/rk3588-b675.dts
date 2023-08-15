@@ -149,7 +149,7 @@
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 		enable-active-high;
-		gpio = <&gpio4 RK_PD0 GPIO_ACTIVE_HIGH>;
+		gpio = <&gpio4 RK_PA1 GPIO_ACTIVE_HIGH>;
 		vin-supply = <&vcc5v0_usb>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&typec5v_pwren>;
@@ -472,16 +472,29 @@
 			regulator-off-in-suspend;
 		};
 	};
+
+	hym8563: hym8563@51 {
+		compatible = "haoyu,hym8563";
+		reg = <0x51>;
+		#clock-cells = <0>;
+		clock-frequency = <32768>;
+		clock-output-names = "hym8563";
+		pinctrl-names = "default";
+		pinctrl-0 = <&hym8563_int>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <RK_PD4 IRQ_TYPE_LEVEL_LOW>;
+		wakeup-source;
+	};
 };
 
-&i2c2 {
+&i2c6 {
 	status = "okay";
 
 	usbc0: fusb302@22 {
 		compatible = "fcs,fusb302";
 		reg = <0x22>;
-		interrupt-parent = <&gpio3>;
-		interrupts = <RK_PB4 IRQ_TYPE_LEVEL_LOW>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <RK_PD3 IRQ_TYPE_LEVEL_LOW>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&usbc0_int>;
 		vbus-supply = <&vbus5v0_typec>;
@@ -541,32 +554,6 @@
 				};
 			};
 		};
-	};
-
-	hym8563: hym8563@51 {
-		compatible = "haoyu,hym8563";
-		reg = <0x51>;
-		#clock-cells = <0>;
-		clock-frequency = <32768>;
-		clock-output-names = "hym8563";
-		pinctrl-names = "default";
-		pinctrl-0 = <&hym8563_int>;
-		interrupt-parent = <&gpio0>;
-		interrupts = <RK_PD4 IRQ_TYPE_LEVEL_LOW>;
-		wakeup-source;
-	};
-};
-
-&i2c6 {
-	status = "okay";
-	gt1x: gt1x@14 {
-		compatible = "goodix,gt1x";
-		reg = <0x14>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&touch_gpio>;
-		goodix,rst-gpio = <&gpio0 RK_PD2 GPIO_ACTIVE_HIGH>;
-		goodix,irq-gpio = <&gpio0 RK_PD3 IRQ_TYPE_LEVEL_LOW>;
-		power-supply = <&vcc3v3_lcd_n>;
 	};
 };
 
@@ -692,14 +679,6 @@
 		};
 	};
 
-	touch {
-		touch_gpio: touch-gpio {
-			rockchip,pins =
-				<0 RK_PD2 RK_FUNC_GPIO &pcfg_pull_up>,
-				<0 RK_PD3 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
-
 	usb {
 		vcc5v0_host_en: vcc5v0-host-en {
 			rockchip,pins = <4 RK_PB0 RK_FUNC_GPIO &pcfg_pull_none>;
@@ -708,11 +687,11 @@
 
 	usb-typec {
 		usbc0_int: usbc0-int {
-			rockchip,pins = <3 RK_PB4 RK_FUNC_GPIO &pcfg_pull_up>;
+			rockchip,pins = <0 RK_PD3 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 
 		typec5v_pwren: typec5v-pwren {
-			rockchip,pins = <4 RK_PD0 RK_FUNC_GPIO &pcfg_pull_none>;
+			rockchip,pins = <4 RK_PA1 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
