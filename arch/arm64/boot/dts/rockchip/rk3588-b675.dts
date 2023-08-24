@@ -253,6 +253,21 @@
 		WIFI,poweren_gpio = <&gpio3 RK_PB1 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
+	touch: touch {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&touch_rst>;
+		regulator-name = "touch";
+		gpio = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+		startup-delay-us = <100000>;
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+
+		status = "okay";
+	};
 };
 
 &backlight {
@@ -1022,6 +1037,15 @@
 			rockchip,pins = <3 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+
+	touch {
+		touch_irq: touch-irq {
+			rockchip,pins = <3 RK_PC0 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+		touch_rst: touch-rst {
+			rockchip,pins = <3 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 };
 
 &pwm2 {
@@ -1121,4 +1145,21 @@
 
 &wdt {
     status = "okay";
+};
+
+&i2c8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c8m2_xfer>;
+	status = "okay";
+
+	i2c_hid_dev: i2c-hid-dev@2c {
+		compatible = "hid-over-i2c";
+		reg = <0x2c>;
+		hid-descr-addr = <0x0020>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&touch_irq>;
+		interrupt-parent = <&gpio3>;
+		interrupts = <RK_PC0 IRQ_TYPE_LEVEL_LOW>;
+		status = "okay";
+	};
 };
