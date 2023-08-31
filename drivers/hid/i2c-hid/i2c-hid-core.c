@@ -43,6 +43,8 @@
 
 #include "../hid-ids.h"
 #include "i2c-hid.h"
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 
 /* quirks to control the device */
 #define I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV	BIT(0)
@@ -999,6 +1001,8 @@ static int i2c_hid_of_probe(struct i2c_client *client,
 	struct device *dev = &client->dev;
 	u32 val;
 	int ret;
+	enum of_gpio_flags rst_flags;
+	int reset_pin;
 
 	ret = of_property_read_u32(dev->of_node, "hid-descr-addr", &val);
 	if (ret) {
@@ -1011,6 +1015,17 @@ static int i2c_hid_of_probe(struct i2c_client *client,
 		return -EINVAL;
 	}
 	pdata->hid_descriptor_address = val;
+
+	reset_pin = of_get_named_gpio_flags(dev->of_node, "touch_reset_gpio", 0, &rst_flags);
+
+	if (gpio_request(reset_pin, "Reset_Pin") < 0)
+		printk("%s : touch reset_pin request failed\n", __func__);
+
+	gpio_direction_output(reset_pin, 0);
+	gpio_set_value(reset_pin, 0);
+	mdelay(100);
+	gpio_set_value(reset_pin, 1);
+	mdelay(100);
 
 	return 0;
 }
