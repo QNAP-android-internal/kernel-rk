@@ -2128,6 +2128,14 @@
 				/* pwm2_m1 */
 				<3 RK_PB1 11 &pcfg_pull_none>;
 		};
+
+		// lvds bkl enable pinmux
+		/omit-if-no-ref/
+        pwm2m3_pins: pwm2m3-pins {
+			rockchip,pins =
+				/* pwm2_m3 */
+				<4 RK_PD1 11 &pcfg_pull_none>;
+		};
 	};
 
 	pwm3 {
