@@ -183,7 +183,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		enable-active-high;
-		gpios = <&gpio3 RK_PC3 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpio2 RK_PC5 GPIO_ACTIVE_HIGH>;
 		startup-delay-us = <5000>;
 		vin-supply = <&vcc12v_dcin>;
 	};
@@ -1016,6 +1016,13 @@
 	status = "disabled";
 };
 
+&pcie2x1l2 {
+        phys = <&combphy0_ps PHY_TYPE_PCIE>;
+	reset-gpios = <&gpio3 RK_PD1 GPIO_ACTIVE_HIGH>;
+	vpcie3v3-supply = <&vcc3v3_pcie30>;
+        status = "okay";
+};
+
 &pcie30phy {
 	rockchip,pcie30-phymode = <PHY_MODE_PCIE_AGGREGATION>;
 	status = "disabled";
@@ -1161,10 +1168,6 @@
 &route_dsi1 {
 	status = "okay";
 	connect = <&vp2_out_dsi1>;
-};
-
-&sata0 {
-	status = "okay";
 };
 
 &spdif_tx2 {
