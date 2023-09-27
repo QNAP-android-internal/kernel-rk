@@ -229,7 +229,7 @@
 
 	wireless_bluetooth: wireless-bluetooth {
 		compatible = "bluetooth-platdata";
-		clocks = <&hym8563>;
+		//clocks = <&hym8563>;
 		clock-names = "ext_clock";
 		uart_rts_gpios = <&gpio3 RK_PA4 GPIO_ACTIVE_LOW>;
 		pinctrl-names = "default", "rts_gpio";
@@ -867,22 +867,21 @@
 		};
 	};
 
-	hym8563: hym8563@51 {
-		compatible = "haoyu,hym8563";
-		reg = <0x51>;
-		#clock-cells = <0>;
-		clock-frequency = <32768>;
-		clock-output-names = "hym8563";
-		pinctrl-names = "default";
-		pinctrl-0 = <&hym8563_int>;
-		interrupt-parent = <&gpio0>;
-		interrupts = <RK_PD4 IRQ_TYPE_LEVEL_LOW>;
-		wakeup-source;
-	};
 };
 
 &i2c6 {
 	status = "okay";
+
+	rtc: bq32000@68 {
+		compatible = "ti,bq32000";
+		reg = <0x68>;
+
+                 pinctrl-names = "default";
+                 pinctrl-0 = <&bq32000_int>;
+                 interrupt-parent = <&gpio0>;
+                 interrupts = <RK_PB0 IRQ_TYPE_LEVEL_LOW>;
+                 wakeup-source;
+	};
 
 	usbc0: fusb302@22 {
 		compatible = "fcs,fusb302";
@@ -1074,11 +1073,11 @@
 		};
 	};
 
-	hym8563 {
-		hym8563_int: hym8563-int {
-			rockchip,pins = <0 RK_PD4 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
+        bq32000 {
+                bq32000_int: bq32000-int {
+                        rockchip,pins = <0 RK_PB0 RK_FUNC_GPIO &pcfg_pull_up>;
+                };
+        };
 
 	lcd {
 		lcd_rst_gpio: lcd-rst-gpio {
