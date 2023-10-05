@@ -73,6 +73,7 @@
 	hdmiin_dc: hdmiin-dc {
 		compatible = "rockchip,dummy-codec";
 		#sound-dai-cells = <0>;
+		status = "okay";
 	};
 
 	hdmiin-sound {
@@ -792,9 +793,10 @@
 &hdmirx_ctrler {
 	status = "okay";
 
+	#sound-dai-cells = <1>;
 	/* Effective level used to trigger HPD: 0-low, 1-high */
 	hpd-trigger-level = <1>;
-	hdmirx-det-gpios = <&gpio2 RK_PB5 GPIO_ACTIVE_LOW>;
+	hdmirx-det-gpios = <&gpio1 RK_PD5 GPIO_ACTIVE_LOW>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&hdmim1_rx &hdmirx_det>;
 };
@@ -1060,8 +1062,20 @@
 
 	hdmi {
 		hdmirx_det: hdmirx-det {
-			rockchip,pins = <2 RK_PB5 RK_FUNC_GPIO &pcfg_pull_up>;
+			rockchip,pins = <1 RK_PD5 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
+
+        hdmim1_rx: hdmim1-rx {
+            rockchip,pins =
+                /* hdmim1_rx_cec */
+                <3 RK_PD1 5 &pcfg_pull_none>,
+                /* hdmim1_rx_scl */
+                <3 RK_PD2 5 &pcfg_pull_none_smt>,
+                /* hdmim1_rx_sda */
+                <3 RK_PD3 5 &pcfg_pull_none_smt>,
+                /* hdmim1_rx_hpdin */
+                <3 RK_PD4 5 &pcfg_pull_none>;
+        };
 	};
 
 	headphone {
