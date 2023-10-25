@@ -33,43 +33,6 @@
 		};
 	};
 
-	es8388_sound: es8388-sound {
-		status = "okay";
-		compatible = "rockchip,multicodecs-card";
-		rockchip,card-name = "rockchip-es8388";
-		hp-det-gpio = <&gpio1 RK_PD5 GPIO_ACTIVE_LOW>;
-		io-channels = <&saradc 3>;
-		io-channel-names = "adc-detect";
-		keyup-threshold-microvolt = <1800000>;
-		poll-interval = <100>;
-		spk-con-gpio = <&gpio1 RK_PD3 GPIO_ACTIVE_HIGH>;
-		hp-con-gpio = <&gpio1 RK_PD2 GPIO_ACTIVE_HIGH>;
-		rockchip,format = "i2s";
-		rockchip,mclk-fs = <256>;
-		rockchip,cpu = <&i2s0_8ch>;
-		rockchip,codec = <&es8388>;
-		rockchip,audio-routing =
-			"Headphone", "LOUT1",
-			"Headphone", "ROUT1",
-			"Speaker", "LOUT2",
-			"Speaker", "ROUT2",
-			"Headphone", "Headphone Power",
-			"Headphone", "Headphone Power",
-			"Speaker", "Speaker Power",
-			"Speaker", "Speaker Power",
-			"LINPUT1", "Main Mic",
-			"LINPUT2", "Main Mic",
-			"RINPUT1", "Headset Mic",
-			"RINPUT2", "Headset Mic";
-		pinctrl-names = "default";
-		pinctrl-0 = <&hp_det>;
-		play-pause-key {
-			label = "playpause";
-			linux,code = <KEY_PLAYPAUSE>;
-			press-threshold-microvolt = <2000>;
-		};
-	};
-
 	hdmiin_dc: hdmiin-dc {
 		compatible = "rockchip,dummy-codec";
 		#sound-dai-cells = <0>;
@@ -177,6 +140,36 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 	};
+    vcc2v8_camera1_dvp: camera1-avdd-2v8 {
+        compatible = "regulator-fixed";
+        regulator-name = "camera1_avdd";
+        regulator-min-microvolt = <2800000>;
+        regulator-max-microvolt = <2800000>;
+		regulator-always-on;
+        regulator-boot-on;
+        enable-active-high;
+    };
+
+    vcc1v8_camera1_dvp: camera1-dovdd-1v8 {
+        compatible = "regulator-fixed";
+        regulator-name = "camera1_dovdd";
+        regulator-min-microvolt = <1800000>;
+        regulator-max-microvolt = <1800000>;
+        regulator-always-on;
+        regulator-boot-on;
+		enable-active-high;
+    };
+
+    vdd1v5_camera1_dvp: camera1-dvdd-1v5 {
+        compatible = "regulator-fixed";
+        regulator-name = "camera1_dvdd";
+        regulator-min-microvolt = <1500000>;
+        regulator-max-microvolt = <1500000>;
+	    regulator-always-on;
+        regulator-boot-on;
+		enable-active-high;
+    };
+
 
 	vcc3v3_pcie30: vcc3v3-pcie30 {
 		compatible = "regulator-fixed";
@@ -849,6 +842,7 @@
 	};
 };
 
+
 &i2c2 {
 	status = "okay";
 
@@ -870,6 +864,7 @@
 	};
 
 };
+
 
 &i2c6 {
 	status = "okay";
@@ -1162,6 +1157,20 @@
 			rockchip,pins = <4 RK_PC2 RK_FUNC_GPIO &pcfg_pull_down>;
 		};
 	};
+
+	camera {
+		camera_en: camera-en {
+            rockchip,pins = <1 RK_PD2 RK_FUNC_GPIO &pcfg_pull_up>;
+        };
+
+        camera_pwdn: camera-pwdn {
+            rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
+        };
+
+        camera_rst: camera-rst {
+            rockchip,pins = <1 RK_PA7 RK_FUNC_GPIO &pcfg_pull_down>;
+        };
+	};
 };
 
 &pwm2 {
@@ -1282,4 +1291,127 @@
         pinctrl-names = "default";
         pinctrl-0 = <&lvds_lcd_rst>;
     };
+};
+
+&i2c3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c3m0_xfer>;
+	status = "okay";
+
+	camera_1: ov5640@3c {
+		compatible = "ovti,ov5640";
+		reg = <0x3c>;
+
+		clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
+		clock-names = "xvclk";
+		pinctrl-names = "default";
+		pinctrl-0 = <&mipim0_camera1_clk>, <&camera_en>, <&camera_pwdn>, <&camera_rst>;
+		avdd-supply = <&vcc2v8_camera1_dvp>;
+		dovdd-supply = <&vcc1v8_camera1_dvp>;
+		dvdd-supply = <&vdd1v5_camera1_dvp>;
+
+		pwdn-gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_HIGH>;
+		pwr-gpios = <&gpio1 RK_PD2 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio1 RK_PA7 GPIO_ACTIVE_LOW>;
+
+		rockchip,camera-module-index = <0>;
+		rockchip,camera-module-facing = "front";
+		rockchip,camera-module-name = "default";
+		rockchip,camera-module-lens-name = "default";
+
+		mipi_csi;
+		status = "okay";
+
+		port {
+			camera_1_out: endpoint {
+				data-lanes = <1 2>;
+				remote-endpoint = <&csidcphy0_in>;
+			};
+		};
+	};
+};
+
+&csi2_dcphy0 {
+    status = "okay";
+
+    ports {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        port@0 {
+            reg = <0>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            csidcphy0_in: endpoint@1 {
+                reg = <1>;
+                remote-endpoint = <&camera_1_out>;
+                data-lanes = <1 2>;
+            };
+        };
+        port@1 {
+            reg = <1>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            csidcphy0_out: endpoint@0 {
+                reg = <0>;
+                remote-endpoint = <&mipi0_csi2_input>;
+            };
+        };
+    };
+};
+
+&mipi0_csi2 {
+    status = "okay";
+
+    ports {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        port@0 {
+            reg = <0>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            mipi0_csi2_input: endpoint@1 {
+                reg = <1>;
+                remote-endpoint = <&csidcphy0_out>;
+            };
+        };
+
+        port@1 {
+            reg = <1>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            mipi0_csi2_output: endpoint@0 {
+                reg = <0>;
+                remote-endpoint = <&cif_mipi_in0>;
+                data-lanes = <1 2>;
+            };
+        };
+    };
+};
+
+&rkcif {
+    status = "okay";
+};
+
+&rkcif_mmu {
+	status = "okay";
+};
+
+&rkcif_mipi_lvds {
+    status = "okay";
+
+    port {
+        cif_mipi_in0: endpoint {
+            remote-endpoint = <&mipi0_csi2_output>;
+            data-lanes = <1 2>;
+        };
+    };
+};
+
+&mipidcphy0_grf {
+	status = "okay";
 };
