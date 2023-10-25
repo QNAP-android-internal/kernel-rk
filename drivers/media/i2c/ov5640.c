@@ -1234,7 +1234,7 @@ static int ov5640_s_frame_interval(struct v4l2_subdev *sd,
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov5640 *ov5640 = to_ov5640(sd);
-	const struct ov5640_framesize *size = NULL;
+	const struct ov5640_framesize *size = ov5640->frame_size;
 	struct v4l2_mbus_framefmt mf;
 	int ret = 0;
 
@@ -1244,7 +1244,6 @@ static int ov5640_s_frame_interval(struct v4l2_subdev *sd,
 		goto unlock;
 
 	mf = ov5640->format;
-	__ov5640_try_frame_size_fps(ov5640, &mf, &size, size->fps);
 
 	if (ov5640->frame_size != size) {
 		dev_info(&client->dev, "%s match wxh@FPS is %dx%d@%d\n",
