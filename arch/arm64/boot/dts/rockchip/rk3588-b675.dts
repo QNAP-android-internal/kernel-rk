@@ -1314,9 +1314,9 @@
 		pwr-gpios = <&gpio1 RK_PD2 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&gpio1 RK_PA7 GPIO_ACTIVE_LOW>;
 
-		rockchip,camera-module-index = <0>;
+		rockchip,camera-module-index = <1>;
 		rockchip,camera-module-facing = "front";
-		rockchip,camera-module-name = "default";
+		rockchip,camera-module-name = "ov5640";
 		rockchip,camera-module-lens-name = "default";
 
 		mipi_csi;
