@@ -126,6 +126,7 @@
 		pinctrl-0 = <&panel_en>;
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
+
 	};
 
 	vcc3v3_lvds_lcd_n: vcc3v3-lvds-lcd0-n {
@@ -347,6 +348,7 @@
 
 // TQ101AJ02
 &dsi0_panel {
+	power-supply = <&vcc3v3_lcd_n>;
 	panel-init-sequence = [
         //Page0
         15 00 02 E0 00
