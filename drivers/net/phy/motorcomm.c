@@ -14,6 +14,7 @@
 #define PHY_ID_YT8511		0x0000010a
 #define PHY_ID_YT8512		0x00000118
 #define PHY_ID_YT8512B		0x00000128
+#define PHY_ID_YT8521		0x0000011a
 #define PHY_ID_YT8531S		0x4f51e91a
 #define PHY_ID_YT8531		0x4f51e91b
 
@@ -795,6 +796,20 @@ static struct phy_driver motorcomm_phy_drvs[] = {
 		.read_status	= yt8512_read_status,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
+	}, {
+		PHY_ID_MATCH_EXACT(PHY_ID_YT8521),
+		.name          = "YT8521 Gigabit Ethernet",
+		.features      = PHY_GBIT_FEATURES,
+		.soft_reset    = yt8521_soft_reset,
+		.aneg_done     = yt8521_aneg_done,
+		.config_init   = yt8531S_config_init,
+		.read_status   = yt8521_read_status,
+		.suspend       = yt8521_suspend,
+		.resume        = yt8521_resume,
+#if (YTPHY_WOL_FEATURE_ENABLE)
+		.get_wol       = &ytphy_wol_feature_get,
+		.set_wol       = &ytphy_wol_feature_set,
+#endif
 	}, {
 		/* same as 8521 */
 		PHY_ID_MATCH_EXACT(PHY_ID_YT8531S),
