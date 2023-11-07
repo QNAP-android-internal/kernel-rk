@@ -981,9 +981,10 @@
 };
 
 &pcie2x1l0 {
-	reset-gpios = <&gpio4 RK_PA5 GPIO_ACTIVE_HIGH>;
-	rockchip,skip-scan-in-resume;
-	status = "disabled";
+	phys = <&combphy1_ps PHY_TYPE_PCIE>;
+	reset-gpios = <&gpio1 RK_PB4 GPIO_ACTIVE_HIGH>;
+	vpcie3v3-supply = <&vcc3v3_pcie30>;
+	status = "okay";
 };
 
 &pcie2x1l2 {
@@ -1004,9 +1005,13 @@
         status = "okay";
 };
 &pcie3x4 {
+	compatible = "rockchip,rk3588-pcie", "snps,dw-pcie";
+	num-lanes = <2>;
 	reset-gpios = <&gpio4 RK_PB6 GPIO_ACTIVE_HIGH>;
 	vpcie3v3-supply = <&vcc3v3_pcie30>;
-	status = "disabled";
+	/delete-property/ memory-region;
+	/delete-property/ busno;
+	status = "okay";
 };
 
 &pinctrl {
