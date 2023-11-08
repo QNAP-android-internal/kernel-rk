@@ -307,29 +307,6 @@
 	status = "okay";
 };
 
-&dp0 {
-	status = "okay";
-};
-
-&dp0_in_vp2 {
-	status = "okay";
-};
-
-&dp0_sound{
-	status = "okay";
-};
-
-&dp1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&dp1_hpd>;
-	hpd-gpios = <&gpio1 RK_PB5 GPIO_ACTIVE_HIGH>;
-	status = "okay";
-};
-
-&dp1_in_vp2 {
-	status = "okay";
-};
-
 /*
  * mipi_dcphy0 needs to be enabled
  * when dsi0 is enabled
