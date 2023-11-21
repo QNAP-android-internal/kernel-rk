@@ -840,9 +840,15 @@ static int rga_mm_handle_remove(int id, void *ptr, void *data)
 	return 0;
 }
 
+static void rga_mm_buffer_destroy(struct rga_internal_buffer *buffer)
+{
+	rga_mm_kref_release_buffer(&buffer->refcount);
+}
+
 static struct rga_internal_buffer *
 rga_mm_lookup_external(struct rga_mm *mm_session,
-		       struct rga_external_buffer *external_buffer)
+		       struct rga_external_buffer *external_buffer,
+		       struct mm_struct *current_mm)
 {
 	int id;
 	struct dma_buf *dma_buf = NULL;
@@ -875,8 +881,12 @@ rga_mm_lookup_external(struct rga_mm *mm_session,
 				continue;
 
 			if (temp_buffer->virt_addr->addr == external_buffer->memory) {
-				output_buffer = temp_buffer;
-				break;
+				if (temp_buffer->current_mm == current_mm) {
+					output_buffer = temp_buffer;
+					break;
+				}
+
+				continue;
 			}
 		}
 
@@ -1309,7 +1319,8 @@ static int rga_mm_sync_dma_sg_for_device(struct rga_internal_buffer *buffer,
 		return -EFAULT;
 	}
 
-	if (buffer->mm_flag & RGA_MEM_PHYSICAL_CONTIGUOUS) {
+	if (buffer->mm_flag & RGA_MEM_PHYSICAL_CONTIGUOUS &&
+	    scheduler->data->mmu != RGA_IOMMU) {
 		dma_sync_single_for_device(scheduler->dev, buffer->phys_addr, buffer->size, dir);
 	} else {
 		sgt = rga_mm_lookup_sgt(buffer);
@@ -1339,7 +1350,8 @@ static int rga_mm_sync_dma_sg_for_cpu(struct rga_internal_buffer *buffer,
 		return -EFAULT;
 	}
 
-	if (buffer->mm_flag & RGA_MEM_PHYSICAL_CONTIGUOUS) {
+	if (buffer->mm_flag & RGA_MEM_PHYSICAL_CONTIGUOUS &&
+	    scheduler->data->mmu != RGA_IOMMU) {
 		dma_sync_single_for_cpu(scheduler->dev, buffer->phys_addr, buffer->size, dir);
 	} else {
 		sgt = rga_mm_lookup_sgt(buffer);
@@ -1481,6 +1493,11 @@ static void rga_mm_put_buffer(struct rga_mm *mm,
 	if (internal_buffer->mm_flag & RGA_MEM_FORCE_FLUSH_CACHE && dir != DMA_NONE)
 		if (rga_mm_sync_dma_sg_for_cpu(internal_buffer, job, dir))
 			pr_err("sync sgt for cpu error!\n");
+
+	if (DEBUGGER_EN(MM)) {
+		pr_info("handle[%d] put info:\n", (int)internal_buffer->handle);
+		rga_mm_dump_buffer(internal_buffer);
+	}
 
 	mutex_lock(&mm->lock);
 	kref_put(&internal_buffer->refcount, rga_mm_kref_release_buffer);
@@ -1981,6 +1998,7 @@ error_unmap_buffer:
 int rga_mm_map_job_info(struct rga_job *job)
 {
 	int ret;
+	ktime_t timestamp = ktime_get();
 
 	if (job->flags & RGA_JOB_USE_HANDLE) {
 		ret = rga_mm_get_handle_info(job);
@@ -1988,12 +2006,20 @@ int rga_mm_map_job_info(struct rga_job *job)
 			pr_err("failed to get buffer from handle\n");
 			return ret;
 		}
+
+		if (DEBUGGER_EN(TIME))
+			pr_info("request[%d], get buffer_handle info cost %lld us\n",
+				job->request_id, ktime_us_delta(ktime_get(), timestamp));
 	} else {
 		ret = rga_mm_map_buffer_info(job);
 		if (ret < 0) {
 			pr_err("failed to map buffer\n");
 			return ret;
 		}
+
+		if (DEBUGGER_EN(TIME))
+			pr_info("request[%d], map buffer cost %lld us\n",
+				job->request_id, ktime_us_delta(ktime_get(), timestamp));
 	}
 
 	return 0;
@@ -2001,10 +2027,21 @@ int rga_mm_map_job_info(struct rga_job *job)
 
 void rga_mm_unmap_job_info(struct rga_job *job)
 {
-	if (job->flags & RGA_JOB_USE_HANDLE)
+	ktime_t timestamp = ktime_get();
+
+	if (job->flags & RGA_JOB_USE_HANDLE) {
 		rga_mm_put_handle_info(job);
-	else
+
+		if (DEBUGGER_EN(TIME))
+			pr_info("request[%d], put buffer_handle info cost %lld us\n",
+				job->request_id, ktime_us_delta(ktime_get(), timestamp));
+	} else {
 		rga_mm_unmap_buffer_info(job);
+
+		if (DEBUGGER_EN(TIME))
+			pr_info("request[%d], unmap buffer cost %lld us\n",
+				job->request_id, ktime_us_delta(ktime_get(), timestamp));
+	}
 }
 
 uint32_t rga_mm_import_buffer(struct rga_external_buffer *external_buffer,
@@ -2023,11 +2060,17 @@ uint32_t rga_mm_import_buffer(struct rga_external_buffer *external_buffer,
 	mutex_lock(&mm->lock);
 
 	/* first, Check whether to rga_mm */
-	internal_buffer = rga_mm_lookup_external(mm, external_buffer);
+	internal_buffer = rga_mm_lookup_external(mm, external_buffer, current->mm);
 	if (!IS_ERR_OR_NULL(internal_buffer)) {
 		kref_get(&internal_buffer->refcount);
 
 		mutex_unlock(&mm->lock);
+
+		if (DEBUGGER_EN(MM)) {
+			pr_info("import existing buffer:\n");
+			rga_mm_dump_buffer(internal_buffer);
+		}
+
 		return internal_buffer->handle;
 	}
 
@@ -2126,9 +2169,9 @@ int rga_mm_session_release_buffer(struct rga_session *session)
 
 	idr_for_each_entry(&mm->memory_idr, buffer, i) {
 		if (session == buffer->session) {
-			pr_err("[tgid:%d] Decrement the reference of handle[%d] when the user exits\n",
+			pr_err("[tgid:%d] Destroy handle[%d] when the user exits\n",
 			       session->tgid, buffer->handle);
-			kref_put(&buffer->refcount, rga_mm_kref_release_buffer);
+			rga_mm_buffer_destroy(buffer);
 		}
 	}
 
