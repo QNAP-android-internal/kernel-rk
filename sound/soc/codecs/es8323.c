@@ -25,8 +25,10 @@
 #include <sound/soc-dapm.h>
 #include <sound/initval.h>
 #include <linux/proc_fs.h>
+#include <linux/gpio.h>
 #include "es8323.h"
 
+#define GPIO4_A3_SPK_AMP       131
 #define NR_SUPPORTED_MCLK_LRCK_RATIOS 5
 static const unsigned int supported_mclk_lrck_ratios[NR_SUPPORTED_MCLK_LRCK_RATIOS] = {
 	256, 384, 512, 768, 1024
@@ -640,6 +642,7 @@ static int es8323_set_bias_level(struct snd_soc_component *component,
 			if (ret)
 				return ret;
 		}
+		gpio_set_value(GPIO4_A3_SPK_AMP , 0);
 		snd_soc_component_write(component, ES8323_ANAVOLMANAG, 0x7C);
 		snd_soc_component_write(component, ES8323_CHIPLOPOW1, 0x00);
 		snd_soc_component_write(component, ES8323_CHIPLOPOW2, 0x00);
