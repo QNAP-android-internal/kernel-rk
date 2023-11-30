@@ -859,7 +859,8 @@
 };
 
 
-&i2c2 {
+&i2c1 {
+	pinctrl-0 = <&i2c1m2_xfer>;
 	status = "okay";
 
 	vdd_npu_s0: vdd_npu_mem_s0: rk8602@42 {
@@ -1434,5 +1435,9 @@
 };
 
 &mipidcphy0_grf {
+	status = "okay";
+};
+
+&rknpu {
 	status = "okay";
 };
