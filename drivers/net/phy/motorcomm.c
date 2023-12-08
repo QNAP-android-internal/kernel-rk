@@ -433,6 +433,31 @@ static int yt8521_hw_strap_polling(struct phy_device *phydev)
 	}
 }
 
+static int init_LAN_LED_standard_customization(struct phy_device *phydev)
+{
+	const int YT8521S_EXTREG_LED0 = 0xA00C;
+	const int YT8521S_EXTREG_LED1 = 0xA00D;
+	const int YT8521S_EXTREG_LED2 = 0xA00E;
+	int ret = 0, val = 0;
+
+	val = 0x20;
+	ret = ytphy_write_ext(phydev, YT8521S_EXTREG_LED0, val);
+	if (ret < 0)
+		return ret;
+
+	val = 0x670;
+	ret = ytphy_write_ext(phydev, YT8521S_EXTREG_LED1, val);
+	if (ret < 0)
+		return ret;
+
+	val = 0x40;
+	ret = ytphy_write_ext(phydev, YT8521S_EXTREG_LED2, val);
+	if (ret < 0)
+		return ret;
+
+	return ret;
+}
+
 static int yt8521_config_init(struct phy_device *phydev)
 {
 	int ret, hw_strap_mode;
@@ -471,6 +496,11 @@ static int yt8521_config_init(struct phy_device *phydev)
 	ret = ytphy_write_ext(phydev, 0xc, val);
 	if (ret < 0)
 		return ret;
+
+	/* IEI: Add LAN LED standard customization */
+	ret = init_LAN_LED_standard_customization(phydev);
+	if (val < 0)
+		netdev_info(phydev->attached_dev, "%s, error in init_LAN_LED_standard_customization()\n", __func__);
 
 	netdev_info(phydev->attached_dev, "%s done, phy addr: %d, strap mode = %d, polling mode = %d\n",
 		    __func__, phydev->mdio.addr, hw_strap_mode, yt8521_hw_strap_polling(phydev));
