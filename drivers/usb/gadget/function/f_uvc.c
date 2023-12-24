@@ -507,8 +507,8 @@ uvc_function_set_alt(struct usb_function *f, unsigned interface, unsigned alt)
 			memset(&v4l2_event, 0, sizeof(v4l2_event));
 			v4l2_event.type = UVC_EVENT_STREAMOFF;
 			v4l2_event_queue(&uvc->vdev, &v4l2_event);
-			uvc->state = UVC_STATE_CONNECTED;
-			return 0;
+
+			return USB_GADGET_DELAYED_STATUS;
 
 		default:
 			return -EINVAL;
@@ -903,23 +903,57 @@ uvc_function_bind(struct usb_configuration *c, struct usb_function *f)
 	}
 	uvc->enable_interrupt_ep = opts->enable_interrupt_ep;
 
-	if (!opts->streaming_bulk)
+	/*
+	 * gadget_is_{super|dual}speed() API check UDC controller capitblity. It should pass down
+	 * highest speed endpoint descriptor to UDC controller. So UDC controller driver can reserve
+	 * enough resource at check_config(), especially mult and maxburst. So UDC driver (such as
+	 * cdns3) can know need at least (mult + 1) * (maxburst + 1) * wMaxPacketSize internal
+	 * memory for this uvc functions. This is the only straightforward method to resolve the UDC
+	 * resource allocation issue in the current gadget framework.
+	 */
+	if (opts->streaming_bulk) {
+		if (gadget_is_superspeed(c->cdev->gadget)) {
+			ep = usb_ep_autoconfig_ss(cdev->gadget,
+						  &uvc_ss_bulk_streaming_ep,
+						  &uvc_ss_bulk_streaming_comp);
+		} else if (gadget_is_dualspeed(cdev->gadget)) {
+			ep = usb_ep_autoconfig(cdev->gadget,
+					       &uvc_hs_bulk_streaming_ep);
+			/*
+			 * In ep_matches(), it will set wMaxPacketSize to 64
+			 * bytes if ep is Bulk and ep_comp is NULL for hs/fs
+			 * bulk maxpacket. So we need to set hs bulk maxpacket
+			 * 512 bytes again here.
+			 */
+			uvc_hs_bulk_streaming_ep.wMaxPacketSize =
+				cpu_to_le16(min(opts->streaming_maxpacket,
+						512U));
+		} else {
+			ep = usb_ep_autoconfig(cdev->gadget,
+					       &uvc_fs_bulk_streaming_ep);
+		}
+	} else if (gadget_is_superspeed(c->cdev->gadget)) {
+		ep = usb_ep_autoconfig_ss(cdev->gadget, &uvc_ss_streaming_ep,
+					  &uvc_ss_streaming_comp);
+	} else if (gadget_is_dualspeed(cdev->gadget)) {
+		ep = usb_ep_autoconfig(cdev->gadget, &uvc_hs_streaming_ep);
+	} else {
 		ep = usb_ep_autoconfig(cdev->gadget, &uvc_fs_streaming_ep);
-	else
-		ep = usb_ep_autoconfig(cdev->gadget, &uvc_fs_bulk_streaming_ep);
+	}
+
 	if (!ep) {
 		uvcg_info(f, "Unable to allocate streaming EP\n");
 		goto error;
 	}
 	uvc->video.ep = ep;
 
-	if (!opts->streaming_bulk) {
-		uvc_hs_streaming_ep.bEndpointAddress = uvc->video.ep->address;
-		uvc_ss_streaming_ep.bEndpointAddress = uvc->video.ep->address;
-	} else {
-		uvc_hs_bulk_streaming_ep.bEndpointAddress = uvc->video.ep->address;
-		uvc_ss_bulk_streaming_ep.bEndpointAddress = uvc->video.ep->address;
-	}
+	uvc_fs_streaming_ep.bEndpointAddress = uvc->video.ep->address;
+	uvc_hs_streaming_ep.bEndpointAddress = uvc->video.ep->address;
+	uvc_ss_streaming_ep.bEndpointAddress = uvc->video.ep->address;
+
+	uvc_fs_bulk_streaming_ep.bEndpointAddress = uvc->video.ep->address;
+	uvc_hs_bulk_streaming_ep.bEndpointAddress = uvc->video.ep->address;
+	uvc_ss_bulk_streaming_ep.bEndpointAddress = uvc->video.ep->address;
 
 #if defined(CONFIG_ARCH_ROCKCHIP) && defined(CONFIG_NO_GKI)
 	if (opts->device_name)
