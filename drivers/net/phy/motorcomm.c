@@ -1521,6 +1521,12 @@ static int yt8521_soft_reset(struct phy_device *phydev)
 static int yt8521_suspend(struct phy_device *phydev)
 {
 	int wol_config;
+	struct ethtool_wolinfo wol;
+
+	/* set phy wol enable */
+	memset(&wol, 0x0, sizeof(struct ethtool_wolinfo));
+	wol.wolopts |= WAKE_MAGIC;
+	ytphy_set_wol(phydev, &wol);
 
 	/* YTPHY_WOL_CONFIG_REG is common ext reg */
 	wol_config = ytphy_read_ext_with_lock(phydev, YTPHY_WOL_CONFIG_REG);
@@ -1544,6 +1550,13 @@ static int yt8521_resume(struct phy_device *phydev)
 {
 	int ret;
 	int wol_config;
+	struct ethtool_wolinfo wol;
+
+	/* set phy wol disable */
+	memset(&wol, 0x0, sizeof(struct ethtool_wolinfo));
+	wol.wolopts &= ~WAKE_MAGIC;
+	ytphy_set_wol(phydev, &wol);
+
 
 	/* disable auto sleep */
 	ret = ytphy_modify_ext_with_lock(phydev,
