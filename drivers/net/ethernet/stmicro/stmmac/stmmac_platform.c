@@ -16,6 +16,7 @@
 #include <linux/of_net.h>
 #include <linux/of_device.h>
 #include <linux/of_mdio.h>
+#include <linux/of_gpio.h>
 
 #include "stmmac.h"
 #include "stmmac_platform.h"
@@ -402,6 +403,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, const char **mac)
 	struct stmmac_dma_cfg *dma_cfg;
 	int phy_mode;
 	int rc;
+	enum of_gpio_flags flags;
 
 	plat = devm_kzalloc(&pdev->dev, sizeof(*plat), GFP_KERNEL);
 	if (!plat)
@@ -430,6 +432,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, const char **mac)
 
 	/* PHYLINK automatically parses the phy-handle property */
 	plat->phylink_node = np;
+	plat->wolirq_io = of_get_named_gpio_flags(np, "wolirq-gpio",0, &flags);
 
 	/* Get max speed of operation from device tree */
 	of_property_read_u32(np, "max-speed", &plat->max_speed);
