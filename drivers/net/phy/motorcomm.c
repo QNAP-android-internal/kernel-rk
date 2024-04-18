@@ -1576,6 +1576,31 @@ static int yt8521_resume(struct phy_device *phydev)
 	return yt8521_modify_utp_fiber_bmcr(phydev, BMCR_PDOWN, 0);
 }
 
+static int init_LAN_LED_standard_customization(struct phy_device *phydev)
+{
+	const int YT8521S_EXTREG_LED0 = 0xA00C;
+	const int YT8521S_EXTREG_LED1 = 0xA00D;
+	const int YT8521S_EXTREG_LED2 = 0xA00E;
+	int ret = 0, val = 0;
+
+	val = 0x20;
+	ret = ytphy_write_ext(phydev, YT8521S_EXTREG_LED0, val);
+	if (ret < 0)
+		return ret;
+
+	val = 0x670;
+	ret = ytphy_write_ext(phydev, YT8521S_EXTREG_LED1, val);
+	if (ret < 0)
+		return ret;
+
+	val = 0x40;
+	ret = ytphy_write_ext(phydev, YT8521S_EXTREG_LED2, val);
+	if (ret < 0)
+		return ret;
+
+	return ret;
+}
+
 /**
  * yt8521_config_init() - called to initialize the PHY
  * @phydev: a pointer to a &struct phy_device
@@ -1614,6 +1639,12 @@ static int yt8521_config_init(struct phy_device *phydev)
 		if (ret < 0)
 			goto err_restore_page;
 	}
+
+	/* IEI: Add LAN LED standard customization */
+	ret = init_LAN_LED_standard_customization(phydev);
+	if (ret < 0)
+		netdev_info(phydev->attached_dev, "%s, error in init_LAN_LED_standard_customization()\n", __func__);
+
 err_restore_page:
 	return phy_restore_page(phydev, old_page, ret);
 }
