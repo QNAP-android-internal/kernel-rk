@@ -730,18 +730,19 @@
 	/* Use rgmii-rxid mode to disable rx delay inside Soc */
 	phy-mode = "rgmii-rxid";
 	clock_in_out = "output";
-
+	wolirq-gpio = <&gpio4 RK_PC6 GPIO_ACTIVE_LOW>;
 	snps,reset-gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
 	snps,reset-active-low;
 	/* Reset time is 20ms, 100ms for rtl8211f */
-	snps,reset-delays-us = <0 20000 100000>;
+	snps,reset-delays-us = <0 50000 100000>;
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&gmac1_miim
 		     &gmac1_tx_bus2
 		     &gmac1_rx_bus2
 		     &gmac1_rgmii_clk
-		     &gmac1_rgmii_bus>;
+		     &gmac1_rgmii_bus
+		     &gmac1_pmeb_gpios>;
 
 	tx_delay = <0x43>;
 	/* rx_delay = <0x3f>; */
@@ -1031,6 +1032,12 @@
 };
 
 &pinctrl {
+	gmac-wol {
+		gmac1_pmeb_gpios:  gmac1-pmeb-gpios {
+			rockchip,pins = <4 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
 	dp {
 		dp1_hpd: dp1-hpd {
 			rockchip,pins = <1 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
@@ -1445,14 +1452,17 @@
 	};
 };
 
+&avcc_1v8_s0 {
+		regulator-state-mem {
+		regulator-on-in-suspend;
+	};
+};
+
 &rockchip_suspend {
 	status = "okay";
 	rockchip,sleep-mode-config = <
 		(0
 		| RKPM_SLP_ARMOFF_DDRPD
-		| RKPM_SLP_PMU_PMUALIVE_32K
-		| RKPM_SLP_PMU_DIS_OSC
-		| RKPM_SLP_32K_EXT
 		)
 		>;
 	rockchip,wakeup-config = <
