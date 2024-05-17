@@ -15,3 +15,11 @@
 &vp1 {
 	cursor-win-id = <ROCKCHIP_VOP2_CLUSTER1>;
 };
+
+&vcc5v0_host {
+	gpio = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
+};
+
+&vcc5v0_otg {
+	gpio = <&gpio0 RK_PA6 GPIO_ACTIVE_HIGH>;
+};
