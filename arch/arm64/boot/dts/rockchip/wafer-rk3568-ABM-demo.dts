@@ -27,3 +27,48 @@
 &wireless_bluetooth {
 	status = "disabled";
 };
+
+&i2c0 {
+	/delete-node/ tcs4525@1c;
+	syr827: syr827@40 {
+		compatible = "silergy,syr82x";
+		reg = <0x40>;
+		status = "okay";
+		fcs,suspend-voltage-selector = <1>;
+		vin-supply = <&vcc5v0_sys>;
+		regulators {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			vdd_cpu: regulator@0 {
+				reg = <0>;
+				regulator-compatible = "syr82x_dcdc1";
+				regulator-name = "vdd_cpu";
+				pinctrl-names = "default";
+				pinctrl-0 = <&vsel_gpio>;
+				vsel-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+				regulator-min-microvolt = <712500>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-boot-on;
+				regulator-initial-mode = <0x2>;
+				regulator-initial-state = <3>;
+				regulator-state-mem {
+					regulator-state-mode = <0x2>;
+					regulator-state-disabled;
+					regulator-state-uv = <900000>;
+				};
+			};
+		};
+	};
+};
+
+&pinctrl{
+	pmic {
+		pmic_int_l: pmic-int-l {
+		    rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+		vsel_gpio: vsel-gpio {
+		    rockchip,pins = <0 RK_PA2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};
