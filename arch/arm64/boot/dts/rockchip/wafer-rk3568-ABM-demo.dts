@@ -72,3 +72,15 @@
 		};
 	};
 };
+
+&rknpu {
+	status = "disabled";
+};
+
+&rknpu_mmu {
+	status = "disabled";
+};
+
+&bus_npu {
+	status = "disabled";
+};
