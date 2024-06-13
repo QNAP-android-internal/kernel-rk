@@ -89,6 +89,14 @@
 	status = "disabled";
 };
 
+&mdio0 {
+	status = "disabled";
+};
+
+&mdio1 {
+	status = "disabled";
+};
+
 &pinctrl{
 	pmic {
 		pmic_int_l: pmic-int-l {
