@@ -18,6 +18,50 @@
 #include "rk3568-linux.dtsi"
 #include <dt-bindings/display/rockchip_vop.h>
 
+&dsi0 {
+	status = "disabled";
+};
+
+&dsi0_in_vp1 {
+	status = "disabled";
+};
+
+&dsi0_panel {
+	status = "disabled";
+};
+
+&dsi1_panel {
+	status = "disabled";
+};
+
+&edp {
+	status = "disabled";
+};
+
+&edp_phy {
+	status = "disabled";
+};
+
+&edp_in_vp0 {
+	status = "disabled";
+};
+
+&edp_in_vp1 {
+	status = "disabled";
+};
+
+&rkisp_vir0 {
+	status = "disabled";
+};
+
+&route_dsi0 {
+	status = "disabled";
+};
+
+&route_edp {
+	status = "disabled";
+};
+
 &pmu_io_domains {
         vccio4-supply = <&vcc_1v8>;
         vccio6-supply = <&vcc_1v8>;
