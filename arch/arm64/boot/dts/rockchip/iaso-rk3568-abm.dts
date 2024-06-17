@@ -225,6 +225,16 @@
 
 &i2c1 {
 	/delete-node/ gt1x@14;
+
+	ili2520@41 {
+		compatible = "ilitek,ili2520";
+		reg = <0x41>;
+
+		interrupt-parent = <&gpio0>;
+		interrupts = <RK_PC3 IRQ_TYPE_LEVEL_LOW>;
+		touchscreen-inverted-y;
+		wakeup-source;
+	};
 };
 
 &i2c4 {
@@ -300,6 +310,13 @@
 		    rockchip,pins = <0 RK_PA2 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+
+	touch_ctl {
+		touch_irq: touchh-irq {
+			rockchip,pins = <0 RK_PC3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
 };
 
 &pwm14 {
