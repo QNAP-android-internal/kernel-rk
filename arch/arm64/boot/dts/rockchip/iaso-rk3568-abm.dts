@@ -235,6 +235,11 @@
 		touchscreen-inverted-y;
 		wakeup-source;
 	};
+
+	rv4162@68 {
+		compatible = "microcrystal,rv4162";
+		reg = <0x68>;
+	};
 };
 
 &i2c4 {
