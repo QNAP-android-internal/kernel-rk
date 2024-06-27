@@ -3,6 +3,7 @@
 # (gwl)
 
 obj-$(CONFIG_AP6XXX) += bcmdhd/
+obj-$(CONFIG_BCMDHD_101105913320) += bcmdhd_101_10_591_33_20/
 
 .PHONY: clean
 

@@ -13,6 +13,14 @@ config AP6XXX
 	  If you choose to build a module, it'll be called dhd. Say M if
 	  unsure.
 
+config BCMDHD_101105913320
+        tristate "BCMDHD wireless cards support"
+        depends on RFKILL_RK
+        select CFG80211
+        select MAC80211
+        help
+          Enable BCMDHD version 101.10.591.33.20
+
 choice
 	prompt "Enable Chip Interface"
 	depends on BCMDHD
