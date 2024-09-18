@@ -41,12 +41,19 @@ struct ili9881c_instr {
 	} arg;
 };
 
+enum ili9881_desc_flags {
+	ILI9881_FLAGS_NO_SHUTDOWN_CMDS = BIT(0),
+	ILI9881_FLAGS_PANEL_ON_IN_PREPARE = BIT(1),
+	ILI9881_FLAGS_MAX = BIT(31),
+};
+
 struct ili9881c_desc {
 	const struct ili9881c_instr *init;
 	const size_t init_length;
 	const struct drm_display_mode *mode;
 	const unsigned long mode_flags;
 	unsigned int lanes;
+	enum ili9881_desc_flags flags;
 };
 
 struct ili9881c {
@@ -1560,6 +1567,12 @@ static int ili9881c_prepare(struct drm_panel *panel)
 	if (ret)
 		return ret;
 
+	if (ctx->desc->flags & ILI9881_FLAGS_PANEL_ON_IN_PREPARE) {
+		msleep(120);
+
+		ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
+	}
+
 	return 0;
 }
 
@@ -1567,9 +1580,11 @@ static int ili9881c_enable(struct drm_panel *panel)
 {
 	struct ili9881c *ctx = panel_to_ili9881c(panel);
 
-	msleep(120);
+	if (!(ctx->desc->flags & ILI9881_FLAGS_PANEL_ON_IN_PREPARE)) {
+		msleep(120);
 
-	mipi_dsi_dcs_set_display_on(ctx->dsi);
+		mipi_dsi_dcs_set_display_on(ctx->dsi);
+	}
 
 	return 0;
 }
@@ -1578,7 +1593,8 @@ static int ili9881c_disable(struct drm_panel *panel)
 {
 	struct ili9881c *ctx = panel_to_ili9881c(panel);
 
-	mipi_dsi_dcs_set_display_off(ctx->dsi);
+	if (!(ctx->desc->flags & ILI9881_FLAGS_PANEL_ON_IN_PREPARE))
+		mipi_dsi_dcs_set_display_off(ctx->dsi);
 
 	return 0;
 }
@@ -1587,7 +1603,12 @@ static int ili9881c_unprepare(struct drm_panel *panel)
 {
 	struct ili9881c *ctx = panel_to_ili9881c(panel);
 
-	mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
+	if (!(ctx->desc->flags & ILI9881_FLAGS_NO_SHUTDOWN_CMDS)) {
+		if (ctx->desc->flags & ILI9881_FLAGS_PANEL_ON_IN_PREPARE)
+			mipi_dsi_dcs_set_display_off(ctx->dsi);
+
+		mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
+	}
 	regulator_disable(ctx->power);
 	gpiod_set_value(ctx->reset, 1);
 
@@ -1873,6 +1894,8 @@ static const struct ili9881c_desc rpi_7inch_desc = {
 	.mode = &rpi_7inch_default_mode,
 	.mode_flags =  MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM,
 	.lanes = 2,
+	.flags = ILI9881_FLAGS_NO_SHUTDOWN_CMDS |
+		 ILI9881_FLAGS_PANEL_ON_IN_PREPARE,
 };
 
 static const struct of_device_id ili9881c_of_match[] = {
