@@ -227,6 +227,17 @@
 #define YTPHY_WCR_INTR_SEL			BIT(6)
 #define YTPHY_WCR_ENABLE			BIT(3)
 
+#define YTPHY_LED0_CFG_REG			0xA00C
+#define YTPHY_LED1_CFG_REG			0xA00D
+#define YTPHY_LED2_CFG_REG			0xA00E
+
+/* LED0 LED1 LED2 share same logic control*/
+#define YTPHY_LED_TXACT_BLK_EN			BIT(10)
+#define YTPHY_LED_RXACT_BLK_EN			BIT(9)
+#define YTPHY_LED_GT_ON_EN			BIT(6)
+#define YTPHY_LED_HT_ON_EN			BIT(5)
+#define YTPHY_LED_BT_ON_EN			BIT(4)
+
 /* 2b00 84ms
  * 2b01 168ms  *default*
  * 2b10 336ms
@@ -418,6 +429,44 @@ static int ytphy_modify_ext_with_lock(struct phy_device *phydev, u16 regnum,
 	phy_lock_mdio_bus(phydev);
 	ret = ytphy_modify_ext(phydev, regnum, mask, set);
 	phy_unlock_mdio_bus(phydev);
+
+	return ret;
+}
+
+/**
+ * ytphy_led_customization() - setting LED customization for IEI
+ * Act/link LED:
+ *	- OFF:      No Link
+ *	- Yellow:   Link
+ *	- Blinking: Data Activity
+ * Speed LED:
+ *	- OFF:      10 Mbps connection
+ *	- Orange:  100 Mbps connection
+ *	- Green:  1000 Mbps connection
+ *
+ * @phydev: a pointer to a &struct phy_device
+ */
+static int ytphy_led_customization(struct phy_device *phydev)
+{
+	int ret = 0,val;
+
+	val = ytphy_read_ext(phydev, YTPHY_LED0_CFG_REG);
+	val = (val | YTPHY_LED_HT_ON_EN) & ~YTPHY_LED_BT_ON_EN & ~YTPHY_LED_RXACT_BLK_EN & ~YTPHY_LED_TXACT_BLK_EN;
+	ret = ytphy_write_ext(phydev, YTPHY_LED0_CFG_REG, val);
+	if (ret < 0)
+		return ret;
+
+	val = ytphy_read_ext(phydev, YTPHY_LED1_CFG_REG);
+	val = (val | YTPHY_LED_GT_ON_EN | YTPHY_LED_BT_ON_EN);
+	ret = ytphy_write_ext(phydev, YTPHY_LED1_CFG_REG, val);
+	if (ret < 0)
+		return ret;
+
+	val = ytphy_read_ext(phydev, YTPHY_LED2_CFG_REG);
+	val = (val | YTPHY_LED_GT_ON_EN) & ~YTPHY_LED_RXACT_BLK_EN & ~YTPHY_LED_TXACT_BLK_EN;
+	ret = ytphy_write_ext(phydev, YTPHY_LED2_CFG_REG, val);
+	if (ret < 0)
+		return ret;
 
 	return ret;
 }
@@ -1601,6 +1650,8 @@ static int yt8521_config_init(struct phy_device *phydev)
 		if (ret < 0)
 			goto err_restore_page;
 	}
+
+	ytphy_led_customization(phydev);
 err_restore_page:
 	return phy_restore_page(phydev, old_page, ret);
 }
