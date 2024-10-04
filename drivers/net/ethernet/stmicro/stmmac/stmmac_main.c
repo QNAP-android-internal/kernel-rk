@@ -51,7 +51,7 @@
 #include "hwif.h"
 
 #include <linux/interrupt.h>
-#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
 #include <linux/rk_keys.h>
 
 /* As long as the interface is active, we keep the timestamping counter enabled
@@ -3889,16 +3889,14 @@ static int __stmmac_open(struct net_device *dev,
 		goto irq_error;
 
 	if (priv->plat->wolirq_io > 0) {
-		ret = devm_gpio_request(priv->device, priv->plat->wolirq_io, "gmac_wol_io");
+		priv->plat->wol_irq = gpiod_to_irq(priv->plat->wolirq_io);
 
-		if (unlikely(ret < 0)) {
+		if (priv->plat->wol_irq < 0) {
 			netdev_err(priv->dev,
-				    "%s: ERROR: failed to request WOL GPIO %d, err: %d\n",
-				   __func__, priv->plat->wolirq_io, ret);
-			goto lpiirq_error;
+				    "%s: ERROR: failed to request WOL GPIO, err: %d\n",
+				    __func__, priv->plat->wol_irq);
+			goto irq_error;
 		}
-
-		priv->plat->wol_irq = gpio_to_irq(priv->plat->wolirq_io);
 		ret = devm_request_irq(priv->device, priv->plat->wol_irq, wol_io_isr,
 			IRQF_TRIGGER_FALLING, "gmac_wol_io_irq", dev);
 
@@ -3906,8 +3904,8 @@ static int __stmmac_open(struct net_device *dev,
 			netdev_err(priv->dev,
 				    "%s: ERROR: request wol io irq fail: %d",
 				    __func__, ret);
-			devm_gpio_free(priv->device, priv->plat->wolirq_io);
-			goto lpiirq_error;
+			gpiod_put(priv->plat->wolirq_io);
+			goto irq_error;
 		}
 
 		//fixed first enable_irq crash issue
@@ -3999,7 +3997,7 @@ static int stmmac_release(struct net_device *dev)
 	if (priv->plat->wol_irq > 0)
 		devm_free_irq(priv->device, priv->plat->wol_irq, dev);
 	if (priv->plat->wolirq_io > 0)
-		devm_gpio_free(priv->device, priv->plat->wolirq_io);
+		gpiod_put(priv->plat->wolirq_io);
 	if (priv->eee_enabled) {
 		priv->tx_path_in_lpi_mode = false;
 		del_timer_sync(&priv->eee_ctrl_timer);
