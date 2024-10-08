@@ -134,6 +134,7 @@ static irqreturn_t stmmac_mac_interrupt(int irq, void *dev_id);
 static irqreturn_t stmmac_safety_interrupt(int irq, void *dev_id);
 static irqreturn_t stmmac_msi_intr_tx(int irq, void *data);
 static irqreturn_t stmmac_msi_intr_rx(int irq, void *data);
+static irqreturn_t wol_io_isr(int irq, void *dev_id);
 static void stmmac_reset_rx_queue(struct stmmac_priv *priv, u32 queue);
 static void stmmac_reset_tx_queue(struct stmmac_priv *priv, u32 queue);
 static void stmmac_reset_queues_param(struct stmmac_priv *priv);
@@ -3453,15 +3454,6 @@ static void stmmac_hw_teardown(struct net_device *dev)
 	clk_disable_unprepare(priv->plat->clk_ptp_ref);
 }
 
-static irqreturn_t wol_io_isr(int irq, void *dev_id)
-{
-	struct net_device *dev = (struct net_device *)dev_id;
-	struct stmmac_priv *priv = netdev_priv(dev);
-
-	wake_lock_timeout(&priv->plat->wol_wake_lock, msecs_to_jiffies(8000));
-	return IRQ_HANDLED;
-}
-
 static void stmmac_free_irq(struct net_device *dev,
 			    enum request_irq_err irq_err, int irq_idx)
 {
@@ -3711,6 +3703,34 @@ static int stmmac_request_irq_single(struct net_device *dev)
 		}
 	}
 
+	if (priv->plat->wolirq_io > 0) {
+		priv->plat->wol_irq = gpiod_to_irq(priv->plat->wolirq_io);
+
+		if (priv->plat->wol_irq < 0) {
+			netdev_err(priv->dev,
+				    "%s: ERROR: failed to request WOL GPIO, err: %d\n",
+				    __func__, priv->plat->wol_irq);
+			irq_err = REQ_IRQ_ERR_LPI;
+			goto irq_error;
+		}
+		ret = devm_request_irq(priv->device, priv->plat->wol_irq, wol_io_isr,
+			IRQF_TRIGGER_FALLING, "gmac_wol_io_irq", dev);
+
+		if (unlikely(ret < 0)) {
+			netdev_err(priv->dev,
+				    "%s: ERROR: request wol io irq fail: %d",
+				    __func__, ret);
+			gpiod_put(priv->plat->wolirq_io);
+			irq_err = REQ_IRQ_ERR_LPI;
+			goto irq_error;
+		}
+
+		//fixed first enable_irq crash issue
+		disable_irq(priv->plat->wol_irq);
+		enable_irq(priv->plat->wol_irq);
+		disable_irq(priv->plat->wol_irq);
+	}
+
 	return 0;
 
 irq_error:
@@ -3887,32 +3907,6 @@ static int __stmmac_open(struct net_device *dev,
 	ret = stmmac_request_irq(dev);
 	if (ret)
 		goto irq_error;
-
-	if (priv->plat->wolirq_io > 0) {
-		priv->plat->wol_irq = gpiod_to_irq(priv->plat->wolirq_io);
-
-		if (priv->plat->wol_irq < 0) {
-			netdev_err(priv->dev,
-				    "%s: ERROR: failed to request WOL GPIO, err: %d\n",
-				    __func__, priv->plat->wol_irq);
-			goto irq_error;
-		}
-		ret = devm_request_irq(priv->device, priv->plat->wol_irq, wol_io_isr,
-			IRQF_TRIGGER_FALLING, "gmac_wol_io_irq", dev);
-
-		if (unlikely(ret < 0)) {
-			netdev_err(priv->dev,
-				    "%s: ERROR: request wol io irq fail: %d",
-				    __func__, ret);
-			gpiod_put(priv->plat->wolirq_io);
-			goto irq_error;
-		}
-
-		//fixed first enable_irq crash issue
-		disable_irq(priv->plat->wol_irq);
-		enable_irq(priv->plat->wol_irq);
-		disable_irq(priv->plat->wol_irq);
-	}
 
 	stmmac_enable_all_queues(priv);
 	netif_tx_start_all_queues(priv->dev);
@@ -5968,6 +5962,15 @@ static irqreturn_t stmmac_msi_intr_rx(int irq, void *data)
 
 	stmmac_napi_check(priv, chan, DMA_DIR_RX);
 
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wol_io_isr(int irq, void *dev_id)
+{
+	struct net_device *dev = (struct net_device *)dev_id;
+	struct stmmac_priv *priv = netdev_priv(dev);
+
+	wake_lock_timeout(&priv->plat->wol_wake_lock, msecs_to_jiffies(8000));
 	return IRQ_HANDLED;
 }
 
