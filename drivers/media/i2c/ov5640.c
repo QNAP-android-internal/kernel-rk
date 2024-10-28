@@ -65,6 +65,7 @@
 
 #define SENSOR_ID(_msb, _lsb)		((_msb) << 8 | (_lsb))
 #define OV5640_ID			0x5640
+#define OV5640_LANES			2
 
 struct sensor_register {
 	u16 addr;
@@ -948,7 +949,7 @@ static void ov5640_set_streaming(struct ov5640 *ov5640, int on)
  */
 
 static int ov5640_enum_mbus_code(struct v4l2_subdev *sd,
-				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_state *cfg,
 				 struct v4l2_subdev_mbus_code_enum *code)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -964,7 +965,7 @@ static int ov5640_enum_mbus_code(struct v4l2_subdev *sd,
 }
 
 static int ov5640_enum_frame_sizes(struct v4l2_subdev *sd,
-				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_state *cfg,
 				   struct v4l2_subdev_frame_size_enum *fse)
 {
 	struct ov5640 *ov5640 = to_ov5640(sd);
@@ -991,7 +992,7 @@ static int ov5640_enum_frame_sizes(struct v4l2_subdev *sd,
 }
 
 static int ov5640_get_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_state *cfg,
 			  struct v4l2_subdev_format *fmt)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -1066,7 +1067,7 @@ static void __ov5640_try_frame_size_fps(struct ov5640 *ov5640,
 }
 
 static int ov5640_set_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_state *cfg,
 			  struct v4l2_subdev_format *fmt)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -1196,7 +1197,7 @@ static int ov5640_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 	struct ov5640 *ov5640 = to_ov5640(sd);
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct v4l2_mbus_framefmt *format =
-				v4l2_subdev_get_try_format(sd, fh->pad, 0);
+				v4l2_subdev_get_try_format(sd, fh->state, 0);
 
 	dev_dbg(&client->dev, "%s:\n", __func__);
 
@@ -1210,10 +1211,7 @@ static int ov5640_g_mbus_config(struct v4l2_subdev *sd, unsigned int pad_id,
 				struct v4l2_mbus_config *config)
 {
 	config->type = V4L2_MBUS_CSI2_DPHY;
-	config->flags = V4L2_MBUS_CSI2_2_LANE |
-						V4L2_MBUS_CSI2_CHANNEL_0 |
-						V4L2_MBUS_CSI2_CHANNEL_1 |
-						V4L2_MBUS_CSI2_CONTINUOUS_CLOCK;
+	config->bus.mipi_csi2.num_data_lanes = OV5640_LANES;
 
 	return 0;
 }
@@ -1382,7 +1380,7 @@ static int ov5640_power(struct v4l2_subdev *sd, int on)
 }
 
 static int ov5640_enum_frame_interval(struct v4l2_subdev *sd,
-				       struct v4l2_subdev_pad_config *cfg,
+				       struct v4l2_subdev_state *cfg,
 				       struct v4l2_subdev_frame_interval_enum *fie)
 {
 	struct ov5640 *ov5640 = to_ov5640(sd);
@@ -1718,7 +1716,7 @@ static int ov5640_probe(struct i2c_client *client,
 	snprintf(sd->name, sizeof(sd->name), "m%02d_%s_%s %s",
 		 ov5640->module_index, facing,
 		 DRIVER_NAME, dev_name(sd->dev));
-	ret = v4l2_async_register_subdev_sensor_common(sd);
+	ret = v4l2_async_register_subdev_sensor(sd);
 	if (ret)
 		goto error;
 
@@ -1736,7 +1734,7 @@ error:
 	return ret;
 }
 
-static int ov5640_remove(struct i2c_client *client)
+static void ov5640_remove(struct i2c_client *client)
 {
 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
 	struct ov5640 *ov5640 = to_ov5640(sd);
@@ -1749,8 +1747,6 @@ static int ov5640_remove(struct i2c_client *client)
 	mutex_destroy(&ov5640->lock);
 
 	__ov5640_power_off(ov5640);
-
-	return 0;
 }
 
 static const struct i2c_device_id ov5640_id[] = {
