@@ -846,6 +846,8 @@ static int rga_dump_image_to_file(struct rga_internal_buffer *dump_buffer,
 	struct file *file;
 	size_t size = 0;
 	loff_t pos = 0;
+	int ret;
+	struct iosys_map map;
 	void *kvaddr = NULL;
 	void *kvaddr_origin = NULL;
 
@@ -858,7 +860,8 @@ static int rga_dump_image_to_file(struct rga_internal_buffer *dump_buffer,
 			return -EINVAL;
 		}
 
-		kvaddr = dma_buf_vmap(dump_buffer->dma_buffer->dma_buf);
+		ret = dma_buf_vmap(dump_buffer->dma_buffer->dma_buf, &map);
+		kvaddr = ret ? NULL : map.vaddr;
 		if (!kvaddr) {
 			pr_err("can't vmap the dma buffer!\n");
 			return -EINVAL;
@@ -928,7 +931,7 @@ static int rga_dump_image_to_file(struct rga_internal_buffer *dump_buffer,
 	switch (dump_buffer->type) {
 	case RGA_DMA_BUFFER:
 	case RGA_DMA_BUFFER_PTR:
-		dma_buf_vunmap(dump_buffer->dma_buffer->dma_buf, kvaddr_origin);
+		dma_buf_vunmap(dump_buffer->dma_buffer->dma_buf, &map);
 		break;
 	case RGA_VIRTUAL_ADDRESS:
 		vunmap(kvaddr_origin);

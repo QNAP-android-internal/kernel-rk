@@ -587,8 +587,8 @@ static int rga_request_add_acquire_fence_callback(int acquire_fence_fd, void *pr
 		       __func__, acquire_fence_fd);
 		return -EINVAL;
 	}
-	/* close acquire fence fd */
-	ksys_close(acquire_fence_fd);
+
+	close_fd(acquire_fence_fd);
 
 	ret = rga_dma_fence_get_status(acquire_fence);
 	if (ret == 0) {

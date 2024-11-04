@@ -203,7 +203,7 @@ static dma_addr_t rga_iommu_dma_alloc_iova(struct iommu_domain *domain,
 					    size_t size, u64 dma_limit,
 					    struct device *dev)
 {
-	struct rga_iommu_dma_cookie *cookie = domain->iova_cookie;
+	struct rga_iommu_dma_cookie *cookie = (void *)domain->iova_cookie;
 	struct iova_domain *iovad = &cookie->iovad;
 	unsigned long shift, iova_len, iova = 0;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
@@ -212,14 +212,6 @@ static dma_addr_t rga_iommu_dma_alloc_iova(struct iommu_domain *domain,
 
 	shift = iova_shift(iovad);
 	iova_len = size >> shift;
-	/*
-	 * Freeing non-power-of-two-sized allocations back into the IOVA caches
-	 * will come back to bite us badly, so we have to waste a bit of space
-	 * rounding up anything cacheable to make sure that can't happen. The
-	 * order of the unadjusted size will still match upon freeing.
-	 */
-	if (iova_len < (1 << (IOVA_RANGE_CACHE_MAX_SIZE - 1)))
-		iova_len = roundup_pow_of_two(iova_len);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 	dma_limit = min_not_zero(dma_limit, dev->bus_dma_limit);
@@ -245,7 +237,7 @@ static dma_addr_t rga_iommu_dma_alloc_iova(struct iommu_domain *domain,
 static void rga_iommu_dma_free_iova(struct iommu_domain *domain,
 				    dma_addr_t iova, size_t size)
 {
-	struct rga_iommu_dma_cookie *cookie = domain->iova_cookie;
+	struct rga_iommu_dma_cookie *cookie =  (void *)domain->iova_cookie;
 	struct iova_domain *iovad = &cookie->iovad;
 
 	free_iova_fast(iovad, iova_pfn(iovad, iova), size >> iova_shift(iovad));
@@ -284,7 +276,7 @@ int rga_iommu_map_sgt(struct sg_table *sgt, size_t size,
 	}
 
 	domain = rga_iommu_get_dma_domain(rga_dev);
-	cookie = domain->iova_cookie;
+	cookie = (void *)domain->iova_cookie;
 	iovad = &cookie->iovad;
 	align_size = iova_align(iovad, size);
 
@@ -329,7 +321,7 @@ int rga_iommu_map(phys_addr_t paddr, size_t size,
 	}
 
 	domain = rga_iommu_get_dma_domain(rga_dev);
-	cookie = domain->iova_cookie;
+	cookie = (void *)domain->iova_cookie;
 	iovad = &cookie->iovad;
 	align_size = iova_align(iovad, size);
 
@@ -393,12 +385,14 @@ int rga_dma_memory_check(struct rga_dma_buffer *rga_dma_buffer, struct rga_img_i
 {
 	int ret = 0;
 	void *vaddr;
+	struct iosys_map map;
 	struct dma_buf *dma_buf;
 
 	dma_buf = rga_dma_buffer->dma_buf;
 
 	if (!IS_ERR_OR_NULL(dma_buf)) {
-		vaddr = dma_buf_vmap(dma_buf);
+		ret = dma_buf_vmap(dma_buf, &map);
+		vaddr = ret ? NULL : map.vaddr;
 		if (vaddr) {
 			ret = rga_virtual_memory_check(vaddr, img->vir_w,
 				img->vir_h, img->format, img->yrgb_addr);
@@ -407,7 +401,7 @@ int rga_dma_memory_check(struct rga_dma_buffer *rga_dma_buffer, struct rga_img_i
 			return -EINVAL;
 		}
 
-		dma_buf_vunmap(dma_buf, vaddr);
+		dma_buf_vunmap(dma_buf, &map);
 	}
 
 	return ret;
