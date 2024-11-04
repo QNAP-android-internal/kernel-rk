@@ -4,131 +4,38 @@
 
 #include "rga_drv.h"
 
-#define RGA2_SYS_REG_BASE			0x000
-#define RGA2_CSC_REG_BASE			0x060
-#define RGA2_CMD_REG_BASE			0x100
+#define RGA2_USE_MASTER_MODE		1
 
-/* sys reg */
-#define RGA2_SYS_CTRL				0x000
-#define RGA2_CMD_CTRL				0x004
-#define RGA2_CMD_BASE				0x008
-#define RGA2_STATUS1				0x00c
-#define RGA2_INT				0x010
-#define RGA2_MMU_CTRL0				0x014
-#define RGA2_MMU_CMD_BASE			0x018
-#define RGA2_STATUS2				0x01c
-#define RGA2_WORK_CNT				0x020
-#define RGA2_VERSION_NUM			0x028
-#define RGA2_READ_LINE_CNT			0x030
-#define RGA2_WRITE_LINE_CNT			0x034
-#define RGA2_LINE_CNT				0x038
-#define RGA2_PERF_CTRL0				0x040
+/* General Registers */
+#define RGA2_SYS_CTRL			0x000
+#define RGA2_CMD_CTRL			0x004
+#define RGA2_CMD_BASE			0x008
+#define RGA2_STATUS			0x00c
+#define RGA2_INT			0x010
+#define RGA2_MMU_CTRL0			0x018
+#define RGA2_MMU_CMD_BASE		0x01c
+#define RGA2_VERSION_NUM		0x028
 
-/* full csc reg */
-#define RGA2_DST_CSC_00				0x060
-#define RGA2_DST_CSC_01				0x064
-#define RGA2_DST_CSC_02				0x068
-#define RGA2_DST_CSC_OFF0			0x06c
-#define RGA2_DST_CSC_10				0x070
-#define RGA2_DST_CSC_11				0x074
-#define RGA2_DST_CSC_12				0x078
-#define RGA2_DST_CSC_OFF1			0x07c
-#define RGA2_DST_CSC_20				0x080
-#define RGA2_DST_CSC_21				0x084
-#define RGA2_DST_CSC_22				0x088
-#define RGA2_DST_CSC_OFF2			0x08c
-
-/* osd read-back reg */
-#define RGA2_OSD_CUR_FLAGS0			0x090
-#define RGA2_OSD_CUR_FLAGS1			0x09c
-
-/* mode ctrl */
-#define RGA2_MODE_CTRL_OFFSET			0x000
-#define RGA2_SRC_INFO_OFFSET			0x004
-#define RGA2_SRC_BASE0_OFFSET			0x008
-#define RGA2_FBCIN_HEAD_BASE_OFFSET		0x008 // repeat
-#define RGA2_SRC_BASE1_OFFSET			0x00c
-#define RGA2_FBCIN_PAYL_BASE_OFFSET		0x00c // repeat
-#define RGA2_SRC_BASE2_OFFSET			0x010
-#define RGA2_FBCIN_OFF_OFFSET			0x010 // repeat
-#define RGA2_SRC_BASE3_OFFSET			0x014
-#define RGA2_SRC_VIR_INFO_OFFSET		0x018
-#define RGA2_FBCIN_HEAD_VIR_INFO_OFFSET		0x018 // repeat
-#define RGA2_SRC_ACT_INFO_OFFSET		0x01c
-#define RGA2_SRC_X_FACTOR_OFFSET		0x020
-#define RGA2_OSD_CTRL0_OFFSET			0x020 // repeat
-#define RGA2_SRC_Y_FACTOR_OFFSET		0x024
-#define RGA2_OSD_CTRL1_OFFSET			0x024 // repeat
-#define RGA2_SRC_BG_COLOR_OFFSET		0x028
-#define RGA2_OSD_COLOR0_OFFSET			0x028 // repeat
-#define RGA2_SRC_FG_COLOR_OFFSET		0x02c
-#define RGA2_OSD_COLOR1_OFFSET			0x02c // repeat
-#define RGA2_SRC_TR_COLOR0_OFFSET		0x030
-#define RGA2_CF_GR_A_OFFSET			0x030 // repeat
-#define RGA2_OSD_LAST_FLAGS0_OFFSET		0x030 // repeat
-#define RGA2_MOSAIC_MODE_OFFSET			0x030 // repeat
-#define RGA2_SRC_TR_COLOR1_OFFSET		0x034
-#define RGA2_CF_GR_B_OFFSET			0x034 // repeat
-#define RGA2_OSD_LAST_FLAGS1_OFFSET		0x034 // repeat
-#define RGA2_DST_INFO_OFFSET			0x038
-#define RGA2_DST_BASE0_OFFSET			0x03c
-#define RGA2_DST_BASE1_OFFSET			0x040
-#define RGA2_DST_BASE2_OFFSET			0x044
-#define RGA2_TILE4x4_OUT_BASE_OFFSET		0x044 //repeat
-#define RGA2_DST_VIR_INFO_OFFSET		0x048
-#define RGA2_DST_ACT_INFO_OFFSET		0x04c
-#define RGA2_ALPHA_CTRL0_OFFSET			0x050
-#define RGA2_ALPHA_CTRL1_OFFSET			0x054
-#define RGA2_FADING_CTRL_OFFSET			0x058
-#define RGA2_PAT_CON_OFFSET			0x05c
-#define RGA2_ROP_CTRL0_OFFSET			0x060
-#define RGA2_CF_GR_G_OFFSET			0x060 // repeat
-#define RGA2_DST_Y4MAP_LUT0_OFFSET		0x060 // repeat
-#define RGA2_DST_QUANTIZE_SCALE_OFFSET		0x060 // repeat
-#define RGA2_OSD_INVERTSION_CAL0_OFFSET		0x060 // repeat
-#define RGA2_ROP_CTRL1_OFFSET			0x064
-#define RGA2_CF_GR_R_OFFSET			0x064 // repeat
-#define RGA2_DST_Y4MAP_LUT1_OFFSET		0x064 // repeat
-#define RGA2_DST_QUANTIZE_OFFSET_OFFSET		0x064 // repeat
-#define RGA2_OSD_INVERTSION_CAL1_OFFSET		0x064 // repeat
-#define RGA2_MASK_BASE_OFFSET			0x068
-#define RGA2_MMU_CTRL1_OFFSET			0x06c
-#define RGA2_MMU_SRC_BASE_OFFSET		0x070
-#define RGA2_PREFETCH_ADDR_TH_OFFSET		0x070 // repeat
-#define RGA2_MMU_SRC1_BASE_OFFSET		0x074
-#define RGA2_MMU_DST_BASE_OFFSET		0x078
-#define RGA2_MMU_ELS_BASE_OFFSET		0x07c
+#define rRGA_SYS_CTRL		(*(volatile u32 *)(RGA2_BASE + RGA2_SYS_CTRL_OFFSET))
+#define rRGA_CMD_CTRL		(*(volatile u32 *)(RGA2_BASE + RGA2_CMD_CTRL_OFFSET))
+#define rRGA_CMD_BASE		(*(volatile u32 *)(RGA2_BASE + RGA2_CMD_BASE_OFFSET))
+#define rRGA_STATUS		(*(volatile u32 *)(RGA2_BASE + RGA2_STATUS_OFFSET))
+#define rRGA_INT		(*(volatile u32 *)(RGA2_BASE + RGA2_INT_OFFSET))
+#define rRGA_MMU_CTRL0		(*(volatile u32 *)(RGA2_BASE + RGA2_MMU_CTRL0_OFFSET))
+#define rRGA_MMU_CMD_BASE	(*(volatile u32 *)(RGA2_BASE + RGA2_MMU_CMD_BASE_OFFSET))
+#define rRGA_CMD_ADDR		(*(volatile u32 *)(RGA2_BASE + RGA2_CMD_ADDR))
+#define rRGA_READ_LINE_CNT_TH	(*(volatile u32 *)(RGA2_BASE + RGA2_READ_LINE_CNT_OFFSET))
+#define rRGA_WRITE_LINE_CNT_TH	(*(volatile u32 *)(RGA2_BASE + RGA2_WRITE_LINE_CNT_OFFSET))
+#define rRGA_INT_LINE_CNT	(*(volatile u32 *)(RGA2_BASE + RGA2_LINE_CNT_OFFSET))
+#define rRGA_PERF_CTRL0		(*(volatile u32 *)(RGA2_BASE + RGA2_PERF_CTRL0_OFFSET))
+#define rRGA_OSD_CUR_FLAGS0	(*(volatile u32 *)(RGA2_BASE + RGA2_OSD_CUR_FLAGS0))
+#define rRGA_OSD_CUR_FLAGS1	(*(volatile u32 *)(RGA2_BASE + RGA2_OSD_CUR_FLAGS1))
 
 /*RGA_SYS*/
-#define m_RGA2_SYS_CTRL_SRC0YUV420SP_RD_OPT_DIS		(0x1 << 12)
-#define m_RGA2_SYS_CTRL_DST_WR_OPT_DIS			(0x1 << 11)
-#define m_RGA2_SYS_CTRL_CMD_CONTINUE_P			(0x1 << 10)
-#define m_RGA2_SYS_CTRL_HOLD_MODE_EN			(0x1 << 9)
-#define m_RGA2_SYS_CTRL_RST_HANDSAVE_P			(0x1 << 7)
-#define m_RGA2_SYS_CTRL_RST_PROTECT_P			(0x1 << 6)
-#define m_RGA2_SYS_CTRL_AUTO_RST			(0x1 << 5)
-#define m_RGA2_SYS_CTRL_CCLK_SRESET_P			(0x1 << 4)
-#define m_RGA2_SYS_CTRL_ACLK_SRESET_P			(0x1 << 3)
-#define m_RGA2_SYS_CTRL_AUTO_CKG			(0x1 << 2)
-#define m_RGA2_SYS_CTRL_CMD_MODE			(0x1 << 1)
-#define m_RGA2_SYS_CTRL_CMD_OP_ST_P			(0x1 << 0)
+#define m_RGA2_SYS_HOLD_MODE_EN				(1 << 9)
 
-#define s_RGA2_SYS_CTRL_CMD_CONTINUE(x)			((x & 0x1) << 10)
-#define s_RGA2_SYS_CTRL_HOLD_MODE_EN(x)			((x & 0x1) << 9)
-#define s_RGA2_SYS_CTRL_CMD_MODE(x)			((x & 0x1) << 1)
-
-/* RGA_CMD_CTRL */
-#define m_RGA2_CMD_CTRL_INCR_NUM			(0x3ff << 3)
-#define m_RGA2_CMD_CTRL_STOP				(0x1 << 2)
-#define m_RGA2_CMD_CTRL_INCR_VALID_P			(0x1 << 1)
-#define m_RGA2_CMD_CTRL_CMD_LINE_ST_P			(0x1 << 0)
-
-#define s_RGA2_CMD_CTRL_INCR_NUM(x)			((x & 0x3ff) << 3)
-
-/* RGA_STATUS1 */
-#define m_RGA2_STATUS1_SW_CMD_TOTAL_NUM			(0xfff << 8)
-#define m_RGA2_STATUS1_SW_CMD_CUR_NUM			(0xfff << 8)
-#define m_RGA2_STATUS1_SW_RGA_STA			(0x1 << 0)
+#define s_RGA2_SYS_HOLD_MODE_EN(x)			((x & 0x1) << 9)
+#define s_RGA2_SYS_CMD_CONTINUE(x)			((x & 0x1) << 10)
 
 /*RGA_INT*/
 #define m_RGA2_INT_LINE_WR_CLEAR			(1 << 16)
@@ -149,22 +56,6 @@
 #define m_RGA2_INT_MMU_INT_FLAG				(1 << 1)
 #define m_RGA2_INT_ERROR_INT_FLAG			(1 << 0)
 
-#define m_RGA2_INT_ERROR_FLAG_MASK \
-	( \
-		m_RGA2_INT_MMU_INT_FLAG | \
-		m_RGA2_INT_ERROR_INT_FLAG \
-	)
-#define m_RGA2_INT_ERROR_CLEAR_MASK \
-	( \
-	m_RGA2_INT_MMU_INT_CLEAR | \
-	m_RGA2_INT_ERROR_INT_CLEAR \
-)
-#define m_RGA2_INT_ERROR_ENABLE_MASK \
-	( \
-		m_RGA2_INT_MMU_INT_EN | \
-		m_RGA2_INT_ERROR_INT_EN \
-	)
-
 #define s_RGA2_INT_LINE_WR_CLEAR(x)			((x & 0x1) << 16)
 #define s_RGA2_INT_LINE_RD_CLEAR(x)			((x & 0x1) << 15)
 #define s_RGA2_INT_LINE_WR_EN(x)			((x & 0x1) << 14)
@@ -176,13 +67,6 @@
 #define s_RGA2_INT_ALL_CMD_DONE_INT_CLEAR(x)		((x & 0x1) << 6)
 #define s_RGA2_INT_MMU_INT_CLEAR(x)			((x & 0x1) << 5)
 #define s_RGA2_INT_ERROR_INT_CLEAR(x)			((x & 0x1) << 4)
-
-/* RGA_STATUS2 hardware status */
-#define m_RGA2_STATUS2_RPP_MKRAM_RREADY			(0x2 << 11)
-#define m_RGA2_STATUS2_DSTRPP_OUTBUF_RREADY		(0x1f << 6)
-#define m_RGA2_STATUS2_SRCRPP_OUTBUF_RREADY		(0xf << 2)
-#define m_RGA2_STATUS2_BUS_ERROR			(0x1 << 1)
-#define m_RGA2_STATUS2_RPP_ERROR			(0x1 << 0)
 
 /* RGA_READ_LINE_CNT_TH */
 #define m_RGA2_READ_LINE_SW_INTR_LINE_RD_TH		(0x1fff << 0)
@@ -206,13 +90,6 @@
 #define m_RGA2_MODE_CTRL_SW_OSD_E			(0x1<<8)
 #define m_RGA2_MODE_CTRL_SW_MOSAIC_EN			(0x1<<9)
 #define m_RGA2_MODE_CTRL_SW_YIN_YOUT_EN			(0x1<<10)
-#define m_RGA2_MODE_CTRL_SW_TILE4x4_IN_EN		(0x1 << 12)
-#define m_RGA2_MODE_CTRL_SW_TILE4x4_OUT_EN		(0x1 << 13)
-#define m_RGA2_MODE_CTRL_SW_FBC_IN_EN			(0x1 << 16)
-#define m_RGA2_MODE_CTRL_SW_FBC_BSP_DIS			(0x1 << 18)
-#define m_RGA2_MODE_CTRL_SW_TABLE_PRE_FETCH_DIS		(0x1 << 19)
-#define m_RGA2_MODE_CTRL_SW_AXI_WR128_DIS		(0x1 << 20)
-#define m_RGA2_MODE_CTRL_SW_HSP_LEFT_COPY_DIS		(0x1 << 21)
 
 #define s_RGA2_MODE_CTRL_SW_RENDER_MODE(x)		((x & 0x7) << 0)
 #define s_RGA2_MODE_CTRL_SW_BITBLT_MODE(x)		((x & 0x1) << 3)
@@ -223,18 +100,8 @@
 #define s_RGA2_MODE_CTRL_SW_OSD_E(x)			((x & 0x1) << 8)
 #define s_RGA2_MODE_CTRL_SW_MOSAIC_EN(x)		((x & 0x1) << 9)
 #define s_RGA2_MODE_CTRL_SW_YIN_YOUT_EN(x)		((x & 0x1) << 10)
-#define s_RGA2_MODE_CTRL_SW_TILE4x4_IN_EN(x)		((x & 0x1) << 12)
-#define s_RGA2_MODE_CTRL_SW_TILE4x4_OUT_EN(x)		((x & 0x1) << 13)
-#define s_RGA2_MODE_CTRL_SW_FBC_IN_EN(x)		((x & 0x1) << 16)
-#define s_RGA2_MODE_CTRL_SW_FBC_BSP_DIS(x)		((x & 0x1) << 18)
-#define s_RGA2_MODE_CTRL_SW_TABLE_PRE_FETCH_DIS(x)	((x & 0x1) << 19)
-#define s_RGA2_MODE_CTRL_SW_AXI_WR128_DIS(x)		((x & 0x1) << 20)
-#define s_RGA2_MODE_CTRL_SW_HSP_LEFT_COPY_DIS(x)	((x & 0x1) << 21)
-
 /* RGA_SRC_INFO */
 #define m_RGA2_SRC_INFO_SW_SRC_FMT			(0xf << 0)
-#define m_RGA2_SRC_INFO_SW_FBCIN_MODE			(0x3 << 0) // repeat
-#define m_RGA2_SRC_INFO_SW_FBCIN_FMT			(0x3 << 2) // repeat
 #define m_RGA2_SRC_INFO_SW_SW_SRC_RB_SWAP		(0x1 << 4)
 #define m_RGA2_SRC_INFO_SW_SW_SRC_ALPHA_SWAP		(0x1 << 5)
 #define m_RGA2_SRC_INFO_SW_SW_SRC_UV_SWAP		(0x1 << 6)
@@ -251,14 +118,9 @@
 #define m_RGA2_SRC_INFO_SW_SW_VSP_MODE_SEL		(0x1 << 26)
 #define m_RGA2_SRC_INFO_SW_SW_YUV10_E			(0x1 << 27)
 #define m_RGA2_SRC_INFO_SW_SW_YUV10_ROUND_E		(0x1 << 28)
-#define m_RGA2_SRC_INFO_SW_SW_VSD_MODE_SEL		(0x1 << 29)
-#define m_RGA2_SRC_INFO_SW_SW_HSP_MODE_SEL		(0x1 << 30)
-#define m_RGA2_SRC_INFO_SW_SW_HSD_MODE_SEL		(0x1 << 31)
 
 
 #define s_RGA2_SRC_INFO_SW_SRC_FMT(x)			((x & 0xf) << 0)
-#define s_RGA2_SRC_INFO_SW_FBCIN_MODE(x)		((x & 0x3) << 0) // repeat
-#define s_RGA2_SRC_INFO_SW_FBCIN_FMT(x)			((x & 0x3) << 2) // repeat
 #define s_RGA2_SRC_INFO_SW_SW_SRC_RB_SWAP(x)		((x & 0x1) << 4)
 #define s_RGA2_SRC_INFO_SW_SW_SRC_ALPHA_SWAP(x)		((x & 0x1) << 5)
 #define s_RGA2_SRC_INFO_SW_SW_SRC_UV_SWAP(x)		((x & 0x1) << 6)
@@ -276,9 +138,6 @@
 #define s_RGA2_SRC_INFO_SW_SW_VSP_MODE_SEL(x)		((x & 0x1) << 26)
 #define s_RGA2_SRC_INFO_SW_SW_YUV10_E(x)		((x & 0x1) << 27)
 #define s_RGA2_SRC_INFO_SW_SW_YUV10_ROUND_E(x)		((x & 0x1) << 28)
-#define s_RGA2_SRC_INFO_SW_SW_VSD_MODE_SEL(x)		((x & 0x1) << 29)
-#define s_RGA2_SRC_INFO_SW_SW_HSP_MODE_SEL(x)		((x & 0x1) << 30)
-#define s_RGA2_SRC_INFO_SW_SW_HSD_MODE_SEL(x)		((x & 0x1) << 31)
 
 /* RGA_SRC_VIR_INFO */
 #define m_RGA2_SRC_VIR_INFO_SW_SRC_VIR_STRIDE		(0x7fff << 0)
@@ -354,7 +213,6 @@
 #define m_RGA2_DST_INFO_SW_DST_FMT_Y4_EN		(0x1 << 25)
 #define m_RGA2_DST_INFO_SW_DST_NN_QUANTIZE_EN		(0x1 << 26)
 #define m_RGA2_DST_INFO_SW_DST_UVVDS_MODE		(0x1 << 27)
-#define m_RGA2_DST_INFO_SW_SRC1_A1555_ACONFIG_EN	(0x1 << 28)
 
 #define s_RGA2_DST_INFO_SW_DST_FMT(x)			((x & 0xf) << 0)
 #define s_RGA2_DST_INFO_SW_DST_RB_SWAP(x)		((x & 0x1) << 4)
@@ -376,7 +234,7 @@
 #define s_RGA2_DST_INFO_SW_DST_FMT_Y4_EN(x)		((x & 0x1) << 25)
 #define s_RGA2_DST_INFO_SW_DST_NN_QUANTIZE_EN(x)	((x & 0x1) << 26)
 #define s_RGA2_DST_INFO_SW_DST_UVVDS_MODE(x)		((x & 0x1) << 27)
-#define s_RGA2_DST_INFO_SW_SRC1_A1555_ACONFIG_EN(x)	((x & 0x1) << 28)
+
 
 /* RGA_ALPHA_CTRL0 */
 #define m_RGA2_ALPHA_CTRL0_SW_ALPHA_ROP_0		(0x1 << 0)
@@ -467,46 +325,95 @@
 #define s_RGA2_MMU_CTRL1_SW_ELS_MMU_EN(x)		((x & 0x1) << 12)
 #define s_RGA2_MMU_CTRL1_SW_ELS_MMU_FLUSH(x)		((x & 0x1) << 13)
 
-#define RGA2_VSP_BICUBIC_LIMIT				1996
+/* sys ctrl */
+#define RGA2_SYS_CTRL_OFFSET				0x0
+#define RGA2_CMD_CTRL_OFFSET				0x4
+#define RGA2_CMD_BASE_OFFSET				0x8
+#define RGA2_STATUS_OFFSET				0xc
+#define RGA2_INT_OFFSET					0x10
+#define RGA2_MMU_CTRL0_OFFSET				0x14
+#define RGA2_MMU_CMD_BASE_OFFSET			0x18
+#define RGA2_READ_LINE_CNT_OFFSET			0x30
+#define RGA2_WRITE_LINE_CNT_OFFSET			0x34
+#define RGA2_LINE_CNT_OFFSET				0x38
+#define RGA2_PERF_CTRL0_OFFSET				0x40
+#define RGA2_DST_CSC_00_OFFSET				0x60
+#define RGA2_DST_CSC_01_OFFSET				0x64
+#define RGA2_DST_CSC_02_OFFSET				0x68
+#define RGA2_DST_CSC_OFF0_OFFSET			0x6c
+#define RGA2_DST_CSC_10_OFFSET				0x70
+#define RGA2_DST_CSC_11_OFFSET				0x74
+#define RGA2_DST_CSC_12_OFFSET				0x78
+#define RGA2_DST_CSC_OFF1_OFFSET			0x7c
+#define RGA2_DST_CSC_20_OFFSET				0x80
+#define RGA2_DST_CSC_21_OFFSET				0x84
+#define RGA2_DST_CSC_22_OFFSET				0x88
+#define RGA2_DST_CSC_OFF2_OFFSET			0x8c
+#define RGA2_OSD_CUR_FLAGS0_OFFSET			0x90
+#define RGA2_OSD_CUR_FLAGS1_OFFSET			0x9c
 
-union rga2_color_ctrl {
-	uint32_t value;
-	struct {
-		uint32_t dst_color_mode:1;
-		uint32_t src_color_mode:1;
+/* mode ctrl */
+#define RGA2_MODE_CTRL_OFFSET				0x00
+#define RGA2_SRC_INFO_OFFSET				0x04
+#define RGA2_SRC_BASE0_OFFSET				0x08
+#define RGA2_SRC_BASE1_OFFSET				0x0c
+#define RGA2_SRC_BASE2_OFFSET				0x10
+#define RGA2_SRC_BASE3_OFFSET				0x14
+#define RGA2_SRC_VIR_INFO_OFFSET			0x18
+#define RGA2_SRC_ACT_INFO_OFFSET			0x1c
+#define RGA2_SRC_X_FACTOR_OFFSET			0x20
+#define RGA2_OSD_CTRL0_OFFSET				0x20 // repeat
+#define RGA2_SRC_Y_FACTOR_OFFSET			0x24
+#define RGA2_OSD_CTRL1_OFFSET				0x24 // repeat
+#define RGA2_SRC_BG_COLOR_OFFSET			0x28
+#define RGA2_OSD_COLOR0_OFFSET				0x28 // repeat
+#define RGA2_SRC_FG_COLOR_OFFSET			0x2c
+#define RGA2_OSD_COLOR1_OFFSET				0x2c // repeat
+#define RGA2_SRC_TR_COLOR0_OFFSET			0x30
+#define RGA2_CF_GR_A_OFFSET				0x30 // repeat
+#define RGA2_OSD_LAST_FLAGS0_OFFSET			0x30 // repeat
+#define RGA2_MOSAIC_MODE_OFFSET				0x30 // repeat
+#define RGA2_SRC_TR_COLOR1_OFFSET			0x34
+#define RGA2_CF_GR_B_OFFSET				0x34 // repeat
+#define RGA2_OSD_LAST_FLAGS1_OFFSET			0x34 // repeat
+#define RGA2_DST_INFO_OFFSET				0x38
+#define RGA2_DST_BASE0_OFFSET				0x3c
+#define RGA2_DST_BASE1_OFFSET				0x40
+#define RGA2_DST_BASE2_OFFSET				0x44
+#define RGA2_DST_VIR_INFO_OFFSET			0x48
+#define RGA2_DST_ACT_INFO_OFFSET			0x4c
+#define RGA2_ALPHA_CTRL0_OFFSET				0x50
+#define RGA2_ALPHA_CTRL1_OFFSET				0x54
+#define RGA2_FADING_CTRL_OFFSET				0x58
+#define RGA2_PAT_CON_OFFSET				0x5c
+#define RGA2_ROP_CTRL0_OFFSET				0x60
+#define RGA2_CF_GR_G_OFFSET				0x60 // repeat
+#define RGA2_DST_Y4MAP_LUT0_OFFSET			0x60 // repeat
+#define RGA2_DST_QUANTIZE_SCALE_OFFSET			0x60 // repeat
+#define RGA2_OSD_INVERTSION_CAL0_OFFSET			0x60 // repeat
+#define RGA2_ROP_CTRL1_OFFSET				0x64
+#define RGA2_CF_GR_R_OFFSET				0x64 // repeat
+#define RGA2_DST_Y4MAP_LUT1_OFFSET			0x64 // repeat
+#define RGA2_DST_QUANTIZE_OFFSET_OFFSET			0x64 // repeat
+#define RGA2_OSD_INVERTSION_CAL1_OFFSET			0x64 // repeat
+#define RGA2_MASK_BASE_OFFSET				0x68
+#define RGA2_MMU_CTRL1_OFFSET				0x6c
+#define RGA2_MMU_SRC_BASE_OFFSET			0x70
+#define RGA2_MMU_SRC1_BASE_OFFSET			0x74
+#define RGA2_MMU_DST_BASE_OFFSET			0x78
+#define RGA2_MMU_ELS_BASE_OFFSET			0x7c
 
-		uint32_t dst_factor_mode:3;
-		uint32_t src_factor_mode:3;
+#define RGA2_SYS_REG_BASE				0x0
+#define RGA2_CSC_REG_BASE				0x60
+#define RGA2_CMD_REG_BASE				0x100
 
-		uint32_t dst_alpha_cal_mode:1;
-		uint32_t src_alpha_cal_mode:1;
+int rga2_gen_reg_info(unsigned char *base, struct rga2_req *msg);
 
-		uint32_t dst_blend_mode:2;
-		uint32_t src_blend_mode:2;
-
-		uint32_t dst_alpha_mode:1;
-		uint32_t src_alpha_mode:1;
-	} bits;
-};
-
-union rga2_alpha_ctrl {
-	uint32_t value;
-	struct {
-		uint32_t dst_factor_mode:3;
-		uint32_t src_factor_mode:3;
-
-		uint32_t dst_alpha_cal_mode:1;
-		uint32_t src_alpha_cal_mode:1;
-
-		uint32_t dst_blend_mode:2;
-		uint32_t src_blend_mode:2;
-
-		uint32_t dst_alpha_mode:1;
-		uint32_t src_alpha_mode:1;
-	} bits;
-};
-
-extern const struct rga_backend_ops rga2_ops;
+void rga2_soft_reset(struct rga_scheduler_t *scheduler);
+int rga2_set_reg(struct rga_job *job, struct rga_scheduler_t *scheduler);
+int rga2_init_reg(struct rga_job *job);
+int rga2_get_version(struct rga_scheduler_t *scheduler);
+void rga2_dump_read_back_reg(struct rga_scheduler_t *scheduler);
 
 #endif
 

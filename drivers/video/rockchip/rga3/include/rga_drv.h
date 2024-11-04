@@ -16,7 +16,6 @@
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/fb.h>
-#include <linux/fdtable.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
@@ -49,6 +48,7 @@
 
 #include <linux/iommu.h>
 #include <linux/iova.h>
+#include <linux/dma-iommu.h>
 #include <linux/pagemap.h>
 
 #ifdef CONFIG_DMABUF_CACHE
@@ -86,8 +86,8 @@
 #define STR(x) STR_HELPER(x)
 
 #define DRIVER_MAJOR_VERISON		1
-#define DRIVER_MINOR_VERSION		3
-#define DRIVER_REVISION_VERSION		4
+#define DRIVER_MINOR_VERSION		2
+#define DRIVER_REVISION_VERSION		20
 #define DRIVER_PATCH_VERSION
 
 #define DRIVER_VERSION (STR(DRIVER_MAJOR_VERISON) "." STR(DRIVER_MINOR_VERSION) \
@@ -97,7 +97,7 @@
 #define RGA_JOB_TIMEOUT_DELAY		HZ
 #define RGA_RESET_TIMEOUT			1000
 
-#define RGA_MAX_SCHEDULER	RGA_HW_SIZE
+#define RGA_MAX_SCHEDULER	3
 #define RGA_MAX_BUS_CLK		10
 
 #define RGA_BUFFER_POOL_MAX_SIZE	64
@@ -114,6 +114,14 @@
 extern struct rga_drvdata_t *rga_drvdata;
 
 enum {
+	RGA3_SCHEDULER_CORE0		= 1 << 0,
+	RGA3_SCHEDULER_CORE1		= 1 << 1,
+	RGA2_SCHEDULER_CORE0		= 1 << 2,
+	RGA_CORE_MASK			 = 0x7,
+	RGA_NONE_CORE			 = 0x0,
+};
+
+enum {
 	RGA_CMD_SLAVE		= 1,
 	RGA_CMD_MASTER		= 2,
 };
@@ -127,23 +135,6 @@ enum rga_scheduler_status {
 	RGA_SCHEDULER_IDLE = 0,
 	RGA_SCHEDULER_WORKING,
 	RGA_SCHEDULER_ABORT,
-};
-
-enum rga_job_state {
-	RGA_JOB_STATE_PENDING = 0,
-	RGA_JOB_STATE_PREPARE,
-	RGA_JOB_STATE_RUNNING,
-	RGA_JOB_STATE_FINISH,
-	RGA_JOB_STATE_DONE,
-	RGA_JOB_STATE_INTR_ERR,
-	RGA_JOB_STATE_HW_TIMEOUT,
-	RGA_JOB_STATE_ABORT,
-};
-
-enum RGA_DEVICE_TYPE {
-	RGA_DEVICE_RGA2 = 0,
-	RGA_DEVICE_RGA3,
-	RGA_DEVICE_BUTT,
 };
 
 struct rga_iommu_dma_cookie {
@@ -165,14 +156,13 @@ struct rga_dma_buffer {
 	struct dma_buf *dma_buf;
 	struct dma_buf_attachment *attach;
 	struct sg_table *sgt;
-	void *vaddr;
+	void *vmap_ptr;
 
 	struct iommu_domain *domain;
 
 	enum dma_data_direction dir;
 
 	dma_addr_t iova;
-	dma_addr_t dma_addr;
 	unsigned long size;
 	/*
 	 * The offset of the first page of the sgt.
@@ -269,9 +259,8 @@ struct rga_job {
 	struct rga_session *session;
 
 	struct rga_req rga_command_base;
-	struct rga_dma_buffer *cmd_buf;
+	uint32_t cmd_reg[32 * 8];
 	struct rga_full_csc full_csc;
-	struct rga_csc_clip full_csc_clip;
 	struct rga_pre_intr_info pre_intr_info;
 
 	struct rga_job_buffer src_buffer;
@@ -296,14 +285,6 @@ struct rga_job {
 	int ret;
 	pid_t pid;
 	bool use_batch_mode;
-
-	struct kref refcount;
-	unsigned long state;
-	uint32_t intr_status;
-	uint32_t hw_status;
-	uint32_t cmd_status;
-
-	uint32_t work_cycle;
 };
 
 struct rga_backend_ops {
@@ -311,10 +292,6 @@ struct rga_backend_ops {
 	int (*set_reg)(struct rga_job *job, struct rga_scheduler_t *scheduler);
 	int (*init_reg)(struct rga_job *job);
 	void (*soft_reset)(struct rga_scheduler_t *scheduler);
-	int (*read_back_reg)(struct rga_job *job, struct rga_scheduler_t *scheduler);
-	int (*read_status)(struct rga_job *job, struct rga_scheduler_t *scheduler);
-	int (*irq)(struct rga_scheduler_t *scheduler);
-	int (*isr_thread)(struct rga_job *job, struct rga_scheduler_t *scheduler);
 };
 
 struct rga_timer {
@@ -327,7 +304,7 @@ struct rga_scheduler_t {
 	void __iomem *rga_base;
 	struct rga_iommu_info *iommu_info;
 
-	struct clk_bulk_data *clks;
+	struct clk *clks[RGA_MAX_BUS_CLK];
 	int num_clks;
 
 	enum rga_scheduler_status status;
@@ -337,11 +314,8 @@ struct rga_scheduler_t {
 	struct list_head todo_list;
 	spinlock_t irq_lock;
 	wait_queue_head_t job_done_wq;
-
 	const struct rga_backend_ops *ops;
 	const struct rga_hw_data *data;
-	unsigned long hw_issues_mask;
-
 	int job_count;
 	int irq;
 	struct rga_version_t version;
@@ -385,7 +359,6 @@ struct rga_request {
 	 */
 	struct mm_struct *current_mm;
 
-	struct rga_feature feature;
 	/* TODO: add some common work */
 };
 
@@ -417,7 +390,6 @@ struct rga_drvdata_t {
 
 	struct rga_scheduler_t *scheduler[RGA_MAX_SCHEDULER];
 	int num_of_scheduler;
-	int device_count[RGA_DEVICE_BUTT];
 	/* The scheduler_index used by default for memory mapping. */
 	int map_scheduler_index;
 	struct rga_mmu_base *mmu_base;
@@ -447,9 +419,10 @@ struct rga_irqs_data_t {
 };
 
 struct rga_match_data_t {
-	enum RGA_DEVICE_TYPE device_type;
-
-	const struct rga_backend_ops *ops;
+	const char * const *clks;
+	int num_clks;
+	const struct rga_irqs_data_t *irqs;
+	int num_irqs;
 };
 
 static inline int rga_read(int offset, struct rga_scheduler_t *scheduler)

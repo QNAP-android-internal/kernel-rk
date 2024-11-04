@@ -20,7 +20,6 @@ extern int RGA_DEBUG_TIME;
 extern int RGA_DEBUG_INT_FLAG;
 extern int RGA_DEBUG_MM;
 extern int RGA_DEBUG_CHECK_MODE;
-extern int RGA_DEBUG_INTERNAL_MODE;
 extern int RGA_DEBUG_NONUSE;
 extern int RGA_DEBUG_DUMP_IMAGE;
 
@@ -134,6 +133,7 @@ static inline int rga_procfs_init(void)
 
 void rga_cmd_print_debug_info(struct rga_req *req);
 void rga_request_task_debug_info(struct seq_file *m, struct rga_req *req);
+void rga_dump_external_buffer(struct rga_external_buffer *buffer);
 #ifdef CONFIG_NO_GKI
 void rga_dump_job_image(struct rga_job *dump_job);
 #else

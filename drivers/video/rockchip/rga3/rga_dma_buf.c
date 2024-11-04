@@ -133,7 +133,6 @@ int rga_buf_size_cal(unsigned long yrgb_addr, unsigned long uv_addr,
 		pageCount = end - start;
 		break;
 	case RGA_FORMAT_YCbCr_400:
-	case RGA_FORMAT_Y8:
 		stride = (w + 3) & (~3);
 		size_yrgb = stride * h;
 		start = yrgb_addr >> PAGE_SHIFT;
@@ -204,14 +203,15 @@ static dma_addr_t rga_iommu_dma_alloc_iova(struct iommu_domain *domain,
 					    size_t size, u64 dma_limit,
 					    struct device *dev)
 {
-	struct rga_iommu_dma_cookie *cookie = (void *)domain->iova_cookie;
+	struct rga_iommu_dma_cookie *cookie = domain->iova_cookie;
 	struct iova_domain *iovad = &cookie->iovad;
 	unsigned long shift, iova_len, iova = 0;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
+	dma_addr_t limit;
+#endif
 
 	shift = iova_shift(iovad);
 	iova_len = size >> shift;
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0))
 	/*
 	 * Freeing non-power-of-two-sized allocations back into the IOVA caches
 	 * will come back to bite us badly, so we have to waste a bit of space
@@ -220,7 +220,6 @@ static dma_addr_t rga_iommu_dma_alloc_iova(struct iommu_domain *domain,
 	 */
 	if (iova_len < (1 << (IOVA_RANGE_CACHE_MAX_SIZE - 1)))
 		iova_len = roundup_pow_of_two(iova_len);
-#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 	dma_limit = min_not_zero(dma_limit, dev->bus_dma_limit);
@@ -232,13 +231,12 @@ static dma_addr_t rga_iommu_dma_alloc_iova(struct iommu_domain *domain,
 	if (domain->geometry.force_aperture)
 		dma_limit = min(dma_limit, (u64)domain->geometry.aperture_end);
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(4, 19, 111) && \
-     LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
-	iova = alloc_iova_fast(iovad, iova_len,
-			       min_t(dma_addr_t, dma_limit >> shift, iovad->end_pfn),
-			       true);
-#else
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
 	iova = alloc_iova_fast(iovad, iova_len, dma_limit >> shift, true);
+#else
+	limit = min_t(dma_addr_t, dma_limit >> shift, iovad->end_pfn);
+
+	iova = alloc_iova_fast(iovad, iova_len, limit, true);
 #endif
 
 	return (dma_addr_t)iova << shift;
@@ -247,7 +245,7 @@ static dma_addr_t rga_iommu_dma_alloc_iova(struct iommu_domain *domain,
 static void rga_iommu_dma_free_iova(struct iommu_domain *domain,
 				    dma_addr_t iova, size_t size)
 {
-	struct rga_iommu_dma_cookie *cookie = (void *)domain->iova_cookie;
+	struct rga_iommu_dma_cookie *cookie = domain->iova_cookie;
 	struct iova_domain *iovad = &cookie->iovad;
 
 	free_iova_fast(iovad, iova_pfn(iovad, iova), size >> iova_shift(iovad));
@@ -286,7 +284,7 @@ int rga_iommu_map_sgt(struct sg_table *sgt, size_t size,
 	}
 
 	domain = rga_iommu_get_dma_domain(rga_dev);
-	cookie = (void *)domain->iova_cookie;
+	cookie = domain->iova_cookie;
 	iovad = &cookie->iovad;
 	align_size = iova_align(iovad, size);
 
@@ -331,7 +329,7 @@ int rga_iommu_map(phys_addr_t paddr, size_t size,
 	}
 
 	domain = rga_iommu_get_dma_domain(rga_dev);
-	cookie = (void *)domain->iova_cookie;
+	cookie = domain->iova_cookie;
 	iovad = &cookie->iovad;
 	align_size = iova_align(iovad, size);
 
@@ -395,20 +393,12 @@ int rga_dma_memory_check(struct rga_dma_buffer *rga_dma_buffer, struct rga_img_i
 {
 	int ret = 0;
 	void *vaddr;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-	struct iosys_map map;
-#endif
 	struct dma_buf *dma_buf;
 
 	dma_buf = rga_dma_buffer->dma_buf;
 
 	if (!IS_ERR_OR_NULL(dma_buf)) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-		ret = dma_buf_vmap(dma_buf, &map);
-		vaddr = ret ? NULL : map.vaddr;
-#else
 		vaddr = dma_buf_vmap(dma_buf);
-#endif
 		if (vaddr) {
 			ret = rga_virtual_memory_check(vaddr, img->vir_w,
 				img->vir_h, img->format, img->yrgb_addr);
@@ -416,11 +406,8 @@ int rga_dma_memory_check(struct rga_dma_buffer *rga_dma_buffer, struct rga_img_i
 			pr_err("can't vmap the dma buffer!\n");
 			return -EINVAL;
 		}
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-		dma_buf_vunmap(dma_buf, &map);
-#else
+
 		dma_buf_vunmap(dma_buf, vaddr);
-#endif
 	}
 
 	return ret;
@@ -437,28 +424,28 @@ int rga_dma_map_buf(struct dma_buf *dma_buf, struct rga_dma_buffer *rga_dma_buff
 	if (dma_buf != NULL) {
 		get_dma_buf(dma_buf);
 	} else {
-		pr_err("dma_buf is invalid[%p]\n", dma_buf);
+		pr_err("dma_buf is Invalid[%p]\n", dma_buf);
 		return -EINVAL;
 	}
 
 	attach = dma_buf_attach(dma_buf, rga_dev);
 	if (IS_ERR(attach)) {
-		ret = PTR_ERR(attach);
-		pr_err("Failed to attach dma_buf, ret[%d]\n", ret);
+		pr_err("Failed to attach dma_buf\n");
+		ret = -EINVAL;
 		goto err_get_attach;
 	}
 
 	sgt = dma_buf_map_attachment(attach, dir);
 	if (IS_ERR(sgt)) {
-		ret = PTR_ERR(sgt);
-		pr_err("Failed to map attachment, ret[%d]\n", ret);
+		pr_err("Failed to map src attachment\n");
+		ret = -EINVAL;
 		goto err_get_sgt;
 	}
 
 	rga_dma_buffer->dma_buf = dma_buf;
 	rga_dma_buffer->attach = attach;
 	rga_dma_buffer->sgt = sgt;
-	rga_dma_buffer->dma_addr = sg_dma_address(sgt->sgl);
+	rga_dma_buffer->iova = sg_dma_address(sgt->sgl);
 	rga_dma_buffer->dir = dir;
 	rga_dma_buffer->size = 0;
 	for_each_sgtable_sg(sgt, sg, i)
@@ -487,29 +474,29 @@ int rga_dma_map_fd(int fd, struct rga_dma_buffer *rga_dma_buffer,
 
 	dma_buf = dma_buf_get(fd);
 	if (IS_ERR(dma_buf)) {
-		ret = PTR_ERR(dma_buf);
-		pr_err("Fail to get dma_buf from fd[%d], ret[%d]\n", fd, ret);
+		pr_err("dma_buf_get fail fd[%d]\n", fd);
+		ret = -EINVAL;
 		return ret;
 	}
 
 	attach = dma_buf_attach(dma_buf, rga_dev);
 	if (IS_ERR(attach)) {
-		ret = PTR_ERR(attach);
-		pr_err("Failed to attach dma_buf, ret[%d]\n", ret);
+		pr_err("Failed to attach dma_buf\n");
+		ret = -EINVAL;
 		goto err_get_attach;
 	}
 
 	sgt = dma_buf_map_attachment(attach, dir);
 	if (IS_ERR(sgt)) {
-		ret = PTR_ERR(sgt);
-		pr_err("Failed to map attachment, ret[%d]\n", ret);
+		pr_err("Failed to map src attachment\n");
+		ret = -EINVAL;
 		goto err_get_sgt;
 	}
 
 	rga_dma_buffer->dma_buf = dma_buf;
 	rga_dma_buffer->attach = attach;
 	rga_dma_buffer->sgt = sgt;
-	rga_dma_buffer->dma_addr = sg_dma_address(sgt->sgl);
+	rga_dma_buffer->iova = sg_dma_address(sgt->sgl);
 	rga_dma_buffer->dir = dir;
 	rga_dma_buffer->size = 0;
 	for_each_sgtable_sg(sgt, sg, i)
@@ -544,53 +531,4 @@ void rga_dma_sync_flush_range(void *pstart, void *pend, struct rga_scheduler_t *
 {
 	dma_sync_single_for_device(scheduler->dev, virt_to_phys(pstart),
 				   pend - pstart, DMA_TO_DEVICE);
-}
-
-int rga_dma_free(struct rga_dma_buffer *buffer)
-{
-	if (buffer == NULL) {
-		pr_err("rga_dma_buffer is NULL.\n");
-		return -EINVAL;
-	}
-
-	dma_free_coherent(buffer->scheduler->dev, buffer->size, buffer->vaddr, buffer->dma_addr);
-	buffer->vaddr = NULL;
-	buffer->dma_addr = 0;
-	buffer->iova = 0;
-	buffer->size = 0;
-	buffer->scheduler = NULL;
-
-	kfree(buffer);
-
-	return 0;
-}
-
-struct rga_dma_buffer *rga_dma_alloc_coherent(struct rga_scheduler_t *scheduler,
-					      int size)
-{
-	size_t align_size;
-	dma_addr_t dma_addr;
-	struct  rga_dma_buffer *buffer;
-
-	buffer = kzalloc(sizeof(*buffer), GFP_KERNEL);
-	if (!buffer)
-		return NULL;
-
-	align_size = PAGE_ALIGN(size);
-	buffer->vaddr = dma_alloc_coherent(scheduler->dev, align_size, &dma_addr, GFP_KERNEL);
-	if (!buffer->vaddr)
-		goto fail_dma_alloc;
-
-	buffer->size = align_size;
-	buffer->dma_addr = dma_addr;
-	buffer->scheduler = scheduler;
-	if (scheduler->data->mmu == RGA_IOMMU)
-		buffer->iova = buffer->dma_addr;
-
-	return buffer;
-
-fail_dma_alloc:
-	kfree(buffer);
-
-	return NULL;
 }

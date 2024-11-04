@@ -84,10 +84,8 @@ int rga_dma_fence_get_fd(struct dma_fence *fence)
 		return fence_fd;
 
 	sync_file = sync_file_create(fence);
-	if (!sync_file) {
-		put_unused_fd(fence_fd);
+	if (!sync_file)
 		return -ENOMEM;
-	}
 
 	fd_install(fence_fd, sync_file->file);
 

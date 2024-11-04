@@ -26,6 +26,20 @@ struct rga_drvdata_t *rga_drvdata;
 static struct hrtimer timer;
 static ktime_t kt;
 
+static const struct rga_backend_ops rga3_ops = {
+	.get_version = rga3_get_version,
+	.set_reg = rga3_set_reg,
+	.init_reg = rga3_init_reg,
+	.soft_reset = rga3_soft_reset
+};
+
+static const struct rga_backend_ops rga2_ops = {
+	.get_version = rga2_get_version,
+	.set_reg = rga2_set_reg,
+	.init_reg = rga2_init_reg,
+	.soft_reset = rga2_soft_reset
+};
+
 static struct rga_session *rga_session_init(void);
 static int rga_session_deinit(struct rga_session *session);
 
@@ -35,7 +49,6 @@ static int rga_mpi_set_channel_buffer(struct dma_buf *dma_buf,
 {
 	struct rga_external_buffer buffer;
 
-	memset(&buffer, 0x0, sizeof(buffer));
 	buffer.memory = (unsigned long)dma_buf;
 	buffer.type = RGA_DMA_BUFFER_PTR;
 	buffer.memory_parm.width = channel_info->vir_w;
@@ -127,6 +140,10 @@ int rga_mpi_commit(struct rga_mpi_job_t *mpi_job)
 		return -EINVAL;
 	}
 
+	/*
+	 * The mpi commit will use the request repeatedly, so an additional
+	 * get() is added here.
+	 */
 	rga_request_get(request);
 	mutex_unlock(&request_manager->lock);
 
@@ -213,6 +230,13 @@ int rga_mpi_commit(struct rga_mpi_job_t *mpi_job)
 		goto err_put_request;
 	}
 
+	if ((mpi_job->dma_buf_src0 != NULL) && (mpi_cmd.src.yrgb_addr > 0))
+		rga_mm_release_buffer(mpi_cmd.src.yrgb_addr);
+	if ((mpi_job->dma_buf_src1 != NULL) && (mpi_cmd.pat.yrgb_addr > 0))
+		rga_mm_release_buffer(mpi_cmd.pat.yrgb_addr);
+	if ((mpi_job->dma_buf_dst != NULL) && (mpi_cmd.dst.yrgb_addr > 0))
+		rga_mm_release_buffer(mpi_cmd.dst.yrgb_addr);
+
 	/* copy dst info to mpi job for next node */
 	if (mpi_job->output != NULL) {
 		mpi_job->output->x_offset = mpi_cmd.dst.x_offset;
@@ -225,14 +249,9 @@ int rga_mpi_commit(struct rga_mpi_job_t *mpi_job)
 		mpi_job->output->format = mpi_cmd.dst.format;
 	}
 
-err_put_request:
-	if ((mpi_job->dma_buf_src0 != NULL) && (mpi_cmd.src.yrgb_addr > 0))
-		rga_mm_release_buffer(mpi_cmd.src.yrgb_addr);
-	if ((mpi_job->dma_buf_src1 != NULL) && (mpi_cmd.pat.yrgb_addr > 0))
-		rga_mm_release_buffer(mpi_cmd.pat.yrgb_addr);
-	if ((mpi_job->dma_buf_dst != NULL) && (mpi_cmd.dst.yrgb_addr > 0))
-		rga_mm_release_buffer(mpi_cmd.dst.yrgb_addr);
+	return 0;
 
+err_put_request:
 	mutex_lock(&request_manager->lock);
 	rga_request_put(request);
 	mutex_unlock(&request_manager->lock);
@@ -251,8 +270,8 @@ int rga_kernel_commit(struct rga_req *cmd)
 	struct rga_pending_request_manager *request_manager = rga_drvdata->pend_request_manager;
 
 	session = rga_session_init();
-	if (IS_ERR(session))
-		return PTR_ERR(session);
+	if (!session)
+		return -ENOMEM;
 
 	request_id = rga_request_alloc(0, session);
 	if (request_id < 0) {
@@ -369,14 +388,19 @@ static void rga_cancel_timer(void)
 int rga_power_enable(struct rga_scheduler_t *scheduler)
 {
 	int ret = -EINVAL;
+	int i;
 	unsigned long flags;
 
 	pm_runtime_get_sync(scheduler->dev);
 	pm_stay_awake(scheduler->dev);
 
-	ret = clk_bulk_prepare_enable(scheduler->num_clks, scheduler->clks);
-	if (ret < 0)
-		goto err_enable_clk;
+	for (i = 0; i < scheduler->num_clks; i++) {
+		if (!IS_ERR(scheduler->clks[i])) {
+			ret = clk_prepare_enable(scheduler->clks[i]);
+			if (ret < 0)
+				goto err_enable_clk;
+		}
+	}
 
 	spin_lock_irqsave(&scheduler->irq_lock, flags);
 
@@ -389,7 +413,9 @@ int rga_power_enable(struct rga_scheduler_t *scheduler)
 	return 0;
 
 err_enable_clk:
-	clk_bulk_disable_unprepare(scheduler->num_clks, scheduler->clks);
+	for (--i; i >= 0; --i)
+		if (!IS_ERR(scheduler->clks[i]))
+			clk_disable_unprepare(scheduler->clks[i]);
 
 	pm_relax(scheduler->dev);
 	pm_runtime_put_sync_suspend(scheduler->dev);
@@ -399,6 +425,7 @@ err_enable_clk:
 
 int rga_power_disable(struct rga_scheduler_t *scheduler)
 {
+	int i;
 	unsigned long flags;
 
 	spin_lock_irqsave(&scheduler->irq_lock, flags);
@@ -416,7 +443,9 @@ int rga_power_disable(struct rga_scheduler_t *scheduler)
 
 	spin_unlock_irqrestore(&scheduler->irq_lock, flags);
 
-	clk_bulk_disable_unprepare(scheduler->num_clks, scheduler->clks);
+	for (i = scheduler->num_clks - 1; i >= 0; i--)
+		if (!IS_ERR(scheduler->clks[i]))
+			clk_disable_unprepare(scheduler->clks[i]);
 
 	pm_relax(scheduler->dev);
 	pm_runtime_put_sync_suspend(scheduler->dev);
@@ -532,38 +561,22 @@ static int rga_session_manager_remove(struct rga_session_manager **session_manag
 
 static struct rga_session *rga_session_init(void)
 {
-	int new_id;
-
 	struct rga_session_manager *session_manager = NULL;
-	struct rga_session *session = NULL;
+	struct rga_session *session = kzalloc(sizeof(*session), GFP_KERNEL);
 
 	session_manager = rga_drvdata->session_manager;
 	if (session_manager == NULL) {
 		pr_err("rga_session_manager is null!\n");
-		return ERR_PTR(-EFAULT);
-	}
-
-	session = kzalloc(sizeof(*session), GFP_KERNEL);
-	if (!session) {
-		pr_err("rga_session alloc failed\n");
-		return ERR_PTR(-ENOMEM);
+		kfree(session);
+		return NULL;
 	}
 
 	mutex_lock(&session_manager->lock);
 
 	idr_preload(GFP_KERNEL);
-	new_id = idr_alloc_cyclic(&session_manager->ctx_id_idr, session, 1, 0, GFP_NOWAIT);
-	idr_preload_end();
-	if (new_id < 0) {
-		mutex_unlock(&session_manager->lock);
-
-		pr_err("rga_session alloc id failed!\n");
-		kfree(session);
-		return ERR_PTR(new_id);
-	}
-
-	session->id = new_id;
+	session->id = idr_alloc(&session_manager->ctx_id_idr, session, 1, 0, GFP_ATOMIC);
 	session_manager->session_cnt++;
+	idr_preload_end();
 
 	mutex_unlock(&session_manager->lock);
 
@@ -575,7 +588,29 @@ static struct rga_session *rga_session_init(void)
 
 static int rga_session_deinit(struct rga_session *session)
 {
-	rga_request_session_destroy_abort(session);
+	pid_t pid;
+	int request_id;
+	struct rga_pending_request_manager *request_manager;
+	struct rga_request *request;
+
+	pid = current->pid;
+
+	request_manager = rga_drvdata->pend_request_manager;
+
+	mutex_lock(&request_manager->lock);
+
+	idr_for_each_entry(&request_manager->request_idr, request, request_id) {
+
+		if (session == request->session) {
+			pr_err("[pid:%d] destroy request[%d] when the user exits",
+			       pid, request->id);
+			rga_request_put(request);
+		}
+	}
+
+	mutex_unlock(&request_manager->lock);
+
+	rga_job_session_destroy(session);
 	rga_mm_session_release_buffer(session);
 
 	rga_session_free_remove_idr(session);
@@ -634,10 +669,9 @@ static long rga_ioctl_import_buffer(unsigned long arg, struct rga_session *sessi
 		}
 
 		ret = rga_mm_import_buffer(&external_buffer[i], session);
-		if (ret <= 0) {
-			pr_err("buffer[%d] mm import buffer failed! memory = 0x%lx, type = %s(0x%x)\n",
+		if (ret == 0) {
+			pr_err("buffer[%d] mm import buffer failed! memory = 0x%lx, type = 0x%x\n",
 			       i, (unsigned long)external_buffer[i].memory,
-			       rga_get_memory_type_str(external_buffer[i].type),
 			       external_buffer[i].type);
 
 			goto err_free_external_buffer;
@@ -707,8 +741,7 @@ static long rga_ioctl_release_buffer(unsigned long arg)
 
 		ret = rga_mm_release_buffer(external_buffer[i].handle);
 		if (ret < 0) {
-			pr_err("buffer[%d] mm release buffer failed! handle = %d\n",
-			       i, external_buffer[i].handle);
+			pr_err("buffer[%d] mm release buffer failed!\n", i);
 
 			goto err_free_external_buffer;
 		}
@@ -868,6 +901,11 @@ static long rga_ioctl_blit(unsigned long arg, uint32_t cmd, struct rga_session *
 	rga_req = request->task_list;
 	/* In the BLIT_SYNC/BLIT_ASYNC command, in_fence_fd needs to be set. */
 	request->acquire_fence_fd = rga_req->in_fence_fd;
+
+	if (DEBUGGER_EN(MSG)) {
+		pr_info("Blit mode: request id = %d", user_request.id);
+		rga_cmd_print_debug_info(rga_req);
+	}
 
 	ret = rga_request_submit(request);
 	if (ret < 0) {
@@ -1102,8 +1140,8 @@ static int rga_open(struct inode *inode, struct file *file)
 	struct rga_session *session = NULL;
 
 	session = rga_session_init();
-	if (IS_ERR(session))
-		return PTR_ERR(session);
+	if (!session)
+		return -ENOMEM;
 
 	file->private_data = (void *)session;
 
@@ -1119,39 +1157,97 @@ static int rga_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static irqreturn_t rga_irq_handler(int irq, void *data)
+static irqreturn_t rga3_irq_handler(int irq, void *data)
 {
-	irqreturn_t irq_ret = IRQ_NONE;
 	struct rga_scheduler_t *scheduler = data;
 
-	if (scheduler->ops->irq)
-		irq_ret = scheduler->ops->irq(scheduler);
+	if (DEBUGGER_EN(INT_FLAG))
+		pr_info("irqthread INT[%x],STATS0[%x], STATS1[%x]\n",
+			rga_read(RGA3_INT_RAW, scheduler),
+			rga_read(RGA3_STATUS0, scheduler),
+			rga_read(RGA3_STATUS1, scheduler));
 
-	return irq_ret;
+	/* TODO: if error interrupt then soft reset hardware */
+	//scheduler->ops->soft_reset(job->core);
+
+	/*clear INT */
+	rga_write(1, RGA3_INT_CLR, scheduler);
+
+	return IRQ_WAKE_THREAD;
 }
 
-static irqreturn_t rga_isr_thread(int irq, void *data)
+static irqreturn_t rga3_irq_thread(int irq, void *data)
 {
-	irqreturn_t irq_ret = IRQ_NONE;
 	struct rga_scheduler_t *scheduler = data;
 	struct rga_job *job;
 
-	job = rga_job_done(scheduler);
-	if (job == NULL) {
-		pr_err("isr thread invalid job!\n");
+	job = scheduler->running_job;
+
+	if (!job) {
+		pr_err("running job is invaild on irq thread\n");
 		return IRQ_HANDLED;
 	}
 
-	if (scheduler->ops->isr_thread)
-		irq_ret = scheduler->ops->isr_thread(job, scheduler);
+	if (DEBUGGER_EN(INT_FLAG))
+		pr_info("irq INT[%x], STATS0[%x], STATS1[%x]\n",
+			rga_read(RGA3_INT_RAW, scheduler),
+			rga_read(RGA3_STATUS0, scheduler),
+			rga_read(RGA3_STATUS1, scheduler));
 
-	rga_request_release_signal(scheduler, job);
+	rga_job_done(scheduler, 0);
 
-	rga_job_next(scheduler);
+	return IRQ_HANDLED;
+}
 
-	rga_power_disable(scheduler);
+static irqreturn_t rga2_irq_handler(int irq, void *data)
+{
+	struct rga_scheduler_t *scheduler = data;
 
-	return irq_ret;
+	if (DEBUGGER_EN(INT_FLAG))
+		pr_info("irqthread INT[%x],STATS0[%x]\n",
+			rga_read(RGA2_INT, scheduler), rga_read(RGA2_STATUS,
+								 scheduler));
+
+	/*if error interrupt then soft reset hardware */
+	//warning
+	if (rga_read(RGA2_INT, scheduler) & 0x01) {
+		pr_err("err irq! INT[%x],STATS0[%x]\n",
+			 rga_read(RGA2_INT, scheduler),
+			 rga_read(RGA2_STATUS, scheduler));
+		scheduler->ops->soft_reset(scheduler);
+	}
+
+	/*clear INT */
+	rga_write(rga_read(RGA2_INT, scheduler) |
+		  (0x1 << 4) | (0x1 << 5) | (0x1 << 6) | (0x1 << 7) |
+		  (0x1 << 15) | (0x1 << 16), RGA2_INT, scheduler);
+
+	return IRQ_WAKE_THREAD;
+}
+
+static irqreturn_t rga2_irq_thread(int irq, void *data)
+{
+	struct rga_scheduler_t *scheduler = data;
+	struct rga_job *job;
+
+	job = scheduler->running_job;
+
+	if (!job)
+		return IRQ_HANDLED;
+
+	if (DEBUGGER_EN(INT_FLAG))
+		pr_info("irq INT[%x], STATS0[%x]\n",
+			rga_read(RGA2_INT, scheduler), rga_read(RGA2_STATUS,
+								 scheduler));
+
+	job->rga_command_base.osd_info.cur_flags0 = rga_read(RGA2_OSD_CUR_FLAGS0_OFFSET,
+							     scheduler);
+	job->rga_command_base.osd_info.cur_flags1 = rga_read(RGA2_OSD_CUR_FLAGS1_OFFSET,
+							     scheduler);
+
+	rga_job_done(scheduler, 0);
+
+	return IRQ_HANDLED;
 }
 
 const struct file_operations rga_fops = {
@@ -1170,97 +1266,123 @@ static struct miscdevice rga_dev = {
 	.fops = &rga_fops,
 };
 
-static const struct rga_match_data_t rga2_match_data = {
-	.device_type = RGA_DEVICE_RGA2,
-	.ops = &rga2_ops,
+static const char *const old_rga2_clks[] = {
+	"aclk_rga",
+	"hclk_rga",
+	"clk_rga",
 };
 
-static const struct rga_match_data_t rga3_match_data = {
-	.device_type = RGA_DEVICE_RGA3,
-	.ops = &rga3_ops,
+static const char *const rk3588_rga2_clks[] = {
+	"aclk_rga2",
+	"hclk_rga2",
+	"clk_rga2",
 };
 
-static const struct of_device_id rga3_dt_ids[] = {
-	{
-	 .compatible = "rockchip,rga3",
-	 .data = &rga3_match_data,
-	},
-	/* legacy */
+static const char *const rga3_core_0_clks[] = {
+	"aclk_rga3_0",
+	"hclk_rga3_0",
+	"clk_rga3_0",
+};
+
+static const char *const rga3_core_1_clks[] = {
+	"aclk_rga3_1",
+	"hclk_rga3_1",
+	"clk_rga3_1",
+};
+
+static const struct rga_irqs_data_t single_rga2_irqs[] = {
+	{"rga2_irq", rga2_irq_handler, rga2_irq_thread}
+};
+
+static const struct rga_irqs_data_t rga3_core0_irqs[] = {
+	{"rga3_core0_irq", rga3_irq_handler, rga3_irq_thread}
+};
+
+static const struct rga_irqs_data_t rga3_core1_irqs[] = {
+	{"rga3_core1_irq", rga3_irq_handler, rga3_irq_thread}
+};
+
+static const struct rga_match_data_t old_rga2_match_data = {
+	.clks = old_rga2_clks,
+	.num_clks = ARRAY_SIZE(old_rga2_clks),
+	.irqs = single_rga2_irqs,
+	.num_irqs = ARRAY_SIZE(single_rga2_irqs)
+};
+
+static const struct rga_match_data_t rk3588_rga2_match_data = {
+	.clks = rk3588_rga2_clks,
+	.num_clks = ARRAY_SIZE(rk3588_rga2_clks),
+	.irqs = single_rga2_irqs,
+	.num_irqs = ARRAY_SIZE(single_rga2_irqs)
+};
+
+static const struct rga_match_data_t rga3_core0_match_data = {
+	.clks = rga3_core_0_clks,
+	.num_clks = ARRAY_SIZE(rga3_core_0_clks),
+	.irqs = rga3_core0_irqs,
+	.num_irqs = ARRAY_SIZE(rga3_core0_irqs)
+};
+
+static const struct rga_match_data_t rga3_core1_match_data = {
+	.clks = rga3_core_1_clks,
+	.num_clks = ARRAY_SIZE(rga3_core_1_clks),
+	.irqs = rga3_core1_irqs,
+	.num_irqs = ARRAY_SIZE(rga3_core1_irqs)
+};
+
+static const struct of_device_id rga3_core0_dt_ids[] = {
 	{
 	 .compatible = "rockchip,rga3_core0",
-	 .data = &rga3_match_data,
+	 .data = &rga3_core0_match_data,
 	},
+	{},
+};
+
+static const struct of_device_id rga3_core1_dt_ids[] = {
 	{
 	 .compatible = "rockchip,rga3_core1",
-	 .data = &rga3_match_data,
+	 .data = &rga3_core1_match_data,
 	},
 	{},
 };
 
 static const struct of_device_id rga2_dt_ids[] = {
 	{
-	 .compatible = "rockchip,rga2",
-	 .data = &rga2_match_data,
-	},
-	/* legacy */
-	{
 	 .compatible = "rockchip,rga2_core0",
-	 .data = &rga2_match_data,
+	 .data = &rk3588_rga2_match_data,
+	},
+	{
+	 .compatible = "rockchip,rga2",
+	 .data = &old_rga2_match_data,
 	},
 	{},
 };
 
-static int init_scheduler(struct rga_scheduler_t *scheduler,
-			  struct device *dev,
-			  const struct rga_match_data_t *match_data,
-			  struct rga_drvdata_t *drv_data)
+static void init_scheduler(struct rga_scheduler_t *scheduler,
+			 const char *name)
 {
-	switch (match_data->device_type) {
-	case RGA_DEVICE_RGA2:
-		switch (drv_data->device_count[match_data->device_type]) {
-		case 0:
-			scheduler->core = RGA2_SCHEDULER_CORE0;
-			break;
-		case 1:
-			scheduler->core = RGA2_SCHEDULER_CORE1;
-			break;
-		default:
-			pr_err("scheduler failed to match RGA2\n");
-			return -EINVAL;
-		}
-
-		break;
-	case RGA_DEVICE_RGA3:
-		switch (drv_data->device_count[match_data->device_type]) {
-		case 0:
-			scheduler->core = RGA3_SCHEDULER_CORE0;
-			break;
-		case 1:
-			scheduler->core = RGA3_SCHEDULER_CORE1;
-			break;
-		default:
-			pr_err("scheduler failed to match RGA2\n");
-			return -EINVAL;
-		}
-
-		break;
-	default:
-
-		return -EINVAL;
-	}
-
-	scheduler->ops = match_data->ops;
-	scheduler->dev = dev;
-
 	spin_lock_init(&scheduler->irq_lock);
 	INIT_LIST_HEAD(&scheduler->todo_list);
 	init_waitqueue_head(&scheduler->job_done_wq);
 
-	return 0;
+	if (!strcmp(name, "rga3_core0")) {
+		scheduler->ops = &rga3_ops;
+		/* TODO: get by hw version */
+		scheduler->core = RGA3_SCHEDULER_CORE0;
+	} else if (!strcmp(name, "rga3_core1")) {
+		scheduler->ops = &rga3_ops;
+		scheduler->core = RGA3_SCHEDULER_CORE1;
+	} else if (!strcmp(name, "rga2")) {
+		scheduler->ops = &rga2_ops;
+		scheduler->core = RGA2_SCHEDULER_CORE0;
+	}
 }
 
 static int rga_drv_probe(struct platform_device *pdev)
 {
+#ifndef RGA_DISABLE_PM
+	int i;
+#endif
 	int ret = 0;
 	int irq;
 	struct resource *res;
@@ -1273,73 +1395,80 @@ static int rga_drv_probe(struct platform_device *pdev)
 	if (!dev->of_node)
 		return -EINVAL;
 
-	if (!strcmp(dev_driver_string(dev), "rga3"))
-		match = of_match_device(rga3_dt_ids, dev);
+	if (!strcmp(dev_driver_string(dev), "rga3_core0"))
+		match = of_match_device(rga3_core0_dt_ids, dev);
+	else if (!strcmp(dev_driver_string(dev), "rga3_core1"))
+		match = of_match_device(rga3_core1_dt_ids, dev);
 	else if (!strcmp(dev_driver_string(dev), "rga2"))
 		match = of_match_device(rga2_dt_ids, dev);
 	else
 		match = NULL;
+
 	if (!match) {
-		dev_err(dev, "missing DT entry!\n");
+		dev_err(dev, "%s missing DT entry!\n", dev_driver_string(dev));
 		return -EINVAL;
 	}
 
 	scheduler = devm_kzalloc(dev, sizeof(struct rga_scheduler_t), GFP_KERNEL);
 	if (scheduler == NULL) {
-		dev_err(dev, "failed to allocate scheduler.\n");
+		pr_err("failed to allocate scheduler. dev name = %s\n", dev_driver_string(dev));
 		return -ENOMEM;
 	}
 
-	match_data = match->data;
-	ret = init_scheduler(scheduler, dev, match_data, data);
-	if (ret < 0) {
-		dev_err(dev, "init scheduler failed!\n");
-		return ret;
-	}
+	init_scheduler(scheduler, dev_driver_string(dev));
+
+	scheduler->dev = dev;
 
 	/* map the registers */
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
-		dev_err(dev, "get memory resource failed.\n");
+		pr_err("get memory resource failed.\n");
 		return -ENXIO;
 	}
 
 	scheduler->rga_base = devm_ioremap(dev, res->start, resource_size(res));
 	if (!scheduler->rga_base) {
-		dev_err(dev, "ioremap failed\n");
+		pr_err("ioremap failed\n");
 		ret = -ENOENT;
 		return ret;
 	}
 
 	/* get the IRQ */
+	match_data = match->data;
+
 	/* there are irq names in dts */
 	irq = platform_get_irq(pdev, 0);
 	if (irq < 0) {
-		dev_err(dev, "no irq in dts\n");
+		dev_err(dev, "no irq %s in dts\n", match_data->irqs[0].name);
 		return irq;
 	}
 
 	scheduler->irq = irq;
 
+	pr_info("%s, irq = %d, match scheduler\n", match_data->irqs[0].name, irq);
+
 	ret = devm_request_threaded_irq(dev, irq,
-					rga_irq_handler,
-					rga_isr_thread,
+					match_data->irqs[0].irq_hdl,
+					match_data->irqs[0].irq_thread,
 					IRQF_SHARED,
 					dev_driver_string(dev), scheduler);
 	if (ret < 0) {
-		dev_err(dev, "request irq failed: %d\n", ret);
+		pr_err("request irq name: %s failed: %d\n", match_data->irqs[0].name, ret);
 		return ret;
 	}
 
 
 #ifndef RGA_DISABLE_PM
 	/* clk init */
-	ret = devm_clk_bulk_get_all(dev, &scheduler->clks);
-	if (ret < 1) {
-		dev_err(dev, "failed to get clk\n");
-		return ret < 0 ? ret : -EINVAL;
+	for (i = 0; i < match_data->num_clks; i++) {
+		struct clk *clk = devm_clk_get(dev, match_data->clks[i]);
+
+		if (IS_ERR(clk))
+			pr_err("failed to get %s\n", match_data->clks[i]);
+
+		scheduler->clks[i] = clk;
 	}
-	scheduler->num_clks = ret;
+	scheduler->num_clks = match_data->num_clks;
 
 	/* PM init */
 	device_init_wakeup(dev, true);
@@ -1347,44 +1476,47 @@ static int rga_drv_probe(struct platform_device *pdev)
 
 	ret = pm_runtime_get_sync(scheduler->dev);
 	if (ret < 0) {
-		dev_err(dev, "failed to get pm runtime, ret = %d\n", ret);
+		pr_err("failed to get pm runtime, ret = %d\n", ret);
 		goto pm_disable;
 	}
 
-	ret = clk_bulk_prepare_enable(scheduler->num_clks, scheduler->clks);
-	if (ret < 0) {
-		dev_err(dev, "failed to enable clk\n");
-		goto pm_disable;
+	for (i = 0; i < scheduler->num_clks; i++) {
+		if (!IS_ERR(scheduler->clks[i])) {
+			ret = clk_prepare_enable(scheduler->clks[i]);
+			if (ret < 0) {
+				pr_err("failed to enable clk\n");
+				goto pm_disable;
+			}
+		}
 	}
 #endif /* #ifndef RGA_DISABLE_PM */
 
 	scheduler->ops->get_version(scheduler);
+	pr_info("%s hardware loaded successfully, hw_version:%s.\n",
+		dev_driver_string(dev), scheduler->version.str);
 
 	/* TODO: get by hw version, Currently only supports judgment 1106. */
 	if (scheduler->core == RGA3_SCHEDULER_CORE0 ||
 	    scheduler->core == RGA3_SCHEDULER_CORE1) {
 		scheduler->data = &rga3_data;
-	} else if (scheduler->core == RGA2_SCHEDULER_CORE0 ||
-		   scheduler->core == RGA2_SCHEDULER_CORE1) {
-		if (!strcmp(scheduler->version.str, "3.3.87975")) {
+	} else if (scheduler->core == RGA2_SCHEDULER_CORE0) {
+		if (!strcmp(scheduler->version.str, "3.3.87975"))
 			scheduler->data = &rga2e_1106_data;
-		} else if (!strcmp(scheduler->version.str, "3.6.92812") ||
-			 !strcmp(scheduler->version.str, "3.7.93215")) {
+		else if (!strcmp(scheduler->version.str, "3.6.92812") ||
+			 !strcmp(scheduler->version.str, "3.7.93215"))
 			scheduler->data = &rga2e_iommu_data;
-		} else if (!strcmp(scheduler->version.str, "3.e.19357")) {
-			scheduler->data = &rga2p_iommu_data;
-			rga_hw_set_issue_mask(scheduler, RGA_HW_ISSUE_DIS_AUTO_RST);
-		} else {
+		else
 			scheduler->data = &rga2e_data;
-		}
 	}
 
 	data->scheduler[data->num_of_scheduler] = scheduler;
+
 	data->num_of_scheduler++;
-	data->device_count[match_data->device_type]++;
 
 #ifndef RGA_DISABLE_PM
-	clk_bulk_disable_unprepare(scheduler->num_clks, scheduler->clks);
+	for (i = scheduler->num_clks - 1; i >= 0; i--)
+		if (!IS_ERR(scheduler->clks[i]))
+			clk_disable_unprepare(scheduler->clks[i]);
 
 	pm_runtime_put_sync(dev);
 #endif /* #ifndef RGA_DISABLE_PM */
@@ -1395,18 +1527,11 @@ static int rga_drv_probe(struct platform_device *pdev)
 			dev_err(dev, "failed to attach iommu\n");
 			scheduler->iommu_info = NULL;
 		}
-
-		dma_set_mask(dev, DMA_BIT_MASK(40));
-		dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
-	} else {
-		dma_set_mask(dev, DMA_BIT_MASK(32));
-		dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
 	}
 
 	platform_set_drvdata(pdev, scheduler);
 
-	dev_info(dev, "probe successfully, irq = %d, hw_version:%s\n",
-		 scheduler->irq, scheduler->version.str);
+	pr_info("%s probe successfully\n", dev_driver_string(dev));
 
 	return 0;
 
@@ -1429,12 +1554,21 @@ static int rga_drv_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static struct platform_driver rga3_driver = {
+static struct platform_driver rga3_core0_driver = {
 	.probe = rga_drv_probe,
 	.remove = rga_drv_remove,
 	.driver = {
-		 .name = "rga3",
-		 .of_match_table = of_match_ptr(rga3_dt_ids),
+		 .name = "rga3_core0",
+		 .of_match_table = of_match_ptr(rga3_core0_dt_ids),
+		 },
+};
+
+static struct platform_driver rga3_core1_driver = {
+	.probe = rga_drv_probe,
+	.remove = rga_drv_remove,
+	.driver = {
+		 .name = "rga3_core1",
+		 .of_match_table = of_match_ptr(rga3_core1_dt_ids),
 		 },
 };
 
@@ -1459,15 +1593,22 @@ static int __init rga_init(void)
 
 	mutex_init(&rga_drvdata->lock);
 
-	ret = platform_driver_register(&rga3_driver);
+	ret = platform_driver_register(&rga3_core0_driver);
 	if (ret != 0) {
-		pr_err("Platform device rga3_driver register failed (%d).\n", ret);
+		pr_err("Platform device rga3_core0_driver register failed (%d).\n", ret);
 		goto err_free_drvdata;
 	}
+
+	ret = platform_driver_register(&rga3_core1_driver);
+	if (ret != 0) {
+		pr_err("Platform device rga3_core1_driver register failed (%d).\n", ret);
+		goto err_unregister_rga3_core0;
+	}
+
 	ret = platform_driver_register(&rga2_driver);
 	if (ret != 0) {
 		pr_err("Platform device rga2_driver register failed (%d).\n", ret);
-		goto err_unregister_rga3;
+		goto err_unregister_rga3_core1;
 	}
 
 	ret = rga_iommu_bind();
@@ -1508,8 +1649,11 @@ err_unbind_iommu:
 err_unregister_rga2:
 	platform_driver_unregister(&rga2_driver);
 
-err_unregister_rga3:
-	platform_driver_unregister(&rga3_driver);
+err_unregister_rga3_core1:
+	platform_driver_unregister(&rga3_core1_driver);
+
+err_unregister_rga3_core0:
+	platform_driver_unregister(&rga3_core0_driver);
 
 err_free_drvdata:
 	kfree(rga_drvdata);
@@ -1537,7 +1681,8 @@ static void __exit rga_exit(void)
 
 	rga_iommu_unbind();
 
-	platform_driver_unregister(&rga3_driver);
+	platform_driver_unregister(&rga3_core0_driver);
+	platform_driver_unregister(&rga3_core1_driver);
 	platform_driver_unregister(&rga2_driver);
 
 	misc_deregister(&rga_dev);
@@ -1550,8 +1695,6 @@ static void __exit rga_exit(void)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 #ifdef CONFIG_ROCKCHIP_THUNDER_BOOT
 module_init(rga_init);
-#elif defined CONFIG_VIDEO_REVERSE_IMAGE
-fs_initcall(rga_init);
 #else
 late_initcall(rga_init);
 #endif
@@ -1565,6 +1708,5 @@ MODULE_AUTHOR("putin.li@rock-chips.com");
 MODULE_DESCRIPTION("Driver for rga device");
 MODULE_LICENSE("GPL");
 #ifdef MODULE_IMPORT_NS
-MODULE_IMPORT_NS(DMA_BUF);
 MODULE_IMPORT_NS(VFS_internal_I_am_really_a_filesystem_and_am_NOT_a_driver);
 #endif

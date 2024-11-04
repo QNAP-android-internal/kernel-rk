@@ -12,7 +12,6 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/syscalls.h>
-#include <linux/kernel.h>
 #include <linux/debugfs.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
@@ -22,7 +21,6 @@
 #include "rga_drv.h"
 #include "rga_mm.h"
 #include "rga_common.h"
-#include "rga_job.h"
 
 #define RGA_DEBUGGER_ROOT_NAME "rkrga"
 
@@ -34,7 +32,6 @@ int RGA_DEBUG_TIME;
 int RGA_DEBUG_INT_FLAG;
 int RGA_DEBUG_MM;
 int RGA_DEBUG_CHECK_MODE;
-int RGA_DEBUG_INTERNAL_MODE;
 int RGA_DEBUG_NONUSE;
 int RGA_DEBUG_DEBUG_MODE;
 int RGA_DEBUG_DUMP_IMAGE;
@@ -51,7 +48,6 @@ static int rga_debug_show(struct seq_file *m, void *data)
 		 "INT [%s]\n"
 		 "MM [%s]\n"
 		 "CHECK [%s]\n"
-		 "INTL [%s]\n"
 		 "STOP [%s]\n",
 		 STR_ENABLE(RGA_DEBUG_REG),
 		 STR_ENABLE(RGA_DEBUG_MSG),
@@ -59,7 +55,6 @@ static int rga_debug_show(struct seq_file *m, void *data)
 		 STR_ENABLE(RGA_DEBUG_INT_FLAG),
 		 STR_ENABLE(RGA_DEBUG_MM),
 		 STR_ENABLE(RGA_DEBUG_CHECK_MODE),
-		 STR_ENABLE(RGA_DEBUG_INTERNAL_MODE),
 		 STR_ENABLE(RGA_DEBUG_NONUSE));
 
 	seq_puts(m, "\nhelp:\n");
@@ -69,7 +64,6 @@ static int rga_debug_show(struct seq_file *m, void *data)
 	seq_puts(m, " 'echo int > debug' to enable/disable interruppt log printing.\n");
 	seq_puts(m, " 'echo mm > debug' to enable/disable memory manager log printing.\n");
 	seq_puts(m, " 'echo check > debug' to enable/disable check mode.\n");
-	seq_puts(m, " 'echo intl > debug' to enable/disable internal mode.\n");
 	seq_puts(m, " 'echo stop > debug' to enable/disable stop using hardware\n");
 
 	return 0;
@@ -109,14 +103,6 @@ static ssize_t rga_debug_write(struct file *file, const char __user *ubuf,
 		} else {
 			RGA_DEBUG_TIME = 1;
 			pr_info("open rga test time!\n");
-		}
-	} else if (strncmp(buf, "intl", 4) == 0) {
-		if (RGA_DEBUG_INTERNAL_MODE) {
-			RGA_DEBUG_INTERNAL_MODE = 0;
-			pr_info("close rga internal flag!\n");
-		} else {
-			RGA_DEBUG_INTERNAL_MODE = 1;
-			pr_info("open rga internal flag!\n");
 		}
 	} else if (strncmp(buf, "int", 3) == 0) {
 		if (RGA_DEBUG_INT_FLAG) {
@@ -476,65 +462,6 @@ static int rga_hardware_show(struct seq_file *m, void *data)
 	return 0;
 }
 
-static int rga_reset_show(struct seq_file *m, void *data)
-{
-	struct rga_scheduler_t *scheduler = NULL;
-	int i;
-
-	seq_puts(m, "help:\n");
-	seq_puts(m, " 'echo <core> > reset' to reset hardware.\n");
-
-	seq_puts(m, "core:\n");
-	for (i = 0; i < rga_drvdata->num_of_scheduler; i++) {
-		scheduler = rga_drvdata->scheduler[i];
-
-		seq_printf(m, "  %s core <%d>\n",
-			   dev_driver_string(scheduler->dev), scheduler->core);
-	}
-
-	return 0;
-}
-
-static ssize_t rga_reset_write(struct file *file, const char __user *ubuf,
-			       size_t len, loff_t *offp)
-{
-	char buf[14];
-	int i, ret;
-	int reset_core = 0;
-	int reset_done = false;
-	struct rga_scheduler_t *scheduler = NULL;
-
-	if (len > sizeof(buf) - 1)
-		return -EINVAL;
-	if (copy_from_user(buf, ubuf, len))
-		return -EFAULT;
-	buf[len - 1] = '\0';
-
-	ret = kstrtoint(buf, 10, &reset_core);
-	if (ret < 0 || reset_core <= 0) {
-		pr_err("invalid core! failed to reset hardware, data = %s len = %zu.\n", buf, len);
-		return -EINVAL;
-	}
-
-	for (i = 0; i < rga_drvdata->num_of_scheduler; i++) {
-		scheduler = rga_drvdata->scheduler[i];
-
-		if (scheduler->core == reset_core) {
-			reset_done = true;
-			pr_info("reset hardware core[%d]!\n", reset_core);
-
-			rga_request_scheduler_abort(scheduler);
-
-			break;
-		}
-	}
-
-	if (!reset_done)
-		pr_err("cannot find core[%d]\n", reset_core);
-
-	return len;
-}
-
 static struct rga_debugger_list rga_debugger_root_list[] = {
 	{"debug", rga_debug_show, rga_debug_write, NULL},
 	{"driver_version", rga_version_show, NULL, NULL},
@@ -547,7 +474,6 @@ static struct rga_debugger_list rga_debugger_root_list[] = {
 	{"dump_image", rga_dump_image_show, rga_dump_image_write, NULL},
 #endif
 	{"hardware", rga_hardware_show, NULL, NULL},
-	{"reset", rga_reset_show, rga_reset_write, NULL},
 };
 
 static ssize_t rga_debugger_write(struct file *file, const char __user *ubuf,
@@ -695,11 +621,7 @@ CREATE_FAIL:
 #ifdef CONFIG_ROCKCHIP_RGA_PROC_FS
 static int rga_procfs_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-	struct rga_debugger_node *node = pde_data(inode);
-#else
 	struct rga_debugger_node *node = PDE_DATA(inode);
-#endif
 
 	return single_open(file, node->info_ent->show, node);
 }
@@ -900,9 +822,18 @@ void rga_cmd_print_debug_info(struct rga_req *req)
 		req->mmu_info.mmu_flag, req->mmu_info.mmu_en);
 	pr_info("alpha: rop_mode = %x\n", req->alpha_rop_mode);
 	pr_info("yuv2rgb mode is %x\n", req->yuv2rgb_mode);
-	pr_info("imterplotion: horiz = 0x%x, verti = 0x%x\n", req->interp.horiz, req->interp.verti);
 	pr_info("set core = %d, priority = %d, in_fence_fd = %d\n",
 		req->core, req->priority, req->in_fence_fd);
+}
+
+void rga_dump_external_buffer(struct rga_external_buffer *buffer)
+{
+	pr_info("external: memory = 0x%lx, type = %s\n",
+		(unsigned long)buffer->memory, rga_get_memory_type_str(buffer->type));
+	pr_info("param: w = %d, h = %d, f = %s, size = %d\n",
+		buffer->memory_parm.width, buffer->memory_parm.height,
+		rga_get_format_name(buffer->memory_parm.format),
+		buffer->memory_parm.size);
 }
 
 #ifdef CONFIG_NO_GKI
@@ -915,10 +846,6 @@ static int rga_dump_image_to_file(struct rga_internal_buffer *dump_buffer,
 	struct file *file;
 	size_t size = 0;
 	loff_t pos = 0;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-	int ret;
-	struct iosys_map map;
-#endif
 	void *kvaddr = NULL;
 	void *kvaddr_origin = NULL;
 
@@ -931,12 +858,7 @@ static int rga_dump_image_to_file(struct rga_internal_buffer *dump_buffer,
 			return -EINVAL;
 		}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-		ret = dma_buf_vmap(dump_buffer->dma_buffer->dma_buf, &map);
-		kvaddr = ret ? NULL : map.vaddr;
-#else
 		kvaddr = dma_buf_vmap(dump_buffer->dma_buffer->dma_buf);
-#endif
 		if (!kvaddr) {
 			pr_err("can't vmap the dma buffer!\n");
 			return -EINVAL;
@@ -1006,11 +928,7 @@ static int rga_dump_image_to_file(struct rga_internal_buffer *dump_buffer,
 	switch (dump_buffer->type) {
 	case RGA_DMA_BUFFER:
 	case RGA_DMA_BUFFER_PTR:
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-		dma_buf_vunmap(dump_buffer->dma_buffer->dma_buf, &map);
-#else
 		dma_buf_vunmap(dump_buffer->dma_buffer->dma_buf, kvaddr_origin);
-#endif
 		break;
 	case RGA_VIRTUAL_ADDRESS:
 		vunmap(kvaddr_origin);
