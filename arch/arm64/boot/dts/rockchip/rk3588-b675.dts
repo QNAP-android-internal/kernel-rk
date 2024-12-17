@@ -18,6 +18,10 @@
 	model = "IEI WAFER-RK3588 Single Board Computer";
 	compatible = "iei,rk3588-b675", "rockchip,rk3588";
 
+	chosen: chosen {
+		bootargs = "earlycon=uart8250,mmio32,0xfeb50000 console=ttyFIQ0 irqchip.gicv3_pseudo_nmi=0 rcupdate.rcu_expedited=1 rcu_nocbs=all quiet";
+	};
+
 	/* If hdmirx node is disabled, delete the reserved-memory node here. */
 	reserved-memory {
 		#address-cells = <2>;
