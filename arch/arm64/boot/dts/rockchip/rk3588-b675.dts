@@ -1515,3 +1515,7 @@
 	sd-uhs-sdr104;
 	status = "okay";
 };
+
+&dmc {
+	status = "disabled";
+};
