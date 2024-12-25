@@ -171,6 +171,9 @@
 #define DPTX_AUX_DATA3				0x0b14
 
 #define DPTX_GENERAL_INTERRUPT			0x0d00
+#define VIDEO_FIFO_OVERFLOW_STREAM3		BIT(26)
+#define VIDEO_FIFO_OVERFLOW_STREAM2		BIT(20)
+#define VIDEO_FIFO_OVERFLOW_STREAM1		BIT(14)
 #define VIDEO_FIFO_OVERFLOW_STREAM0		BIT(6)
 #define AUDIO_FIFO_OVERFLOW_STREAM0		BIT(5)
 #define SDP_EVENT_STREAM0			BIT(4)
@@ -2840,7 +2843,6 @@ static irqreturn_t dw_dp_hpd_irq_handler(int irq, void *arg)
 			dp->hotplug.long_hpd = true;
 			dp->hotplug.status = hpd;
 			dp->hotplug.state = GPIO_STATE_PLUG;
-			schedule_work(&dp->hpd_work);
 		}
 	} else if (dp->hotplug.state == GPIO_STATE_PLUG) {
 		if (!hpd) {
@@ -2855,9 +2857,12 @@ static irqreturn_t dw_dp_hpd_irq_handler(int irq, void *arg)
 			dp->hotplug.long_hpd = false;
 			dp->hotplug.status = hpd;
 			dp->hotplug.state = GPIO_STATE_PLUG;
-			schedule_work(&dp->hpd_work);
 		}
 	}
+
+	if (hpd)
+		schedule_work(&dp->hpd_work);
+
 	mutex_unlock(&dp->irq_lock);
 
 
@@ -2867,6 +2872,10 @@ static irqreturn_t dw_dp_hpd_irq_handler(int irq, void *arg)
 static void dw_dp_hpd_init(struct dw_dp *dp)
 {
 	dp->hotplug.status = dw_dp_detect_no_power(dp);
+	if (dp->hpd_gpio && dp->hotplug.status) {
+		dp->hotplug.state = GPIO_STATE_PLUG;
+		dp->hotplug.long_hpd = true;
+	}
 
 	if (dp->hpd_gpio || dp->force_hpd || dp->usbdp_hpd) {
 		regmap_update_bits(dp->regmap, DPTX_CCTL, FORCE_HPD,
@@ -2900,6 +2909,14 @@ static void dw_dp_init(struct dw_dp *dp)
 
 	dw_dp_hpd_init(dp);
 	dw_dp_aux_init(dp);
+
+	regmap_update_bits(dp->regmap, DPTX_GENERAL_INTERRUPT_ENABLE,
+			   VIDEO_FIFO_OVERFLOW_STREAM0 | VIDEO_FIFO_OVERFLOW_STREAM1 |
+			   VIDEO_FIFO_OVERFLOW_STREAM2 | VIDEO_FIFO_OVERFLOW_STREAM3,
+			   FIELD_PREP(VIDEO_FIFO_OVERFLOW_STREAM0, 1) |
+			   FIELD_PREP(VIDEO_FIFO_OVERFLOW_STREAM1, 1) |
+			   FIELD_PREP(VIDEO_FIFO_OVERFLOW_STREAM2, 1) |
+			   FIELD_PREP(VIDEO_FIFO_OVERFLOW_STREAM3, 1));
 }
 
 static void dw_dp_encoder_enable(struct drm_encoder *encoder)
@@ -5083,6 +5100,30 @@ static irqreturn_t dw_dp_irq_handler(int irq, void *data)
 
 	if (value & HDCP_EVENT)
 		dw_dp_handle_hdcp_event(dp);
+
+	if (value & VIDEO_FIFO_OVERFLOW_STREAM0) {
+		dev_err_ratelimited(dp->dev, "video fifo overflow stream0\n");
+		regmap_write(dp->regmap, DPTX_GENERAL_INTERRUPT,
+			     VIDEO_FIFO_OVERFLOW_STREAM0);
+	}
+
+	if (value & VIDEO_FIFO_OVERFLOW_STREAM1) {
+		dev_err_ratelimited(dp->dev, "video fifo overflow stream1\n");
+		regmap_write(dp->regmap, DPTX_GENERAL_INTERRUPT,
+			     VIDEO_FIFO_OVERFLOW_STREAM1);
+	}
+
+	if (value & VIDEO_FIFO_OVERFLOW_STREAM2) {
+		dev_err_ratelimited(dp->dev, "video fifo overflow stream2\n");
+		regmap_write(dp->regmap, DPTX_GENERAL_INTERRUPT,
+			     VIDEO_FIFO_OVERFLOW_STREAM2);
+	}
+
+	if (value & VIDEO_FIFO_OVERFLOW_STREAM3) {
+		dev_err_ratelimited(dp->dev, "video fifo overflow stream3\n");
+		regmap_write(dp->regmap, DPTX_GENERAL_INTERRUPT,
+			     VIDEO_FIFO_OVERFLOW_STREAM3);
+	}
 
 	return IRQ_HANDLED;
 }

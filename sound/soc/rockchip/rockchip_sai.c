@@ -1226,7 +1226,7 @@ static int rockchip_sai_init_dai(struct rk_sai_dev *sai, struct resource *res,
 		dai->playback.stream_name = "Playback";
 		dai->playback.channels_min = 1;
 		dai->playback.channels_max = 512;
-		dai->playback.rates = SNDRV_PCM_RATE_8000_384000;
+		dai->playback.rates = SNDRV_PCM_RATE_CONTINUOUS;
 		dai->playback.formats = SNDRV_PCM_FMTBIT_S8 |
 					SNDRV_PCM_FMTBIT_S16_LE |
 					SNDRV_PCM_FMTBIT_S24_LE |
@@ -1242,7 +1242,7 @@ static int rockchip_sai_init_dai(struct rk_sai_dev *sai, struct resource *res,
 		dai->capture.stream_name = "Capture";
 		dai->capture.channels_min = 1;
 		dai->capture.channels_max = 512;
-		dai->capture.rates = SNDRV_PCM_RATE_8000_384000;
+		dai->capture.rates = SNDRV_PCM_RATE_CONTINUOUS;
 		dai->capture.formats = SNDRV_PCM_FMTBIT_S8 |
 				       SNDRV_PCM_FMTBIT_S16_LE |
 				       SNDRV_PCM_FMTBIT_S24_LE |
