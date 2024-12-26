@@ -11659,8 +11659,8 @@ static void vop3_post_csc_config(struct drm_crtc *crtc, struct post_acm *acm, st
 	struct vop2 *vop2 = vp->vop2;
 	struct drm_plane *plane;
 	struct drm_plane_state *pstate;
-	struct post_csc_coef csc_coef;
-	struct post_csc_convert_mode convert_mode;
+	struct post_csc_coef csc_coef = {};
+	struct post_csc_convert_mode convert_mode = {};
 	bool acm_enable;
 	bool post_r2y_en = false;
 	bool post_csc_en = false;

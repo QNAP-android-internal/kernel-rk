@@ -4744,7 +4744,7 @@ static const struct vop2_ctrl rk3576_vop_ctrl = {
 	.rgb_dclk_sel = VOP_REG(RK3576_RGB_IF_CTRL, 0x1, 21),
 
 	.gamma_port_sel = VOP_REG_MASK(RK3568_LUT_PORT_SEL, 0x3, 12),
-	.esmart_lb_mode = VOP_REG(RK3568_SYS_PD_CTRL, 0x3, 6),
+	.esmart_lb_mode = VOP_REG_MASK(RK3568_SYS_PD_CTRL, 0x3, 6),
 	.vp_intr_merge_en = VOP_REG_MASK(RK3576_SYS_PORT_CTRL_IMD, 0x1, 14),
 	.win_vp_id[ROCKCHIP_VOP2_CLUSTER0] = VOP_REG(RK3576_CLUSTER0_PORT_SEL_IMD, 0x3, 0),
 	.win_vp_id[ROCKCHIP_VOP2_CLUSTER1] = VOP_REG(RK3576_CLUSTER1_PORT_SEL_IMD, 0x3, 0),

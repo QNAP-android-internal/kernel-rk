@@ -36,6 +36,32 @@
 
 #define GPIO_MAX_PINS	(32)
 
+#define ROCKCHIP_PIN_EXP_IRQ_DEMUX(_N) \
+static void rockchip_single_pin_exp_irq_demux##_N(struct irq_desc *desc) \
+{ \
+	struct irq_chip *chip = irq_desc_get_chip(desc); \
+	struct rockchip_pin_bank *bank = irq_desc_get_handler_data(desc); \
+\
+	chained_irq_enter(chip, desc); \
+	generic_handle_domain_irq(bank->domain, bank->irq_pin_id[_N][0]); \
+	chained_irq_exit(chip, desc); \
+} \
+\
+static void rockchip_multi_pin_exp_irq_demux##_N(struct irq_desc *desc) \
+{ \
+	struct irq_chip *chip = irq_desc_get_chip(desc); \
+	struct rockchip_pin_bank *bank = irq_desc_get_handler_data(desc); \
+	u32 value; \
+\
+	value = readl_relaxed(bank->reg_base + bank->gpio_regs->int_status); \
+	chained_irq_enter(chip, desc); \
+	if (value & (1 << bank->irq_pin_id[_N][0])) \
+		generic_handle_domain_irq(bank->domain, bank->irq_pin_id[_N][0]); \
+	if (value & (1 << bank->irq_pin_id[_N][1])) \
+		generic_handle_domain_irq(bank->domain, bank->irq_pin_id[_N][1]); \
+	chained_irq_exit(chip, desc); \
+}
+
 static const struct rockchip_gpio_regs gpio_regs_v1 = {
 	.port_dr = 0x00,
 	.port_ddr = 0x04,
@@ -388,6 +414,22 @@ static void rockchip_irq_demux(struct irq_desc *desc)
 	chained_irq_exit(chip, desc);
 }
 
+ROCKCHIP_PIN_EXP_IRQ_DEMUX(1);
+ROCKCHIP_PIN_EXP_IRQ_DEMUX(2);
+ROCKCHIP_PIN_EXP_IRQ_DEMUX(3);
+
+static irq_flow_handler_t rockchip_irq_s[RK_GPIO_IRQ_MAX_NUM - 1] = {
+	rockchip_single_pin_exp_irq_demux1,
+	rockchip_single_pin_exp_irq_demux2,
+	rockchip_single_pin_exp_irq_demux3
+};
+
+static irq_flow_handler_t rockchip_irq_m[RK_GPIO_IRQ_MAX_NUM - 1] = {
+	rockchip_multi_pin_exp_irq_demux1,
+	rockchip_multi_pin_exp_irq_demux2,
+	rockchip_multi_pin_exp_irq_demux3
+};
+
 static int rockchip_irq_set_type(struct irq_data *d, unsigned int type)
 {
 	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
@@ -576,9 +618,21 @@ static int rockchip_interrupts_register(struct rockchip_pin_bank *bank)
 	rockchip_gpio_writel(bank, 0xffffffff, bank->gpio_regs->int_en);
 	gc->mask_cache = 0xffffffff;
 
-	irq_set_chained_handler_and_data(bank->irq,
+	irq_set_chained_handler_and_data(bank->irq[0],
 					 rockchip_irq_demux, bank);
 
+	for (int i = 1; i < RK_GPIO_IRQ_MAX_NUM; i++) {
+		if (!bank->irq_pins[i])
+			continue;
+		if (hweight32(bank->irq_pins[i]) == 1)
+			irq_set_chained_handler_and_data(bank->irq[i],
+							 rockchip_irq_s[i - 1],
+							 bank);
+		else
+			irq_set_chained_handler_and_data(bank->irq[i],
+							 rockchip_irq_m[i - 1],
+							 bank);
+	}
 	return 0;
 }
 
@@ -709,6 +763,118 @@ static int rockchip_gpio_acpi_get_bank_id(struct device *dev)
 }
 #endif /* CONFIG_ACPI */
 
+static bool rockchip_gpio_has_irq_affinity(struct device_node *node)
+{
+	return !!of_find_property(node, "interrupt-affinity", NULL);
+}
+
+static int rockchip_gpio_set_irq_affinity(const struct device *dev, int index,
+					  struct rockchip_pin_bank *bank)
+{
+	int cpu, ret;
+	struct device_node *node = dev->of_node, *dn;
+
+	dn = of_parse_phandle(node, "interrupt-affinity", index);
+	if (!dn) {
+		dev_err(dev, "failed to parse interrupt-affinity[%d]\n", index);
+		return -EINVAL;
+	}
+
+	cpu = of_cpu_node_to_id(dn);
+	of_node_put(dn);
+	if (cpu < 0)
+		return cpu;
+
+	ret = irq_force_affinity(bank->irq[index], cpumask_of(cpu));
+	if (ret) {
+		dev_err(dev, "unable to set irq affinity (irq=%d, cpu=%u)\n",
+			bank->irq[index], cpu);
+		return ret;
+	}
+
+	return 0;
+}
+
+static bool rockchip_gpio_has_irq_pins(struct device_node *node)
+{
+	return !!of_find_property(node, "interrupt-pins", NULL);
+}
+
+static int rockchip_gpio_get_irq_pins(const struct device *dev, int index,
+				      struct rockchip_pin_bank *bank)
+{
+	int ret, i;
+	unsigned int pin;
+	unsigned long pending;
+	struct device_node *node = dev->of_node;
+
+	if (index == 0)
+		return 0;
+
+	for (i = 0; i < RK_GPIO_EXP_IRQ_MAX_PIN_NUM; i++)
+		bank->irq_pin_id[index][i] = -1;
+	ret = of_property_read_u32_index(node, "interrupt-pins", index,
+					 &bank->irq_pins[index]);
+	if (ret) {
+		dev_err(dev, "Failed to read interrupt-pin at index %d\n", index);
+		return ret;
+	}
+
+	if (hweight32(bank->irq_pins[index]) > RK_GPIO_EXP_IRQ_MAX_PIN_NUM) {
+		dev_err(dev, "Interrupt-pin at index %d must not more then %d\n",
+			index, RK_GPIO_EXP_IRQ_MAX_PIN_NUM);
+		return -EINVAL;
+	}
+
+	if (bank->irq_pins[index]) {
+		i = 0;
+		pending = bank->irq_pins[index];
+		for_each_set_bit(pin, &pending, 32) {
+			bank->irq_pin_id[index][i++] = pin;
+		}
+	}
+
+	return 0;
+}
+
+static int rockchip_gpio_parse_irqs(struct platform_device *pdev,
+				    struct rockchip_pin_bank *bank)
+{
+	int num_irqs, i, ret;
+	struct device *dev = &pdev->dev;
+	bool has_irq_pins = rockchip_gpio_has_irq_pins(dev->of_node);
+	bool has_affinity = rockchip_gpio_has_irq_affinity(dev->of_node);
+
+	num_irqs = platform_irq_count(pdev);
+	if (num_irqs < 0)
+		return dev_err_probe(dev, num_irqs, "unable to count GPIO IRQs\n");
+	else if (num_irqs == 0)
+		return dev_err_probe(dev, -EINVAL, "no available GPIO IRQs found\n");
+	else if (num_irqs > RK_GPIO_IRQ_MAX_NUM)
+		return dev_err_probe(dev, -EINVAL, "GPIO IRQs number must not more than %d\n",
+				     RK_GPIO_IRQ_MAX_NUM);
+
+	for (i = 0; i < num_irqs; i++) {
+		bank->irq[i] = platform_get_irq(pdev, i);
+		if (bank->irq[i] < 0)
+			return dev_err_probe(dev, -EINVAL, "failed to get gpio irq %d\n", i);
+
+		if (!has_irq_pins)
+			continue;
+		ret = rockchip_gpio_get_irq_pins(dev, i, bank);
+		if (ret)
+			return ret;
+
+		if (!has_affinity)
+			continue;
+		ret = rockchip_gpio_set_irq_affinity(dev, i, bank);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 static int rockchip_gpio_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -750,9 +916,11 @@ static int rockchip_gpio_probe(struct platform_device *pdev)
 	if (IS_ERR(bank->reg_base))
 		return PTR_ERR(bank->reg_base);
 
-	bank->irq = platform_get_irq(pdev, 0);
-	if (bank->irq < 0)
-		return bank->irq;
+	rockchip_gpio_get_ver(bank);
+
+	ret = rockchip_gpio_parse_irqs(pdev, bank);
+	if (ret < 0)
+		return ret;
 
 	raw_spin_lock_init(&bank->slock);
 
@@ -776,8 +944,6 @@ static int rockchip_gpio_probe(struct platform_device *pdev)
 
 	clk_prepare_enable(bank->clk);
 	clk_prepare_enable(bank->db_clk);
-
-	rockchip_gpio_get_ver(bank);
 
 	/*
 	 * Prevent clashes with a deferred output setting
