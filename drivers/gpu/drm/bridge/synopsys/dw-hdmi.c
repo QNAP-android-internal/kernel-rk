@@ -1673,6 +1673,18 @@ static void hdmi_video_packetize(struct dw_hdmi *hdmi)
 		return;
 	}
 
+	/*
+	 * GCP is sent by default after power on.
+	 * In kernel 4.19/5.10, we did not intentionally
+	 * disable sending of GCP. The kernel 6.1 upstream
+	 * code disable GCP transmission in 8bit color depth.
+	 * Therefore, when you need to use avmute function,
+	 * it is need to enable GCP transmission.
+	 */
+	val = hdmi_readb(hdmi, HDMI_FC_GCP);
+	if (val & (HDMI_FC_GCP_SET_AVMUTE | HDMI_FC_GCP_CLEAR_AVMUTE))
+		clear_gcp_auto = 0;
+
 	/* set the packetizer registers */
 	val = (color_depth << HDMI_VP_PR_CD_COLOR_DEPTH_OFFSET) &
 	      HDMI_VP_PR_CD_COLOR_DEPTH_MASK;

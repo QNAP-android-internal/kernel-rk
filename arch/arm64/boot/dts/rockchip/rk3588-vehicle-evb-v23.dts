@@ -18,6 +18,10 @@
 	model = "Rockchip RK3588 VEHICLE EVB V23 Board";
 	compatible = "rockchip,rk3588-vehicle-evb-v23", "rockchip,rk3588";
 
+	chosen: chosen {
+		bootargs = "earlycon=uart8250,mmio32,0xfeb50000 console=ttyFIQ0 irqchip.gicv3_pseudo_nmi=0 rcupdate.rcu_expedited=1 rcu_nocbs=all spidev.bufsiz=131072";
+	};
+
 	vcc5v0_buck: vcc5v0-buck {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc5v0_buck";
