@@ -375,6 +375,10 @@ rkf_wf_get_lut:
 	ldrb	w13, [x11, #30]
 	strb	w12, [x11]
 	strb	w13, [x11, #990]
+	strb	w12, [x11, #32]
+	strb	w13, [x11, #1022]
+	strb	w13, [x11, #62]
+	strb	w12, [x11, #992]
 	strb	w12, [x11, #96]
 	strb	w13, [x11, #126]
 	b.ne	.LBB2_28
