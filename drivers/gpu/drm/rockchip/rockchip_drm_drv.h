@@ -31,7 +31,7 @@
 #define ROCKCHIP_MAX_CONNECTOR	2
 #define ROCKCHIP_MAX_CRTC	4
 #define ROCKCHIP_MAX_LAYER	16
-
+#define ROCKCHIP_MAX_DOVI_CORE	3
 
 struct drm_device;
 struct drm_connector;
@@ -60,6 +60,21 @@ struct iommu_domain;
 #define RK_IF_PROP_COLOR_DEPTH_CAPS	"color_depth_caps"
 #define RK_IF_PROP_COLOR_FORMAT_CAPS	"color_format_caps"
 #define RK_IF_PROP_ENCRYPTED		"hdcp_encrypted"
+
+/*
+ * This is extend by rockchip, the other EOTF is defined at hdmi.h
+ *
+ * enum hdmi_eotf {
+ *	HDMI_EOTF_TRADITIONAL_GAMMA_SDR,
+ *	HDMI_EOTF_TRADITIONAL_GAMMA_HDR,
+ *	HDMI_EOTF_SMPTE_ST2084,
+ *	HDMI_EOTF_BT_2100_HLG,
+ *};
+ */
+#define HDMI_EOTF_HDR10PLUS	0x10
+#define HDMI_EOTF_HDRVIVID	0x11
+#define HDMI_EOTF_DOVI		0x12
+#define DOVI_VSDB_LEN		26
 
 enum rockchip_drm_debug_category {
 	VOP_DEBUG_PLANE		= BIT(0),
@@ -158,6 +173,8 @@ struct rockchip_bcsh_state {
 
 struct rockchip_crtc {
 	struct drm_crtc crtc;
+	/* @frme_count: the frame num of commit buf */
+	u32 frame_count;
 #if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
 	/**
 	 * @vop_dump_status the status of vop dump control
@@ -553,6 +570,7 @@ struct rockchip_drm_private {
 	struct drm_property *eotf_prop;
 	struct drm_property *async_commit_prop;
 	struct drm_property *share_id_prop;
+	struct drm_property *dovi_input_type_prop;
 
 	/* private connector prop */
 	struct drm_property *connector_id_prop;
@@ -644,8 +662,7 @@ int rockchip_drm_get_yuv422_format(struct drm_connector *connector,
 int rockchip_drm_parse_cea_ext(struct rockchip_drm_dsc_cap *dsc_cap,
 			       u8 *max_frl_rate_per_lane, u8 *max_lanes, u8 *add_func,
 			       const struct edid *edid);
-int rockchip_drm_parse_next_hdr(struct next_hdr_sink_data *sink_data,
-				const struct edid *edid);
+int rockchip_drm_parse_dovi(u8 *sink_data, const struct edid *edid);
 int rockchip_drm_parse_colorimetry_data_block(u8 *colorimetry, const struct edid *edid);
 struct dma_buf *rockchip_drm_gem_prime_export(struct drm_gem_object *obj, int flags);
 long rockchip_drm_dclk_round_rate(u32 version, struct clk *dclk, unsigned long rate);

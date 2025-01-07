@@ -80,6 +80,7 @@ struct platform_device;
  */
 
 #define SUPPORT_HDMI_ALLM	BIT(1)
+#define DOVI_VSIF_LEN		8
 
 enum {
 	DW_HDMI_RES_8,
@@ -140,6 +141,11 @@ struct dw_hdmi_link_config {
 	int hcactive;
 	u8 add_func;
 	u8 pps_payload[128];
+};
+
+struct dovi_vsif_data {
+	u8 header[3];
+	u8 pb[28];
 };
 
 struct dw_hdmi_phy_ops {
@@ -254,6 +260,9 @@ struct dw_hdmi_plat_data {
 	int (*get_edid_dsc_info)(void *data, const struct edid *edid);
 	int (*get_next_hdr_data)(void *data, struct edid *edid,
 				 struct drm_connector *connector);
+	int (*get_dovi_data)(void *data, const struct edid *edid,
+			     struct drm_connector *connector);
+	void (*get_dovi_vsif)(void *data, u32 *buf);
 	struct dw_hdmi_link_config *(*get_link_cfg)(void *data);
 	void (*set_hdcp_status)(void *data, u8 status);
 	void (*set_hdcp2_enable)(void *data, bool enable);
@@ -273,6 +282,8 @@ struct dw_hdmi_plat_data {
 	struct drm_display_mode *(*get_force_timing)(void *data);
 	u32 (*get_refclk_rate)(void *data);
 	void (*force_frl_rate)(void *data, u8 rate);
+	void (*get_mode_color_caps)(struct drm_connector *connector, struct drm_display_info *info,
+				    void *data);
 
 	/* Vendor Property support */
 	const struct dw_hdmi_property_ops *property_ops;
@@ -356,6 +367,7 @@ void dw_hdmi_qp_audio_enable(struct dw_hdmi_qp *hdmi);
 void dw_hdmi_qp_audio_disable(struct dw_hdmi_qp *hdmi);
 int dw_hdmi_qp_set_plugged_cb(struct dw_hdmi_qp *hdmi, hdmi_codec_plugged_cb fn,
 			      struct device *codec_dev);
+void dw_hdmi_qp_set_quant_range(struct dw_hdmi_qp *hdmi);
 void dw_hdmi_qp_set_output_type(struct dw_hdmi_qp *hdmi, u64 val);
 bool dw_hdmi_qp_get_output_whether_hdmi(struct dw_hdmi_qp *hdmi);
 int dw_hdmi_qp_get_output_type_cap(struct dw_hdmi_qp *hdmi);
