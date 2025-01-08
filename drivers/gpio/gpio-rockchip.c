@@ -94,6 +94,13 @@ static const struct rockchip_gpio_regs gpio_regs_v2 = {
 	.version_id = 0x78,
 };
 
+static enum rockchip_pinctrl_type chip_type;
+
+static inline bool is_rk3506_bank4(struct rockchip_pin_bank *bank)
+{
+	return IS_ENABLED(CONFIG_CPU_RK3506) && chip_type == RK3506 && bank->bank_num == 4;
+}
+
 static inline void gpio_writel_v2(u32 val, void __iomem *reg)
 {
 	writel((val & 0xffff) | 0xffff0000, reg);
@@ -109,6 +116,14 @@ static inline void rockchip_gpio_writel(struct rockchip_pin_bank *bank,
 					u32 value, unsigned int offset)
 {
 	void __iomem *reg = bank->reg_base + offset;
+
+	if (is_rk3506_bank4(bank)) {
+		u32 tmp = value & 0x3f;
+
+		value &= 0xffffffc0;
+		value |= (tmp >> 1) & 0x15;
+		value |= (tmp << 1) & 0x2a;
+	}
 
 	if (bank->gpio_type >= GPIO_TYPE_V2)
 		gpio_writel_v2(value, reg);
@@ -127,6 +142,14 @@ static inline u32 rockchip_gpio_readl(struct rockchip_pin_bank *bank,
 	else
 		value = readl(reg);
 
+	if (is_rk3506_bank4(bank)) {
+		u32 tmp = value & 0x3f;
+
+		value &= 0xffffffc0;
+		value |= (tmp >> 1) & 0x15;
+		value |= (tmp << 1) & 0x2a;
+	}
+
 	return value;
 }
 
@@ -136,6 +159,9 @@ static inline void rockchip_gpio_writel_bit(struct rockchip_pin_bank *bank,
 {
 	void __iomem *reg = bank->reg_base + offset;
 	u32 data;
+
+	if (is_rk3506_bank4(bank) && bit < 6)
+		bit ^= 0x1;
 
 	if (bank->gpio_type >= GPIO_TYPE_V2) {
 		if (value)
@@ -157,6 +183,9 @@ static inline u32 rockchip_gpio_readl_bit(struct rockchip_pin_bank *bank,
 {
 	void __iomem *reg = bank->reg_base + offset;
 	u32 data;
+
+	if (is_rk3506_bank4(bank) && bit < 6)
+		bit ^= 0x1;
 
 	if (bank->gpio_type >= GPIO_TYPE_V2) {
 		data = readl(bit >= 16 ? reg + 0x4 : reg);
@@ -709,6 +738,9 @@ rockchip_gpio_find_bank(struct pinctrl_dev *pctldev, int id)
 	int i, found = 0;
 
 	info = pinctrl_dev_get_drvdata(pctldev);
+	if (IS_ENABLED(CONFIG_CPU_RK3506))
+		chip_type = info->ctrl->type;
+
 	bank = info->ctrl->pin_banks;
 	for (i = 0; i < info->ctrl->nr_banks; i++, bank++) {
 		if (bank->bank_num == id) {
