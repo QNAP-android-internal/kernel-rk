@@ -80,7 +80,7 @@ struct runtime_device {
 struct rk801_regulator_data {
 	struct gpio_desc *pwrctrl_gpio;
 	struct suspend_device sdev[RK801_ID_MAX];
-	bool pwrctrl_dvs;
+	bool req_pwrctrl_dvs;
 };
 
 static const struct linear_range rk801_buck1_voltage_ranges[] = {
@@ -162,7 +162,7 @@ static int rk801_set_suspend_voltage(struct regulator_dev *rdev, int uv)
 	unsigned int reg;
 	int sel;
 
-	if (pdata->pwrctrl_dvs) {
+	if (pdata->req_pwrctrl_dvs) {
 		pdata->sdev[rdev->desc->id].rdev = rdev;
 		pdata->sdev[rdev->desc->id].uv = uv;
 	} else {
@@ -186,7 +186,7 @@ static int rk801_set_suspend_enable(struct regulator_dev *rdev)
 {
 	struct rk801_regulator_data *pdata = rdev_get_drvdata(rdev);
 
-	if (pdata->pwrctrl_dvs) {
+	if (pdata->req_pwrctrl_dvs) {
 		pdata->sdev[rdev->desc->id].rdev = rdev;
 		pdata->sdev[rdev->desc->id].enable = 1;
 	} else {
@@ -201,7 +201,7 @@ static int rk801_set_suspend_disable(struct regulator_dev *rdev)
 {
 	struct rk801_regulator_data *pdata = rdev_get_drvdata(rdev);
 
-	if (pdata->pwrctrl_dvs) {
+	if (pdata->req_pwrctrl_dvs) {
 		pdata->sdev[rdev->desc->id].rdev = rdev;
 		pdata->sdev[rdev->desc->id].enable = 0;
 	} else {
@@ -221,7 +221,7 @@ static int rk801_set_enable(struct regulator_dev *rdev)
 	if (ret)
 		return ret;
 
-	if (pdata->pwrctrl_dvs)
+	if (pdata->req_pwrctrl_dvs)
 		return regmap_update_bits(rdev->regmap, RK801_POWER_SLP_EN_REG,
 					  BIT(rdev->desc->id), BIT(rdev->desc->id));
 
@@ -237,7 +237,7 @@ static int rk801_set_disable(struct regulator_dev *rdev)
 	if (ret)
 		return ret;
 
-	if (pdata->pwrctrl_dvs)
+	if (pdata->req_pwrctrl_dvs)
 		return regmap_update_bits(rdev->regmap, RK801_POWER_SLP_EN_REG,
 					  BIT(rdev->desc->id), 0);
 
@@ -260,7 +260,7 @@ static int rk801_set_voltage_sel(struct regulator_dev *rdev, unsigned sel)
 	unsigned int reg;
 	int ret, gpio_level;
 
-	if (pdata->pwrctrl_dvs) {
+	if (pdata->req_pwrctrl_dvs) {
 		gpio_level = gpiod_get_value(gpio);
 		reg = (gpio_level == 1) ? reg0 : reg1;
 
@@ -427,7 +427,7 @@ static int rk801_regulator_dt_parse_pdata(struct device *dev,
 	if (!np)
 		return -ENXIO;
 
-	if (pdata->pwrctrl_dvs) {
+	if (pdata->req_pwrctrl_dvs) {
 		pdata->pwrctrl_gpio = devm_gpiod_get_optional(client_dev,
 						"pwrctrl", GPIOD_OUT_LOW);
 		if (IS_ERR(pdata->pwrctrl_gpio)) {
@@ -558,7 +558,7 @@ static int rk801_regulator_suspend_late(struct device *dev)
 	struct gpio_desc *gpio = pdata->pwrctrl_gpio;
 	int i, ret;
 
-	if (!pdata->pwrctrl_dvs)
+	if (!pdata->req_pwrctrl_dvs)
 		return 0;
 
 	/* set pwrctrl pin low */
@@ -581,7 +581,7 @@ static int rk801_regulator_resume_early(struct device *dev)
 {
 	struct rk801_regulator_data *pdata = dev_get_drvdata(dev);
 
-	if (!pdata->pwrctrl_dvs)
+	if (!pdata->req_pwrctrl_dvs)
 		return 0;
 
 	return rk801_regulator_init(dev);
@@ -604,8 +604,8 @@ static int rk801_regulator_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	pdata->pwrctrl_dvs = (id_lsb & 0x0f) < 4;
-	dev_info(&pdev->dev, "pwrctrl dvs: %d\n", pdata->pwrctrl_dvs);
+	pdata->req_pwrctrl_dvs = (id_lsb & 0x0f) < 4;
+	dev_info(&pdev->dev, "req pwrctrl dvs: %d\n", pdata->req_pwrctrl_dvs);
 
 	ret = rk801_regulator_dt_parse_pdata(&pdev->dev, &client->dev,
 					     rk808->regmap, pdata);
