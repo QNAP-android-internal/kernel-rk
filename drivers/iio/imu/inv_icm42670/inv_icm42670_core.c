@@ -988,6 +988,22 @@ static int icm42670_chip_init(struct icm42670_data *data, icm42670_bus_setup bus
 		return ret;
 	}
 
+	ret = regmap_update_bits(data->regmap, REG_GYRO_CONFIG1,
+					GYRO_CONFIG1_GYRO_UI_FILT_BW_MASK,
+					BIT_GYR_UI_FLT_BW_BYPASS);
+	if (ret < 0) {
+		dev_err(dev, "icm42670 set gyro ln bw failed!\r\n");
+		return ret;
+	}
+
+	ret = regmap_update_bits(data->regmap, REG_ACCEL_CONFIG1,
+					ACCEL_CONFIG1_ACCEL_UI_FILT_BW_MASK,
+					BIT_ACC_FILT_BW_IND_BYPASS);
+	if (ret < 0) {
+		dev_err(dev, "icm42670 set accel ln bw failed!\r\n");
+		return ret;
+	}
+
 	ret = regmap_write(data->regmap, REG_INT_CONFIG_REG, data->irq_mask);
 	if (ret < 0)
 		return ret;
@@ -1054,6 +1070,11 @@ int icm42670_core_probe(struct regmap *regmap,
 			irq_type);
 		return -EINVAL;
 	}
+
+	if (device_property_read_bool(dev, "drive-open-drain"))
+		data->irq_mask |= BIT_ONLY_INT1_OPEN_DRAIN;
+	else
+		data->irq_mask |= BIT_ONLY_INT1_PUSH_PULL;
 
 	data->vdd_supply = devm_regulator_get(dev, "vcc_3v3_s0");
 	if (IS_ERR(data->vdd_supply)) {
