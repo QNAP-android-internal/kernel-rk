@@ -3200,6 +3200,46 @@ static void dw_hdmi_rockchip_get_mode_color_caps(struct drm_connector *connector
 					 hdmi->mode_color_caps, &connector->base, property);
 }
 
+static void dw_hdmi_rockchip_crtc_post_enable(void *data, struct drm_crtc *crtc)
+{
+	struct rockchip_hdmi *hdmi = (struct rockchip_hdmi *)data;
+	int output_if;
+
+	switch (hdmi->id) {
+	case 0:
+		output_if = VOP_OUTPUT_IF_HDMI0;
+		break;
+	case 1:
+		output_if = VOP_OUTPUT_IF_HDMI1;
+		break;
+	default:
+		dev_err(hdmi->dev, "invalid id:%d\n", hdmi->id);
+		return;
+	}
+
+	rockchip_drm_crtc_output_post_enable(crtc, output_if);
+}
+
+static void dw_hdmi_rockchip_crtc_pre_disable(void *data, struct drm_crtc *crtc)
+{
+	struct rockchip_hdmi *hdmi = (struct rockchip_hdmi *)data;
+	int output_if;
+
+	switch (hdmi->id) {
+	case 0:
+		output_if = VOP_OUTPUT_IF_HDMI0;
+		break;
+	case 1:
+		output_if = VOP_OUTPUT_IF_HDMI1;
+		break;
+	default:
+		dev_err(hdmi->dev, "invalid id:%d\n", hdmi->id);
+		return;
+	}
+
+	rockchip_drm_crtc_output_pre_disable(crtc, output_if);
+}
+
 static const struct drm_prop_enum_list color_depth_enum_list[] = {
 	{ 0, "Automatic" }, /* Prefer highest color depth */
 	{ 8, "24bit" },
@@ -4433,6 +4473,10 @@ static int dw_hdmi_rockchip_bind(struct device *dev, struct device *master,
 		dw_hdmi_rockchip_force_frl_rate;
 	plat_data->get_mode_color_caps =
 		dw_hdmi_rockchip_get_mode_color_caps;
+	plat_data->crtc_pre_disable =
+		dw_hdmi_rockchip_crtc_pre_disable;
+	plat_data->crtc_post_enable =
+		dw_hdmi_rockchip_crtc_post_enable;
 	plat_data->property_ops = &dw_hdmi_rockchip_property_ops;
 
 	secondary = rockchip_hdmi_find_by_id(dev->driver, !hdmi->id);

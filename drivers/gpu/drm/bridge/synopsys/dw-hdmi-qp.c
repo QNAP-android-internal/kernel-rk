@@ -3496,6 +3496,8 @@ static void dw_hdmi_qp_bridge_atomic_disable(struct drm_bridge *bridge,
 
 	extcon_set_state_sync(hdmi->extcon, EXTCON_DISP_HDMI, false);
 	handle_plugged_change(hdmi, false);
+	if (hdmi->plat_data->crtc_pre_disable)
+		hdmi->plat_data->crtc_pre_disable(data, bridge->encoder->crtc);
 	mutex_lock(&hdmi->mutex);
 
 	if (hdmi->dclk_en) {
@@ -3569,6 +3571,9 @@ static void dw_hdmi_qp_bridge_atomic_enable(struct drm_bridge *bridge,
 
 	if (link_cfg && link_cfg->frl_mode)
 		queue_work(hdmi->workqueue, &hdmi->flt_work);
+
+	if (hdmi->plat_data->crtc_post_enable)
+		hdmi->plat_data->crtc_post_enable(data, bridge->encoder->crtc);
 
 	dw_hdmi_qp_init_audio_infoframe(hdmi);
 	dw_hdmi_qp_audio_enable(hdmi);

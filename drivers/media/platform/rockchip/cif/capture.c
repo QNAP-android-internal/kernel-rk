@@ -6494,6 +6494,7 @@ void rkcif_do_stop_stream(struct rkcif_stream *stream,
 
 			kfifo_free(&stream->dcg_kfifo);
 		}
+		stream->crop_mask = 0;
 	}
 	if (mode == RKCIF_STREAM_MODE_CAPTURE) {
 		tasklet_disable(&stream->vb_done_tasklet);
@@ -11135,6 +11136,10 @@ static void rkcif_line_wake_up_rdbk(struct rkcif_stream *stream, int mipi_id)
 			stream->cur_stream_mode |= RKCIF_STREAM_MODE_TOISP;
 			stream->cifdev->wait_line = 0;
 			stream->is_line_wake_up = false;
+			v4l2_dbg(3, rkcif_debug, &stream->cifdev->v4l2_dev,
+				 "stream[%d] frame_idx %d, last_rx_buf_idx %d cur dma buf %x,  change to online\n",
+				 stream->id, stream->frame_idx, stream->last_rx_buf_idx,
+				 (u32)active_buf->dummy.dma_addr);
 			if (stream->cifdev->hdr.hdr_mode == NO_HDR ||
 			    (priv->hdr_cfg.hdr_mode == HDR_X2 && stream->id == 1) ||
 			    (priv->hdr_cfg.hdr_mode == HDR_X3 && stream->id == 2)) {
@@ -13070,7 +13075,7 @@ static void rkcif_toisp_check_stop_status(struct sditf_priv *priv,
 			      (priv->hdr_cfg.hdr_mode == HDR_X3 && stream->id == 2)))
 				sditf_disable_immediately(priv);
 			cur_time = rkcif_time_get_ns(stream->cifdev);
-			stream->readout.readout_time = cur_time - stream->readout.fs_timestamp;
+			stream->readout.total_time = cur_time - stream->readout.fs_timestamp;
 			stream->readout.fs_timestamp = cur_time;
 			stream->buf_wake_up_cnt++;
 			if (stream->frame_idx % 2)
@@ -13498,8 +13503,6 @@ static void rkcif_sensor_quick_streaming_cb(void *data)
 	v4l2_subdev_call(subdevs, core, ioctl,
 			 RKMODULE_SET_QUICK_STREAM, &on);
 }
-
-extern void rkcif_set_sensor_streamon_in_sync_mode(struct rkcif_device *cif_dev);
 
 static int rkcif_terminal_sensor_set_stream(struct rkcif_device *cif_dev, int on)
 {
@@ -14466,7 +14469,10 @@ void rkcif_irq_pingpong_v1(struct rkcif_device *cif_dev)
 					} else {
 						spin_lock_irqsave(&stream->fps_lock, flags);
 						stream->readout.fs_timestamp = rkcif_time_get_ns(cif_dev);
-						stream->frame_idx++;
+						if (cif_dev->hdr.hdr_mode == HDR_X2 || cif_dev->hdr.hdr_mode == HDR_X3)
+							stream->frame_idx = cif_dev->stream[0].frame_idx;
+						else
+							stream->frame_idx++;
 						if (cif_dev->channels[0].capture_info.mode == RKMODULE_MULTI_CH_TO_MULTI_ISP &&
 						    cif_dev->sditf[stream->id])
 							sditf_event_inc_sof(cif_dev->sditf[stream->id]);

@@ -1070,6 +1070,7 @@ static DRM_ENUM_NAME_FN(drm_get_bus_format_name, drm_bus_format_enum_list)
 
 static inline void vop2_cfg_done(struct drm_crtc *crtc);
 static void vop2_wait_for_fs_by_done_bit_status(struct vop2_video_port *vp);
+static int vop2_clk_reset(struct reset_control *rstc);
 
 static inline struct vop2_video_port *to_vop2_video_port(struct drm_crtc *crtc)
 {
@@ -1266,6 +1267,9 @@ static void vop2_crtc_output_post_enable(struct drm_crtc *crtc, int intf)
 		vop2_cfg_done(crtc);
 		vop2_wait_for_fs_by_done_bit_status(vp);
 	}
+
+	if (!vp->loader_protect)
+		vop2_clk_reset(vp->dclk_rst);
 
 	drm_info(vop2, "vop enable intf:%x\n", intf);
 }
@@ -10303,8 +10307,6 @@ static void vop2_crtc_atomic_enable(struct drm_crtc *crtc, struct drm_atomic_sta
 		vop3_mcu_mode_setup(crtc);
 	}
 
-	if (!vp->loader_protect)
-		vop2_clk_reset(vp->dclk_rst);
 	if (vcstate->dsc_enable)
 		rk3588_vop2_dsc_cfg_done(crtc);
 	drm_crtc_vblank_on(crtc);
