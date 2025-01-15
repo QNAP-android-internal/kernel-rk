@@ -15454,19 +15454,36 @@ static int vop2_bind(struct device *dev, struct device *master, void *data)
 		INIT_WORK(&vop2->post_buf_empty_work, post_buf_empty_work_event);
 	}
 
-	if (vop2->merge_irq == false)
-		ret = devm_request_irq(dev, vop2->irq, vop3_sys_isr, IRQF_SHARED, dev_name(dev), vop2);
-	else
-		ret = devm_request_irq(dev, vop2->irq, vop2_isr, IRQF_SHARED, dev_name(dev), vop2);
-	if (ret)
-		return ret;
-
 	vop2_dovi_data_init(vop2);
 	vop2_dsc_data_init(vop2);
 
 	registered_num_crtcs = vop2_create_crtc(vop2, enabled_vp_mask);
 	if (registered_num_crtcs <= 0)
 		return -ENODEV;
+
+	ret = vop2_gamma_init(vop2);
+	if (ret)
+		return ret;
+	vop2_clk_init(vop2);
+	vop2_cubic_lut_init(vop2);
+	vop2_wb_connector_init(vop2, registered_num_crtcs);
+	rockchip_drm_dma_init_device(drm_dev, vop2->dev);
+	pm_runtime_enable(&pdev->dev);
+	rockchip_vop2_devfreq_init(vop2);
+
+	/**
+	 * At MOS environment, the irq handle may be triggered immediately
+	 * after request irq, the irq handle maybe access vop2 memory, e.g.,
+	 * vop3_vp_isr() -> vop2_wb_handler() access vop2->wb->regs,
+	 * so move devm_request_irq() to the end of this function to make sure
+	 * vop2 is initialized.
+	 */
+	if (vop2->merge_irq == false)
+		ret = devm_request_irq(dev, vop2->irq, vop3_sys_isr, IRQF_SHARED, dev_name(dev), vop2);
+	else
+		ret = devm_request_irq(dev, vop2->irq, vop2_isr, IRQF_SHARED, dev_name(dev), vop2);
+	if (ret)
+		return ret;
 
 	if (vop2->merge_irq == false) {
 		struct drm_crtc *crtc;
@@ -15490,16 +15507,6 @@ static int vop2_bind(struct device *dev, struct device *master, void *data)
 			}
 		}
 	}
-
-	ret = vop2_gamma_init(vop2);
-	if (ret)
-		return ret;
-	vop2_clk_init(vop2);
-	vop2_cubic_lut_init(vop2);
-	vop2_wb_connector_init(vop2, registered_num_crtcs);
-	rockchip_drm_dma_init_device(drm_dev, vop2->dev);
-	pm_runtime_enable(&pdev->dev);
-	rockchip_vop2_devfreq_init(vop2);
 
 	return 0;
 }

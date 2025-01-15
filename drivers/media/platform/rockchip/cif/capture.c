@@ -2695,8 +2695,6 @@ static void rkcif_assign_new_buffer_init(struct rkcif_stream *stream,
 					 __func__, __LINE__, stream->id, stream->next_buf->vb.vb2_buf.index);
 				list_del(&stream->next_buf->queue);
 				atomic_inc(&buf_stream->sub_stream_buf_cnt);
-			} else if (stream->curr_buf) {
-				stream->next_buf = stream->curr_buf;
 			}
 		}
 
@@ -2718,6 +2716,8 @@ static void rkcif_assign_new_buffer_init(struct rkcif_stream *stream,
 
 		} else if (!stream->next_buf && stream->curr_buf) {
 			stream->next_buf = stream->curr_buf;
+			if (stream->lack_buf_cnt < 2)
+				stream->lack_buf_cnt++;
 		}
 		if (stream->next_buf) {
 			buff_addr_y = stream->next_buf->buff_addr[RKCIF_PLANE_Y];
@@ -5162,6 +5162,8 @@ static void rkcif_check_buffer_update_pingpong(struct rkcif_stream *stream,
 	    stream->curr_buf == NULL ||
 	    stream->next_buf == NULL) {
 		frame_phase = stream->frame_phase_cache;
+		if (dev->irq_stats.frm_end_cnt[stream->id] == 0)
+			frame_phase = CIF_CSI_FRAME1_READY;
 		if (!stream->is_line_wake_up ||
 		    (stream->is_line_wake_up && stream->frame_idx < 2)) {
 			if (mbus_cfg->type == V4L2_MBUS_CSI2_DPHY ||
