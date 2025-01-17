@@ -73,7 +73,7 @@
 /*
  * regs for pwm v4
  */
-#define HIWORD_UPDATE(v, l, h)	(((v) << (l)) | (GENMASK(h, l) << 16))
+#define HIWORD_UPDATE(v, l, h)	((((v) << (l)) & GENMASK((h), (l))) | (GENMASK(h, l) << 16))
 
 /* VERSION_ID */
 #define VERSION_ID			0x0
@@ -1621,8 +1621,6 @@ static int rockchip_pwm_set_wave_v4(struct pwm_chip *chip, struct pwm_device *pw
 	writel_relaxed(middle, pc->base + WAVE_MIDDLE);
 
 	writel_relaxed(rpt, pc->base + RPT);
-	writel_relaxed(WAVE_MAX_INT_EN(config->enable) | WAVE_MIDDLE_INT_EN(config->enable),
-		       pc->base + INT_EN);
 
 	pc->wave_en = config->enable;
 
@@ -1652,7 +1650,7 @@ int rockchip_pwm_set_wave(struct pwm_device *pwm, struct rockchip_pwm_wave_confi
 		return -EINVAL;
 	}
 
-	pc->scaler = DIV_ROUND_CLOSEST_ULL(pc->clk_rate, config->clk_rate * 2);
+	pc->scaler = DIV_ROUND_CLOSEST_ULL(pc->clk_rate, config->clk_rate) / 2;
 	if (pc->scaler > 256) {
 		dev_err(chip->dev, "Unsupported scale factor %d(max: 512) for PWM%d\n",
 			pc->scaler * 2, pc->channel_id);
