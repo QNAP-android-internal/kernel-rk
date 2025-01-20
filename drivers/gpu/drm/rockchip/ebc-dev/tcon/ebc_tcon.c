@@ -447,7 +447,7 @@ static void rk3576_tcon_dsp_mode_set(struct ebc_tcon *tcon, int update_mode,
 	int ret;
 
 	if (panel && display_mode != tcon->display_mode) {
-		if (display_mode == DIRECT_MODE)
+		if (display_mode == DIRECT_MODE && panel->panel_16bit)
 			ret = clk_set_rate(tcon->dclk, panel->sdck);
 		else
 			ret = clk_set_rate(tcon->dclk,
@@ -456,7 +456,7 @@ static void rk3576_tcon_dsp_mode_set(struct ebc_tcon *tcon, int update_mode,
 			dev_err(tcon->dev, "Failed to set dclk:%d\n", ret);
 	}
 
-	if (display_mode == DIRECT_MODE)
+	if (display_mode == DIRECT_MODE && panel && panel->panel_16bit)
 		val = RK3576_DSP_SDCLK_DIV(0);
 	else
 		val = RK3576_DSP_SDCLK_DIV((panel && panel->panel_16bit) ? 7 : 3);
