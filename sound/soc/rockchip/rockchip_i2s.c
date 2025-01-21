@@ -3,7 +3,7 @@
  *
  * ALSA SoC Audio Layer - Rockchip I2S Controller driver
  *
- * Copyright (c) 2014 Rockchip Electronics Co. Ltd.
+ * Copyright (c) 2014 Rockchip Electronics Co., Ltd.
  * Author: Jianqun <jay.xu@rock-chips.com>
  */
 

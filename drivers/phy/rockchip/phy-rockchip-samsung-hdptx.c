@@ -2,7 +2,7 @@
 /*
  * Rockchip HDMI/DP Combo PHY with Samsung IP block
  *
- * Copyright (c) 2021 Rockchip Electronics Co. Ltd.
+ * Copyright (c) 2021 Rockchip Electronics Co., Ltd.
  */
 
 #include <linux/bitfield.h>
