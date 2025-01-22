@@ -2,7 +2,7 @@
 /*
  * Rockchip SPI Slave Controller Driver
  *
- * Copyright (c) 2023, Rockchip Inc.
+ * Copyright (c) 2023, Rockchip Electronics Co., Ltd.
  * Author: Jon Lin <Jon.lin@rock-chips.com>
  */
 
