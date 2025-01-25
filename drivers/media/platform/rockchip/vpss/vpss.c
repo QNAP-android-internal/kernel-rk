@@ -329,6 +329,9 @@ static long rkvpss_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
 	case RKISP_VPSS_RESET_NOTIFY_VPSS:
 		rkvpss_reset_handle(vpss_dev);
 		break;
+	case RKISP_VPSS_CMD_FRAME_INFO:
+		memcpy(&vpss_dev->frame_info, arg, sizeof(struct rkisp_vpss_frame_info));
+		break;
 	default:
 		ret = -ENOIOCTLCMD;
 	}

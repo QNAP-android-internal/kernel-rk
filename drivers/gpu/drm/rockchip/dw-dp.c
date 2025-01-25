@@ -2924,20 +2924,25 @@ static void dw_dp_encoder_enable(struct drm_encoder *encoder)
 
 }
 
-static void dw_dp_encoder_disable(struct drm_encoder *encoder)
+static void dw_dp_encoder_atomic_disable(struct drm_encoder *encoder,
+					 struct drm_atomic_state *state)
 {
 	struct dw_dp *dp = encoder_to_dp(encoder);
-	struct drm_crtc *crtc = encoder->crtc;
-	struct rockchip_crtc_state *s = to_rockchip_crtc_state(crtc->state);
+	struct drm_crtc *old_crtc, *new_crtc;
+	struct rockchip_crtc_state *s;
 
-	if (!crtc->state->active_changed)
-		return;
+	old_crtc = rockchip_drm_encoder_get_old_crtc(encoder, state);
+	new_crtc = rockchip_drm_encoder_get_new_crtc(encoder, state);
 
-	if (dp->split_mode)
-		s->output_if &= ~(VOP_OUTPUT_IF_DP0 | VOP_OUTPUT_IF_DP1);
-	else
-		s->output_if &= ~(dp->id ? VOP_OUTPUT_IF_DP1 : VOP_OUTPUT_IF_DP0);
-	s->output_if_left_panel &= ~(dp->id ? VOP_OUTPUT_IF_DP1 : VOP_OUTPUT_IF_DP0);
+	if (old_crtc && old_crtc != new_crtc) {
+		s = to_rockchip_crtc_state(old_crtc->state);
+
+		if (dp->split_mode)
+			s->output_if &= ~(VOP_OUTPUT_IF_DP0 | VOP_OUTPUT_IF_DP1);
+		else
+			s->output_if &= ~(dp->id ? VOP_OUTPUT_IF_DP1 : VOP_OUTPUT_IF_DP0);
+		s->output_if_left_panel &= ~(dp->id ? VOP_OUTPUT_IF_DP1 : VOP_OUTPUT_IF_DP0);
+	}
 }
 
 static void dw_dp_mode_fixup(struct dw_dp *dp, struct drm_display_mode *adjusted_mode)
@@ -3070,7 +3075,7 @@ static enum drm_mode_status dw_dp_encoder_mode_valid(struct drm_encoder *encoder
 
 static const struct drm_encoder_helper_funcs dw_dp_encoder_helper_funcs = {
 	.enable			= dw_dp_encoder_enable,
-	.disable		= dw_dp_encoder_disable,
+	.atomic_disable		= dw_dp_encoder_atomic_disable,
 	.atomic_check		= dw_dp_encoder_atomic_check,
 	.mode_valid		= dw_dp_encoder_mode_valid,
 };

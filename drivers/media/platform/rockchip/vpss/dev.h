@@ -82,6 +82,7 @@ struct rkvpss_device {
 	bool is_suspend;
 	bool is_idle;
 	struct completion pm_suspend_wait_fe;
+	struct rkisp_vpss_frame_info frame_info;
 };
 
 void rkvpss_pipeline_default_fmt(struct rkvpss_device *dev);

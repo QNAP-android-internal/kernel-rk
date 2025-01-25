@@ -2462,7 +2462,7 @@ static void cm_adapter_disattach(struct charger_manager *cm)
 #if defined(CONFIG_ROCKCHIP_CHARGER_MANAGER_CHARGE_PUMP)
 	cm_charge_limit_update(cm);
 #endif
-	if (!cm->desc->dc_charger_status) {
+	if (!cm->desc->dc_charger_status || !cm->desc->support_dc_charger) {
 		set_sw_charger_input_limit_current(cm, USB_SDP_INPUT_CURRENT);
 		set_sw_charger_disable(cm);
 		set_sw_charger_voltage(cm, cm->fc_config->vbat_lmt);
@@ -2499,7 +2499,6 @@ static int charger_extcon_notifier(struct notifier_block *self,
 	struct charger_manager *cm =
 		container_of(self, struct charger_manager, nb);
 	struct charger_desc *desc = cm->desc;
-	struct fastcharge_config *fc_config;
 	union power_supply_propval val;
 	int tcpm_wait = 0;
 	int ret;
@@ -2509,7 +2508,6 @@ static int charger_extcon_notifier(struct notifier_block *self,
 	 * If cable is attached, cable->attached is true.
 	 */
 	cm->attached = event;
-	fc_config = cm->fc_config;
 
 	CM_DBG("%s, %d\n", __func__, cm->attached);
 	if (event) {
@@ -2587,7 +2585,8 @@ static void cm_disable_charge(struct charger_manager *cm)
 	cancel_delayed_work_sync(&cm->cm_monitor_work);
 #endif
 	cancel_delayed_work_sync(&cm->cm_jeita_work);
-	cancel_delayed_work_sync(&cm->dc_work);
+	if (cm->desc->support_dc_charger)
+		cancel_delayed_work_sync(&cm->dc_work);
 	cm_adapter_disattach(cm);
 }
 
@@ -2595,7 +2594,8 @@ static void cm_enable_charge(struct charger_manager *cm)
 {
 	set_sw_charger_enable(cm);
 	charger_extcon_notifier(&cm->nb, 1, NULL);
-	queue_delayed_work(cm->cm_wq, &cm->dc_work,  msecs_to_jiffies(500));
+	if (cm->desc->support_dc_charger)
+		queue_delayed_work(cm->cm_wq, &cm->dc_work, msecs_to_jiffies(500));
 }
 
 static ssize_t chg_en_show(struct device *dev,
@@ -2985,8 +2985,9 @@ static int charger_manager_probe(struct platform_device *pdev)
 #endif
 	INIT_DELAYED_WORK(&cm->cm_jeita_work,
 			  cm_jeita_poller);
-	INIT_DELAYED_WORK(&cm->dc_work,
-			  cm_dc_det_work);
+	if (cm->desc->support_dc_charger)
+		INIT_DELAYED_WORK(&cm->dc_work,
+				  cm_dc_det_work);
 
 	/* Register extcon device for charger cable */
 	ret = charger_extcon_init(cm);
@@ -3038,7 +3039,8 @@ static int charger_manager_remove(struct platform_device *pdev)
 	cancel_delayed_work_sync(&cm->cm_monitor_work);
 #endif
 	cancel_delayed_work_sync(&cm->cm_jeita_work);
-	cancel_delayed_work_sync(&cm->dc_work);
+	if (cm->desc->support_dc_charger)
+		cancel_delayed_work_sync(&cm->dc_work);
 
 	return 0;
 }
@@ -3053,7 +3055,8 @@ static void charger_manager_shutdown(struct platform_device *pdev)
 	cancel_delayed_work_sync(&cm->cm_monitor_work);
 #endif
 	cancel_delayed_work_sync(&cm->cm_jeita_work);
-	cancel_delayed_work_sync(&cm->dc_work);
+	if (cm->desc->support_dc_charger)
+		cancel_delayed_work_sync(&cm->dc_work);
 
 	CM_DBG("charger manager shutdown\n");
 #if defined(CONFIG_ROCKCHIP_CHARGER_MANAGER_CHARGE_PUMP)

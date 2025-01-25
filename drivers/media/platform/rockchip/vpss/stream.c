@@ -917,6 +917,31 @@ static void rkvpss_stream_buf_done(struct rkvpss_stream *stream,
 	tasklet_schedule(&stream->buf_done_tasklet);
 }
 
+static void rkvpss_fill_frame_info(struct rkvpss_frame_info *dst_info,
+				   struct rkisp_vpss_frame_info *src_info)
+{
+	dst_info->timestamp = src_info->timestamp;
+
+	dst_info->seq = src_info->seq;
+	dst_info->hdr = src_info->hdr;
+	dst_info->rolling_shutter_skew = src_info->rolling_shutter_skew;
+
+	dst_info->sensor_exposure_time = src_info->sensor_exposure_time;
+	dst_info->sensor_analog_gain = src_info->sensor_analog_gain;
+	dst_info->sensor_digital_gain = src_info->sensor_digital_gain;
+	dst_info->isp_digital_gain = src_info->isp_digital_gain;
+
+	dst_info->sensor_exposure_time_m = src_info->sensor_exposure_time_m;
+	dst_info->sensor_analog_gain_m = src_info->sensor_analog_gain_m;
+	dst_info->sensor_digital_gain_m = src_info->sensor_digital_gain_m;
+	dst_info->isp_digital_gain_m = src_info->isp_digital_gain_m;
+
+	dst_info->sensor_exposure_time_l = src_info->sensor_exposure_time_l;
+	dst_info->sensor_analog_gain_l = src_info->sensor_analog_gain_l;
+	dst_info->sensor_digital_gain_l = src_info->sensor_digital_gain_l;
+	dst_info->isp_digital_gain_l = src_info->isp_digital_gain_l;
+}
+
 static void rkvpss_frame_end(struct rkvpss_stream *stream)
 {
 	struct rkvpss_device *dev = stream->dev;
@@ -939,8 +964,18 @@ static void rkvpss_frame_end(struct rkvpss_stream *stream)
 		u64 ns = sdev->frame_timestamp;
 		int i;
 
-		for (i = 0; i < fmt->mplanes; i++)
-			vb2_set_plane_payload(vb2_buf, i, stream->out_fmt.plane_fmt[i].sizeimage);
+		for (i = 0; i < fmt->mplanes; i++) {
+			u32 payload_size = stream->out_fmt.plane_fmt[i].sizeimage;
+
+			vb2_set_plane_payload(vb2_buf, i, payload_size);
+
+			if (stream->is_attach_info && i == fmt->mplanes - 1) {
+				struct rkvpss_frame_info *dst_info = buf->vaddr[i] + payload_size;
+				struct rkisp_vpss_frame_info *src_info = &dev->frame_info;
+
+				rkvpss_fill_frame_info(dst_info, src_info);
+			}
+		}
 		if (!ns)
 			ns = ktime_get_ns();
 		buf->vb.vb2_buf.timestamp = ns;
@@ -982,6 +1017,9 @@ static int rkvpss_queue_setup(struct vb2_queue *queue,
 
 		plane_fmt = &pixm->plane_fmt[i];
 		sizes[i] = plane_fmt->sizeimage / pixm->height * ALIGN(pixm->height, 16);
+
+		if (stream->is_attach_info && i == cap_fmt->mplanes - 1)
+			sizes[i] += sizeof(struct rkvpss_frame_info);
 	}
 
 	v4l2_dbg(1, rkvpss_debug, &dev->v4l2_dev,
@@ -1009,6 +1047,8 @@ static void rkvpss_buf_queue(struct vb2_buffer *vb)
 	for (i = 0; i < cap_fmt->mplanes; i++) {
 		sgt = vb2_dma_sg_plane_desc(vb, i);
 		vpssbuf->dma[i] = sg_dma_address(sgt->sgl);
+
+		vpssbuf->vaddr[i] = vb2_plane_vaddr(vb, i);
 	}
 	/*
 	 * NOTE: plane_fmt[0].sizeimage is total size of all planes for single
@@ -1041,19 +1081,31 @@ static void destroy_buf_queue(struct rkvpss_stream *stream,
 {
 	unsigned long lock_flags = 0;
 	struct rkvpss_buffer *buf;
+	LIST_HEAD(queue_local_list);
+	LIST_HEAD(done_local_list);
 
 	spin_lock_irqsave(&stream->vbq_lock, lock_flags);
 	if (stream->curr_buf) {
 		list_add_tail(&stream->curr_buf->queue, &stream->buf_queue);
 		stream->curr_buf = NULL;
 	}
-	while (!list_empty(&stream->buf_queue)) {
-		buf = list_first_entry(&stream->buf_queue, struct rkvpss_buffer, queue);
+	list_replace_init(&stream->buf_queue, &queue_local_list);
+	list_replace_init(&stream->buf_done_list, &done_local_list);
+	spin_unlock_irqrestore(&stream->vbq_lock, lock_flags);
+
+	while (!list_empty(&queue_local_list)) {
+		buf = list_first_entry(&queue_local_list, struct rkvpss_buffer, queue);
 		list_del(&buf->queue);
 		buf->vb.vb2_buf.synced = false;
 		vb2_buffer_done(&buf->vb.vb2_buf, state);
 	}
-	spin_unlock_irqrestore(&stream->vbq_lock, lock_flags);
+
+	while (!list_empty(&done_local_list)) {
+		buf = list_first_entry(&done_local_list, struct rkvpss_buffer, queue);
+		list_del(&buf->queue);
+		buf->vb.vb2_buf.synced = false;
+		vb2_buffer_done(&buf->vb.vb2_buf, state);
+	}
 }
 
 static int rkvpss_stream_crop(struct rkvpss_stream *stream, bool on, bool sync)
@@ -2486,6 +2538,9 @@ static long rkvpss_ioctl_default(struct file *file, void *fh,
 		break;
 	case RKVPSS_CMD_SET_CMSC:
 		ret = rkvpss_set_cmsc(stream, arg);
+		break;
+	case RKVPSS_CMD_STREAM_ATTACH_INFO:
+		stream->is_attach_info = *(int *)arg;
 		break;
 	default:
 		ret = -EINVAL;
