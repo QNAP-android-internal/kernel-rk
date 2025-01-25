@@ -614,7 +614,7 @@ struct uvc_format_framebased {
 	__u8  bVariableSize;
 } __attribute__((__packed__));
 
-#define UVC_DT_FORMAT_FRAMEBASED_SIZE			28
+#define UVC_DT_FORMAT_FRAMEBASED_SIZE                  28
 
 /* Frame Based Payload - 3.1.2. Frame Based Video Frame Descriptor */
 struct uvc_frame_framebased {
@@ -638,21 +638,21 @@ struct uvc_frame_framebased {
 #define UVC_FRAME_FRAMEBASED(n) \
 	uvc_frame_framebased_##n
 
-#define DECLARE_UVC_FRAME_FRAMEBASED(n)		\
-struct UVC_FRAME_FRAMEBASED(n) {		\
-	__u8  bLength;				\
-	__u8  bDescriptorType;			\
-	__u8  bDescriptorSubType;		\
-	__u8  bFrameIndex;			\
-	__u8  bmCapabilities;			\
-	__u16 wWidth;				\
-	__u16 wHeight;				\
-	__u32 dwMinBitRate;			\
-	__u32 dwMaxBitRate;			\
-	__u32 dwDefaultFrameInterval;		\
-	__u8  bFrameIntervalType;		\
-	__u32 dwBytesPerLine;			\
-	__u32 dwFrameInterval[n];		\
+#define DECLARE_UVC_FRAME_FRAMEBASED(n)			\
+struct UVC_FRAME_FRAMEBASED(n) {			\
+	__u8  bLength;					\
+	__u8  bDescriptorType;				\
+	__u8  bDescriptorSubType;                       \
+	__u8  bFrameIndex;                              \
+	__u8  bmCapabilities;                           \
+	__u16 wWidth;                                   \
+	__u16 wHeight;                                  \
+	__u32 dwMinBitRate;                             \
+	__u32 dwMaxBitRate;                             \
+	__u32 dwDefaultFrameInterval;                   \
+	__u8  bFrameIntervalType;                       \
+	__u32 dwBytesPerLine;                           \
+	__u32 dwFrameInterval[n];                       \
 } __attribute__ ((packed))
 
 #endif /* __LINUX_USB_VIDEO_H */

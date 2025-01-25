@@ -3765,6 +3765,9 @@ static int sd_resume_common(struct device *dev)
 	if (!sdkp)	/* E.g.: runtime resume at the start of sd_probe() */
 		return 0;
 
+	if (!sdkp->device->manage_start_stop)
+		return 0;
+
 	/* The wake-up process cannot allow the PM to enter sleep */
 	pm_stay_awake(dev);
 
