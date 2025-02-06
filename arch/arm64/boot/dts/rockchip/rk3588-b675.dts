@@ -678,6 +678,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&lvds_lcd_rst>;
 	backlight = <&backlight_lvds>;
+	no-panel-reinit;
 
 	panel-init-sequence = [
 		// TC358774/75XBG DSI Basic Parameters.  Following 10 setting should be pefromed in LP mode
