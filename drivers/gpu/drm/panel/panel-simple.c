@@ -68,6 +68,8 @@ struct panel_cmd_seq {
 	unsigned int cmd_cnt;
 };
 
+static bool panel_reinit_property = 0;
+
 /**
  * struct panel_desc - Describes a simple panel.
  */
@@ -579,8 +581,10 @@ static int panel_simple_unprepare(struct drm_panel *panel)
 		}
 	}
 
-	gpiod_direction_output(p->reset_gpio, 1);
-	gpiod_direction_output(p->enable_gpio, 0);
+	if (!panel_reinit_property) {
+		gpiod_direction_output(p->reset_gpio, 1);
+		gpiod_direction_output(p->enable_gpio, 0);
+	}
 
 	panel_simple_regulator_disable(p);
 
@@ -933,6 +937,8 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc)
 		if (!of_get_display_timing(dev->of_node, "panel-timing", &dt))
 			panel_simple_parse_panel_timing_node(dev, panel, &dt);
 	}
+
+	panel_reinit_property = of_property_read_bool(dev->of_node, "no-panel-reinit");
 
 	connector_type = desc->connector_type;
 	/* Catch common mistakes for panels. */
