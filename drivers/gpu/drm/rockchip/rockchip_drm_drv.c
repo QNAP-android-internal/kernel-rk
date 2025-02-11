@@ -66,7 +66,7 @@
 	    (idx) += sizeof(struct displayid_block) + (block)->num_bytes, \
 	    (block) = (struct displayid_block *)&(displayid)[idx])
 
-#if IS_ENABLED(CONFIG_DRM_ROCKCHIP_VVOP)
+#if IS_ENABLED(CONFIG_DRM_ROCKCHIP_VKMS)
 static bool is_support_iommu = false;
 #else
 static bool is_support_iommu = true;
@@ -1178,6 +1178,50 @@ rockchip_drm_parse_colorimetry_data_block(u8 *colorimetry, const struct edid *ed
 	return 0;
 }
 EXPORT_SYMBOL(rockchip_drm_parse_colorimetry_data_block);
+
+#define HDR10_PLUS_OUI 0x90848b
+
+static bool cea_db_is_hdr10_plus_block(const u8 *db)
+{
+	unsigned int oui;
+
+	if (cea_db_tag(db) != CTA_DB_EXTENDED_TAG)
+		return false;
+
+	if (cea_db_payload_len(db) < 5)
+		return false;
+
+	oui = db[4] << 16 | db[3] << 8 | db[2];
+	return oui == HDR10_PLUS_OUI;
+}
+
+u8 rockchip_drm_parse_hdr10_plus_vsdb(const struct edid *edid)
+{
+	const u8 *edid_ext;
+	int i, start, end;
+	u8 hdr10_plus = 0;
+
+	if (!edid)
+		return 0;
+
+	edid_ext = find_cea_extension(edid);
+	if (!edid_ext)
+		return 0;
+
+	if (cea_db_offsets(edid_ext, &start, &end))
+		return 0;
+
+	for_each_cea_db(edid_ext, i, start, end) {
+		const u8 *db = &edid_ext[i];
+
+		if (cea_db_is_hdr10_plus_block(db))
+			/* As per CEA 861-G spec */
+			hdr10_plus = db[5];
+	}
+
+	return hdr10_plus;
+}
+EXPORT_SYMBOL(rockchip_drm_parse_hdr10_plus_vsdb);
 
 /*
  * Attach a (component) device to the shared drm dma mapping from master drm
@@ -2429,7 +2473,7 @@ static int rockchip_drm_platform_probe(struct platform_device *pdev)
 	int ret;
 
 	ret = rockchip_drm_platform_of_probe(dev);
-#if !IS_ENABLED(CONFIG_DRM_ROCKCHIP_VVOP)
+#if !IS_ENABLED(CONFIG_DRM_ROCKCHIP_VKMS)
 	if (ret)
 		return ret;
 #endif
@@ -2501,8 +2545,8 @@ static int __init rockchip_drm_init(void)
 		return -ENODEV;
 
 	num_rockchip_sub_drivers = 0;
-#if IS_ENABLED(CONFIG_DRM_ROCKCHIP_VVOP)
-	ADD_ROCKCHIP_SUB_DRIVER(vvop_platform_driver, CONFIG_DRM_ROCKCHIP_VVOP);
+#if IS_ENABLED(CONFIG_DRM_ROCKCHIP_VKMS)
+	ADD_ROCKCHIP_SUB_DRIVER(rockchip_vkms_platform_driver, CONFIG_DRM_ROCKCHIP_VKMS);
 #else
 	ADD_ROCKCHIP_SUB_DRIVER(vop_platform_driver, CONFIG_ROCKCHIP_VOP);
 	ADD_ROCKCHIP_SUB_DRIVER(vop2_platform_driver, CONFIG_ROCKCHIP_VOP2);

@@ -8305,6 +8305,7 @@ static int vop2_crtc_debugfs_init(struct drm_minor *minor, struct drm_crtc *crtc
 	rockchip_drm_add_dump_buffer(crtc, vop2->debugfs);
 	rockchip_drm_debugfs_add_color_bar(crtc, vop2->debugfs);
 	rockchip_drm_debugfs_add_regs_write(crtc, vop2->debugfs);
+	rockchip_drm_debugfs_add_dclk_rate(crtc, vop2->debugfs);
 #endif
 	for (i = 0; i < ARRAY_SIZE(vop2_debugfs_files); i++)
 		vop2->debugfs_files[i].data = vop2;
@@ -8627,6 +8628,31 @@ static void vop2_iommu_fault_handler(struct drm_crtc *crtc, struct iommu_domain 
 	rockchip_drm_send_error_event(private, ROCKCHIP_DRM_ERROR_EVENT_IOMMU_FAULT);
 }
 
+#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
+static unsigned long vop2_crtc_get_dclk_rate(struct drm_crtc *crtc)
+{
+	struct vop2_video_port *vp = to_vop2_video_port(crtc);
+	struct vop2 *vop2 = vp->vop2;
+	unsigned long rate, count;
+
+	/* not support */
+	if (!vp->regs->calc_dclk_cnt.mask)
+		return 0;
+
+	VOP_MODULE_SET(vop2, vp, calc_clk_en, 1);
+
+	usleep_range(500, 1000);
+	count = VOP_MODULE_GET(vop2, vp, calc_dclk_cnt);
+	rate = clk_get_rate(vop2->hclk);
+
+	/* calc_dclk_cnt is the count number when hclk counts to 5000 */
+	rate = rate / 5000 * count;
+
+	VOP_MODULE_SET(vop2, vp, calc_clk_en, 0);
+	return rate;
+}
+#endif
+
 static const struct rockchip_crtc_funcs private_crtc_funcs = {
 	.loader_protect = vop2_crtc_loader_protect,
 	.cancel_pending_vblank = vop2_crtc_cancel_pending_vblank,
@@ -8649,6 +8675,9 @@ static const struct rockchip_crtc_funcs private_crtc_funcs = {
 	.set_aclk = vop2_set_aclk_rate,
 	.get_crc = vop2_crtc_get_crc,
 	.iommu_fault_handler = vop2_iommu_fault_handler,
+#if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
+	.crtc_get_dclk_rate = vop2_crtc_get_dclk_rate,
+#endif
 };
 
 static bool vop2_crtc_mode_fixup(struct drm_crtc *crtc,
@@ -8702,7 +8731,7 @@ static bool vop2_crtc_mode_fixup(struct drm_crtc *crtc,
 	if (vop2->version == VOP_VERSION_RK3528 && vcstate->output_if & VOP_OUTPUT_IF_BT656)
 		adj_mode->crtc_clock *= 4;
 
-	if (vp->mcu_timing.mcu_pix_total)
+	if (vcstate->output_if & VOP_OUTPUT_IF_RGB)
 		adj_mode->crtc_clock *= rockchip_drm_get_cycles_per_pixel(vcstate->bus_format) *
 					(vp->mcu_timing.mcu_pix_total + 1);
 
@@ -9842,6 +9871,37 @@ static inline char *vop2_output_if_to_string(unsigned long inf)
 {
 	return vop2_bitmask_to_string(inf, vop2_output_if_name_list,
 				      ARRAY_SIZE(vop2_output_if_name_list));
+}
+
+/* vop2_layer_phy_id */
+static const char *const vop2_layer_name_list[] = {
+	"Cluster0",
+	"Cluster1",
+	"Esmart0",
+	"Esmart1",
+	"Smart0",
+	"Smart1",
+	"Cluster2",
+	"Cluster3",
+	"Esmart2",
+	"Esmart3",
+};
+
+static char *vop2_plane_mask_to_string(unsigned long mask)
+{
+	return vop2_bitmask_to_string(mask, vop2_layer_name_list,
+				      ARRAY_SIZE(vop2_layer_name_list));
+}
+
+static inline const char *vop2_plane_phys_id_to_string(unsigned long phys_id)
+{
+	if (phys_id == ROCKCHIP_VOP2_PHY_ID_INVALID)
+		return "INVALID";
+
+	if (WARN_ON(phys_id >= ARRAY_SIZE(vop2_layer_name_list)))
+		return NULL;
+
+	return vop2_layer_name_list[phys_id];
 }
 
 static bool vop2_is_left_right_or_odd_even_mode(struct rockchip_crtc_state *vcstate)
@@ -14526,7 +14586,12 @@ static int vop2_create_crtc(struct vop2 *vop2, uint8_t enabled_vp_mask)
 			drm_object_attach_property(&crtc->base,
 						   drm_dev->mode_config.tv_bottom_margin_property, 100);
 		}
-		if (plane_mask)
+		/*
+		 * For vop3, user can switch planes between different CRTCs based
+		 * on the &drm_plane.possible_crtcs in userspace, so the 'PLANE_MASK'
+		 * property is not required.
+		 */
+		if (plane_mask && !is_vop3(vop2))
 			vop2_crtc_create_plane_mask_property(vop2, crtc, plane_mask);
 		vop2_crtc_create_feature_property(vop2, crtc);
 		vop2_crtc_create_vrr_property(vop2, crtc);
@@ -14869,37 +14934,6 @@ static void post_buf_empty_work_event(struct work_struct *work)
 	}
 }
 
-/* vop2_layer_phy_id */
-static const char *const vop2_layer_name_list[] = {
-	"Cluster0",
-	"Cluster1",
-	"Esmart0",
-	"Esmart1",
-	"Smart0",
-	"Smart1",
-	"Cluster2",
-	"Cluster3",
-	"Esmart2",
-	"Esmart3",
-};
-
-static char *vop2_plane_mask_to_string(unsigned long mask)
-{
-	return vop2_bitmask_to_string(mask, vop2_layer_name_list,
-				      ARRAY_SIZE(vop2_layer_name_list));
-}
-
-static inline const char *vop2_plane_id_to_string(unsigned long phy)
-{
-	if (phy == ROCKCHIP_VOP2_PHY_ID_INVALID)
-		return "INVALID";
-
-	if (WARN_ON(phy >= ARRAY_SIZE(vop2_layer_name_list)))
-		return NULL;
-
-	return vop2_layer_name_list[phy];
-}
-
 static bool vop2_plane_mask_check(struct vop2 *vop2)
 {
 	const struct vop2_data *vop2_data = vop2->data;
@@ -14922,8 +14956,7 @@ static bool vop2_plane_mask_check(struct vop2 *vop2)
 		plane_mask |= vop2->vps[i].plane_mask;
 	}
 
-	if (hweight32(plane_mask) != vop2_data->nr_layers ||
-	    plane_mask != vop2_data->plane_mask_base) {
+	if (plane_mask != vop2_data->plane_mask_base) {
 		full_plane = vop2_plane_mask_to_string(vop2_data->plane_mask_base);
 		current_plane = vop2_plane_mask_to_string(plane_mask);
 		DRM_WARN("all windows should be assigned, full plane mask: %s[0x%x], current plane mask: %s[0x%x]\n",
@@ -15509,7 +15542,7 @@ static int vop2_bind(struct device *dev, struct device *master, void *data)
 			plane_mask_string = vop2_plane_mask_to_string(vop2->vps[i].plane_mask);
 			DRM_DEV_INFO(dev, "vp%d assign plane mask: %s[0x%x], primary plane phy id: %s[%d]\n",
 				     i, plane_mask_string, vop2->vps[i].plane_mask,
-				     vop2_plane_id_to_string(vop2->vps[i].primary_plane_phy_id),
+				     vop2_plane_phys_id_to_string(vop2->vps[i].primary_plane_phy_id),
 				     vop2->vps[i].primary_plane_phy_id);
 			kfree(plane_mask_string);
 		}
