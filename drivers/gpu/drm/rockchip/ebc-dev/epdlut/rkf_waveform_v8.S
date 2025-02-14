@@ -30,9 +30,9 @@ rkf_wf_input:
 	ret
 .LBB0_3:
 	add	x20, x0, #20
-	adrp	x1, .L.str.4
+	adrp	x1, .L.str.5
 	mov	x19, x0
-	add	x1, x1, :lo12:.L.str.4
+	add	x1, x1, :lo12:.L.str.5
 	mov	x0, x20
 	mov	w2, #8
 	bl	strncmp
@@ -41,25 +41,25 @@ rkf_wf_input:
 	mov	w2, #16
 	b	.LBB0_7
 .LBB0_5:
-	adrp	x1, .L.str.5
+	adrp	x1, .L.str.6
 	mov	x0, x20
-	add	x1, x1, :lo12:.L.str.5
+	add	x1, x1, :lo12:.L.str.6
 	mov	w2, #8
 	bl	strncmp
 	cbnz	w0, .LBB0_16
 	mov	w2, #32
 .LBB0_7:
 	cmp	w21, #0
-	adrp	x0, .L.str.6
+	adrp	x0, .L.str.7
 	cset	w8, ne
 	adrp	x9, maxpic
-	add	x0, x0, :lo12:.L.str.6
+	add	x0, x0, :lo12:.L.str.7
 	mov	x1, x20
 	strb	w8, [x9, :lo12:maxpic]
 	bl	_printk
-	adrp	x1, .L.str.7
+	adrp	x1, .L.str.8
 	add	x0, x19, #4
-	add	x1, x1, :lo12:.L.str.7
+	add	x1, x1, :lo12:.L.str.8
 	mov	w2, #12
 	bl	strncmp
 	cbnz	w0, .LBB0_17
@@ -152,16 +152,16 @@ rkf_wf_input:
 	add	x0, x0, :lo12:.L.str
 	b	.LBB0_20
 .LBB0_17:
-	adrp	x0, .L.str.8
-	add	x0, x0, :lo12:.L.str.8
+	adrp	x0, .L.str.9
+	add	x0, x0, :lo12:.L.str.9
 	bl	_printk
 	adrp	x0, .L.str.1
 	add	x0, x0, :lo12:.L.str.1
 	b	.LBB0_20
 .LBB0_18:
-	adrp	x0, .L.str.9
+	adrp	x0, .L.str.10
 	mov	w1, w20
-	add	x0, x0, :lo12:.L.str.9
+	add	x0, x0, :lo12:.L.str.10
 	bl	_printk
 .LBB0_19:
 	adrp	x0, .L.str.2
@@ -259,38 +259,37 @@ rkf_wf_get_lut:
 	cmp	w9, #0
 	csel	w10, w10, w8, ne
 	cbz	w22, .LBB2_24
+	lsr	w13, w10, #4
 	mov	x11, xzr
 	mov	x12, xzr
-	lsr	w13, w10, #4
 	mov	w8, w22
+	mul	w14, w13, w10
 .LBB2_14:
-	mul	w15, w10, w12
 	ldr	x16, [x20, #8]
-	mov	x14, xzr
-	sxtw	x15, w15
-	mul	x15, x15, x13
-	add	x15, x16, x15, lsl #2
-	mov	x16, x11
+	mul	w17, w14, w12
+	mov	x15, xzr
+	add	x16, x16, w17, sxtw #2
+	mov	x17, x11
 .LBB2_15:
-	mul	x0, x14, x13
-	mov	w17, wzr
-	mov	x2, x16
-	mov	x3, x10
-	add	x0, x15, x0, lsl #2
+	mul	x2, x15, x13
+	mov	w0, wzr
+	mov	x3, x17
+	mov	x4, x10
+	add	x2, x16, x2, lsl #2
 .LBB2_16:
-	lsr	w4, w17, #5
-	and	w5, w17, #0x1e
-	subs	x3, x3, #1
-	add	w17, w17, #2
-	ldr	w4, [x0, w4, uxtw #2]
-	lsr	w4, w4, w5
-	and	w4, w4, #0x3
-	strb	w4, [x1, w2, uxtw]
-	add	x2, x2, #1
+	lsr	w5, w0, #5
+	and	w6, w0, #0x1e
+	subs	x4, x4, #1
+	add	w0, w0, #2
+	ldr	w5, [x2, w5, uxtw #2]
+	lsr	w5, w5, w6
+	and	w5, w5, #0x3
+	strb	w5, [x1, w3, uxtw]
+	add	x3, x3, #1
 	b.ne	.LBB2_16
-	add	x14, x14, #1
-	add	x16, x16, #32
-	cmp	x14, x10
+	add	x15, x15, #1
+	add	x17, x17, #32
+	cmp	x15, x10
 	b.ne	.LBB2_15
 	add	x12, x12, #1
 	add	x11, x11, #1024
@@ -375,10 +374,6 @@ rkf_wf_get_lut:
 	ldrb	w13, [x11, #30]
 	strb	w12, [x11]
 	strb	w13, [x11, #990]
-	strb	w12, [x11, #32]
-	strb	w13, [x11, #1022]
-	strb	w13, [x11, #62]
-	strb	w12, [x11, #992]
 	strb	w12, [x11, #96]
 	strb	w13, [x11, #126]
 	b.ne	.LBB2_28
@@ -1299,38 +1294,38 @@ need_pic:
 	.asciz	"rkf waveform get frame number failed\n"
 	.size	.L.str.3, 38
 
-	.type	.L.str.4,@object
-.L.str.4:
+	.type	.L.str.5,@object
+.L.str.5:
 	.asciz	"rkf:v1.0"
-	.size	.L.str.4, 9
+	.size	.L.str.5, 9
 
 	.type	maxpic,@object
 	.local	maxpic
 	.comm	maxpic,1,4
-	.type	.L.str.5,@object
-.L.str.5:
-	.asciz	"rkf:v2.0"
-	.size	.L.str.5, 9
-
 	.type	.L.str.6,@object
 .L.str.6:
-	.asciz	"rkf: input waveform version: %s, gray level: %d\n"
-	.size	.L.str.6, 49
+	.asciz	"rkf:v2.0"
+	.size	.L.str.6, 9
 
 	.type	.L.str.7,@object
 .L.str.7:
-	.asciz	"rkf waveform"
-	.size	.L.str.7, 13
+	.asciz	"rkf: input waveform version: %s, gray level: %d\n"
+	.size	.L.str.7, 49
 
 	.type	.L.str.8,@object
 .L.str.8:
-	.asciz	"rkf: check format failed\n"
-	.size	.L.str.8, 26
+	.asciz	"rkf waveform"
+	.size	.L.str.8, 13
 
 	.type	.L.str.9,@object
 .L.str.9:
+	.asciz	"rkf: check format failed\n"
+	.size	.L.str.9, 26
+
+	.type	.L.str.10,@object
+.L.str.10:
 	.asciz	"[EINK]: waveform crc err readcrc = %x crccheck = %x\n"
-	.size	.L.str.9, 53
+	.size	.L.str.10, 53
 
 	.type	crc32_table,@object
 	.local	crc32_table

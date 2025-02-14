@@ -13,14 +13,28 @@
 pvi_wf_add_custom_mode_table:
 	cmp	w1, #11
 	b.ne	.LBB0_4
-	adrp	x10, custom_mode_table
+	adrp	x9, custom_mode_table
+	ldrb	w8, [x0, #2]
+	add	x9, x9, :lo12:custom_mode_table
+	strb	w8, [x9]
+	ldrb	w8, [x0, #3]
+	strb	w8, [x9, #1]
+	ldrb	w8, [x0, #4]
+	strb	w8, [x9, #2]
+	ldrb	w8, [x0, #5]
+	strb	w8, [x9, #3]
+	ldrb	w8, [x0, #6]
+	strb	w8, [x9, #4]
+	ldrb	w8, [x0, #7]
+	strb	w8, [x9, #5]
+	ldrb	w8, [x0, #8]
+	strb	w8, [x9, #6]
+	ldrb	w8, [x0, #9]
+	strb	w8, [x9, #7]
 	ldrb	w8, [x0, #10]
-	ldur	x9, [x0, #2]
-	add	x10, x10, :lo12:custom_mode_table
-	strb	w8, [x10, #8]
-	str	x9, [x10]
+	strb	w8, [x9, #8]
 	ldrb	w8, [x0]
-	strb	w8, [x10, #9]
+	strb	w8, [x9, #9]
 	ldrb	w8, [x0, #1]
 	cmp	w8, #4
 	b.eq	.LBB0_5
@@ -72,7 +86,6 @@ pvi_wf_get_lut:
 	mov	w9, #21846
 	movk	w9, #21845, lsl #16
 	adrp	x27, pvi_wf_get_lut.stype
-	adrp	x28, pvi_wf_get_lut.fix
 	ldrsw	x10, [x24, :lo12:pvi_wf_get_lut.sftemp]
 	smull	x11, w19, w9
 	mul	x9, x10, x9
@@ -82,12 +95,13 @@ pvi_wf_get_lut:
 	lsr	x9, x9, #32
 	add	w26, w11, w10
 	add	w9, w9, w12
+	adrp	x11, pvi_wf_get_lut.fix
 	cmp	w26, w9
 	b.ne	.LBB1_6
 	ldr	w10, [x27, :lo12:pvi_wf_get_lut.stype]
 	cmp	w10, w22
 	b.ne	.LBB1_6
-	ldr	w10, [x28, :lo12:pvi_wf_get_lut.fix]
+	ldr	w10, [x11, :lo12:pvi_wf_get_lut.fix]
 	cmp	w10, w21
 	b.eq	.LBB1_30
 .LBB1_6:
@@ -96,9 +110,9 @@ pvi_wf_get_lut:
 	str	w3, [x10, :lo12:need_pic]
 	b.eq	.LBB1_29
 	ldr	x10, [x20, #16]
-	adrp	x11, waveformdata
+	adrp	x28, waveformdata
 	ldrb	w9, [x8, #38]
-	str	x10, [x11, :lo12:waveformdata]
+	str	x10, [x28, :lo12:waveformdata]
 	cbz	w9, .LBB1_14
 	mov	x10, xzr
 	add	x8, x8, #48
@@ -139,7 +153,7 @@ pvi_wf_get_lut:
 	b.eq	.LBB1_22
 	cmp	w22, #7
 	b.ne	.LBB1_37
-	ldr	x8, [x20, #16]
+	ldr	x8, [x28, :lo12:waveformdata]
 	cbz	w23, .LBB1_27
 	mov	w10, w23
 	mov	x9, xzr
@@ -152,16 +166,12 @@ pvi_wf_get_lut:
 	ldrb	w13, [x11, #30]
 	strb	w12, [x11]
 	strb	w13, [x11, #990]
-	strb	w12, [x11, #32]
-	strb	w13, [x11, #1022]
-	strb	w13, [x11, #62]
-	strb	w12, [x11, #992]
 	strb	w12, [x11, #96]
 	strb	w13, [x11, #126]
 	b.ne	.LBB1_21
 	b	.LBB1_27
 .LBB1_22:
-	ldr	x8, [x20, #16]
+	ldr	x8, [x28, :lo12:waveformdata]
 	cbz	w23, .LBB1_27
 	mov	w9, w23
 	mov	x10, xzr
@@ -201,11 +211,12 @@ pvi_wf_get_lut:
 	str	w8, [x20]
 	ldrsw	x8, [x24, :lo12:pvi_wf_get_lut.sftemp]
 	str	w22, [x27, :lo12:pvi_wf_get_lut.stype]
-	str	w21, [x28, :lo12:pvi_wf_get_lut.fix]
 	mul	x8, x8, x9
 	lsr	x9, x8, #63
 	lsr	x8, x8, #32
 	add	w9, w8, w9
+	adrp	x8, pvi_wf_get_lut.fix
+	str	w21, [x8, :lo12:pvi_wf_get_lut.fix]
 .LBB1_29:
 	cmp	w26, w9
 	b.ne	.LBB1_31
@@ -241,7 +252,7 @@ pvi_wf_get_lut:
 	cmp	w8, #1
 	b.hi	.LBB1_45
 	cbz	w23, .LBB1_28
-	ldr	x8, [x20, #16]
+	ldr	x8, [x28, :lo12:waveformdata]
 	mov	w9, w23
 	cmp	w23, #1
 	b.ne	.LBB1_52
@@ -277,7 +288,7 @@ pvi_wf_get_lut:
 	cmp	w8, #1
 	b.hi	.LBB1_50
 	cbz	w23, .LBB1_28
-	ldr	x8, [x20, #16]
+	ldr	x8, [x28, :lo12:waveformdata]
 	mov	w9, w23
 	cmp	w23, #1
 	b.ne	.LBB1_66
@@ -293,7 +304,7 @@ pvi_wf_get_lut:
 	sub	w8, w22, #13
 	cmp	w8, #1
 	b.hi	.LBB1_28
-	ldr	x0, [x20, #16]
+	ldr	x0, [x28, :lo12:waveformdata]
 	mov	w1, w23
 	mov	w2, w21
 	bl	pvi_wf_normal_fix
@@ -530,8 +541,8 @@ get_wf_mode_index:
 	ldr	x30, [x18, #-8]!
 	ret
 .LBB2_17:
-	adrp	x0, .L.str.3
-	add	x0, x0, :lo12:.L.str.3
+	adrp	x0, .L.str.4
+	add	x0, x0, :lo12:.L.str.4
 	bl	_printk
 	mov	w0, #255
 	b	.LBB2_16
@@ -822,8 +833,8 @@ get_wf_frm_num:
 	cinc	w19, w19, hs
 	b	.LBB3_15
 .LBB3_18:
-	adrp	x0, .L.str.6
-	add	x0, x0, :lo12:.L.str.6
+	adrp	x0, .L.str.7
+	add	x0, x0, :lo12:.L.str.7
 	bl	_printk
 	ldr	w10, [x21, :lo12:maxpic]
 	ldr	w9, [x22, :lo12:need_pic]
@@ -888,24 +899,24 @@ get_wf_frm_num:
 	b.hi	.LBB3_23
 	b	.LBB3_31
 .LBB3_26:
-	adrp	x0, .L.str.4
+	adrp	x0, .L.str.5
 	adrp	x1, .L__func__.get_wf_frm_num
-	add	x0, x0, :lo12:.L.str.4
+	add	x0, x0, :lo12:.L.str.5
 	add	x1, x1, :lo12:.L__func__.get_wf_frm_num
-	mov	w2, #256
+	mov	w2, #269
 	b	.LBB3_28
 .LBB3_27:
-	adrp	x0, .L.str.4
+	adrp	x0, .L.str.5
 	adrp	x1, .L__func__.get_wf_frm_num
-	add	x0, x0, :lo12:.L.str.4
+	add	x0, x0, :lo12:.L.str.5
 	add	x1, x1, :lo12:.L__func__.get_wf_frm_num
-	mov	w2, #263
+	mov	w2, #276
 .LBB3_28:
 	bl	_printk
 	b	.LBB3_30
 .LBB3_29:
-	adrp	x0, .L.str.5
-	add	x0, x0, :lo12:.L.str.5
+	adrp	x0, .L.str.6
+	add	x0, x0, :lo12:.L.str.6
 	bl	_printk
 .LBB3_30:
 	mov	w19, #-22
@@ -991,8 +1002,8 @@ pvi_wf_input:
 .LBB5_3:
 	mov	x19, x0
 	ldrb	w1, [x0, #16]
-	adrp	x0, .L.str.1
-	add	x0, x0, :lo12:.L.str.1
+	adrp	x0, .L.str.2
+	add	x0, x0, :lo12:.L.str.2
 	bl	_printk
 	ldrb	w1, [x19, #16]
 	sub	w9, w1, #9
@@ -1021,9 +1032,9 @@ pvi_wf_input:
 	ldr	w8, [x8, :lo12:custom_mode_table+12]
 	b	.LBB5_5
 .LBB5_9:
-	adrp	x0, .L.str.2
+	adrp	x0, .L.str.3
 	ldrb	w2, [x19, #22]
-	add	x0, x0, :lo12:.L.str.2
+	add	x0, x0, :lo12:.L.str.3
 	bl	_printk
 	mov	w0, #-8
 	b	.LBB5_2
@@ -1144,20 +1155,21 @@ pvi_wf_input:
 	.type	pvi_wf_get_version,@function
 pvi_wf_get_version:
 	adrp	x8, global_waveform
-	ldr	x8, [x8, :lo12:global_waveform]
-	cbz	x8, .LBB6_2
+	ldr	x9, [x8, :lo12:global_waveform]
+	cbz	x9, .LBB6_4
 	adrp	x0, pvi_wf_get_version.spi_id_buffer
-	ldur	x9, [x8, #73]
-	ldr	x10, [x8, #88]
+	mov	x8, xzr
+	add	x9, x9, #65
 	add	x0, x0, :lo12:pvi_wf_get_version.spi_id_buffer
-	ldur	x11, [x8, #81]
-	ldur	x8, [x8, #65]
-	stur	x10, [x0, #23]
-	stp	x9, x11, [x0, #8]
-	str	x8, [x0]
+.LBB6_2:
+	ldrb	w10, [x9, x8]
+	strb	w10, [x0, x8]
+	add	x8, x8, #1
+	cmp	x8, #31
+	b.ne	.LBB6_2
 	strb	wzr, [x0, #31]
 	ret
-.LBB6_2:
+.LBB6_4:
 	mov	x0, xzr
 	ret
 .Lfunc_end6:
@@ -1220,10 +1232,10 @@ need_pic:
 	.asciz	"pvi waveform get frame number failed\n"
 	.size	.L.str, 38
 
-	.type	.L.str.1,@object
-.L.str.1:
+	.type	.L.str.2,@object
+.L.str.2:
 	.asciz	"pvi : input waveform version 0x%x\n"
-	.size	.L.str.1, 35
+	.size	.L.str.2, 35
 
 	.type	maxpic,@object
 	.data
@@ -1232,39 +1244,39 @@ maxpic:
 	.word	16
 	.size	maxpic, 4
 
-	.type	.L.str.2,@object
+	.type	.L.str.3,@object
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.L.str.2:
+.L.str.3:
 	.asciz	"pvi : Unknow waveform version 0x%x, 0x%x, may be wrong waveform file\n"
-	.size	.L.str.2, 70
+	.size	.L.str.3, 70
 
 	.type	pvi_wf_get_version.spi_id_buffer,@object
 	.local	pvi_wf_get_version.spi_id_buffer
 	.comm	pvi_wf_get_version.spi_id_buffer,32,1
-	.type	.L.str.3,@object
-.L.str.3:
-	.asciz	"pvi: unspport PVI waveform type"
-	.size	.L.str.3, 32
-
 	.type	.L.str.4,@object
 .L.str.4:
+	.asciz	"pvi: unspport PVI waveform type"
+	.size	.L.str.4, 32
+
+	.type	.L.str.5,@object
+.L.str.5:
 	.asciz	"pvi: %s %d check error\n"
-	.size	.L.str.4, 24
+	.size	.L.str.5, 24
 
 	.type	.L__func__.get_wf_frm_num,@object
 .L__func__.get_wf_frm_num:
 	.asciz	"get_wf_frm_num"
 	.size	.L__func__.get_wf_frm_num, 15
 
-	.type	.L.str.5,@object
-.L.str.5:
-	.asciz	"waveformdata is NULL\n"
-	.size	.L.str.5, 22
-
 	.type	.L.str.6,@object
 .L.str.6:
+	.asciz	"waveformdata is NULL\n"
+	.size	.L.str.6, 22
+
+	.type	.L.str.7,@object
+.L.str.7:
 	.asciz	"pvi: decodec waveform error, framenum err\n"
-	.size	.L.str.6, 43
+	.size	.L.str.7, 43
 
 	.type	.Lswitch.table.get_wf_mode_index,@object
 	.section	.rodata,"a",@progbits
