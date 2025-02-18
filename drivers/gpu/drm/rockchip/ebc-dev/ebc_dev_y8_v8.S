@@ -7263,7 +7263,7 @@ direct_mode_data_change_full2:
 	csel	x10, x10, x1, eq
 	csel	w12, w16, w17, eq
 	cmp	w11, w12
-	b.ge	.LBB25_16
+	b.ge	.LBB25_17
 	ldrb	w16, [x3, #56]
 	asr	w13, w13, #3
 	asr	w2, w14, #3
@@ -7284,7 +7284,7 @@ direct_mode_data_change_full2:
 	add	w11, w11, #2
 	add	w16, w16, w1
 	cmp	w11, w12
-	b.ge	.LBB25_16
+	b.ge	.LBB25_17
 .LBB25_4:
 	cmp	w8, #8
 	b.lo	.LBB25_3
@@ -7356,16 +7356,16 @@ direct_mode_data_change_full2:
 	mov	x5, xzr
 	mov	x6, xzr
 	mov	w7, w2
-	b	.LBB25_13
+	b	.LBB25_14
 .LBB25_12:
-	str	w19, [x4, x6, lsl #2]
+	str	wzr, [x4, x6, lsl #2]
+.LBB25_13:
 	add	x6, x6, #1
 	sub	w7, w7, #1
 	sub	x5, x5, #8
 	cmp	x15, x6
 	b.eq	.LBB25_2
-.LBB25_13:
-	mov	w19, wzr
+.LBB25_14:
 	cmp	x6, x17
 	b.lo	.LBB25_12
 	cmp	x6, x14
@@ -7376,49 +7376,53 @@ direct_mode_data_change_full2:
 	ldr	x21, [x9, x19]
 	ldr	x19, [x10, x19]
 	lsl	w20, w20, #10
-	lsl	w23, w21, #2
 	lsr	x24, x21, #6
-	add	x20, x22, w20, sxtw
-	and	x22, x23, #0x3e0
-	and	x23, x24, #0x3e0
+	lsl	w23, w21, #2
+	and	x24, x24, #0x3e0
+	and	x23, x23, #0x3e0
+	bfxil	x24, x19, #11, #5
 	lsr	x25, x21, #14
-	bfxil	x23, x19, #11, #5
+	add	x20, x22, w20, sxtw
+	bfxil	x23, x19, #3, #5
 	lsr	x26, x21, #22
-	and	x24, x25, #0x3e0
-	bfxil	x22, x19, #3, #5
+	and	x25, x25, #0x3e0
 	lsr	x27, x21, #30
-	and	x25, x26, #0x3e0
-	bfxil	x24, x19, #19, #5
-	lsr	x28, x21, #38
-	and	x26, x27, #0x3e0
-	bfxil	x25, x19, #27, #5
-	ldrb	w23, [x20, x23]
-	bfxil	x26, x19, #35, #5
-	ldrb	w22, [x20, x22]
-	and	x27, x28, #0x3e0
-	lsr	x28, x21, #46
-	lsr	x21, x21, #54
+	and	x26, x26, #0x3e0
+	bfxil	x25, x19, #19, #5
 	ldrb	w24, [x20, x24]
-	bfxil	x27, x19, #43, #5
+	lsr	x28, x21, #38
+	and	x27, x27, #0x3e0
+	bfxil	x26, x19, #27, #5
+	ldrb	w23, [x20, x23]
+	lsr	x22, x21, #46
 	and	x28, x28, #0x3e0
+	bfxil	x27, x19, #35, #5
+	and	x22, x22, #0x3e0
+	bfxil	x28, x19, #43, #5
+	ldrb	w25, [x20, x25]
+	lsr	x21, x21, #54
+	bfxil	x22, x19, #51, #5
+	ldrb	w26, [x20, x26]
+	lsl	w24, w24, #6
+	ldrb	w27, [x20, x27]
+	orr	w23, w24, w23, lsl #2
 	and	x21, x21, #0x3e0
-	bfxil	x28, x19, #51, #5
+	lsl	x24, x6, #2
 	bfxil	x21, x19, #59, #5
-	ldrb	w19, [x20, x25]
-	lsl	w23, w23, #6
-	ldrb	w25, [x20, x26]
-	orr	w22, w23, w22, lsl #2
-	ldrb	w23, [x20, x27]
-	orr	w22, w22, w24, lsl #10
-	ldrb	w24, [x20, x28]
-	orr	w19, w22, w19, lsl #14
+	ldrb	w19, [x20, x28]
+	orr	w23, w23, w25, lsl #10
+	ldrb	w22, [x20, x22]
+	orr	w23, w23, w26, lsl #14
+	ldr	w25, [x4, x24]
+	orr	w23, w23, w27, lsl #18
 	ldrb	w20, [x20, x21]
-	orr	w19, w19, w25, lsl #18
-	orr	w19, w19, w23, lsl #22
-	orr	w19, w19, w24, lsl #26
+	orr	w19, w23, w19, lsl #22
+	orr	w19, w19, w22, lsl #26
+	orr	w19, w19, w25
 	orr	w19, w19, w20, lsl #30
-	b	.LBB25_12
-.LBB25_16:
+	str	w19, [x4, x24]
+	b	.LBB25_13
+.LBB25_17:
 	ldp	x20, x19, [sp, #64]
 	ldp	x22, x21, [sp, #48]
 	ldp	x24, x23, [sp, #32]
@@ -11782,7 +11786,7 @@ ebc_pm:
 
 	.type	.L.str.2,@object
 .L.str.2:
-	.asciz	"7.05_y8"
+	.asciz	"7.06_y8"
 	.size	.L.str.2, 8
 
 	.type	.L.str.3,@object
@@ -11870,7 +11874,7 @@ ebc_pm:
 
 	.type	.L.str.19,@object
 .L.str.19:
-	.asciz	"Get PMIC deivce failed\n"
+	.asciz	"Get PMIC device failed\n"
 	.size	.L.str.19, 24
 
 	.type	.L.str.20,@object
