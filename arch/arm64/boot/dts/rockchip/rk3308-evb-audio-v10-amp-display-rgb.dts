@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include "rk3308-evb-audio-amic-v10.dts"
+#include "rk3308-audio-amp.dtsi"
 
 / {
 	model = "Rockchip RK3308B EVB AUDIO DDR3 V10 Board + Rockchip RK3308 RGB ExtBoard V10";
@@ -55,11 +56,11 @@
 		compatible = "simple-panel";
 		bus-format = <MEDIA_BUS_FMT_RGB666_1X18>;
 		backlight = <&backlight>;
-		//enable-gpios = <&gpio2 RK_PB3 GPIO_ACTIVE_LOW>;
-		//enable-delay-ms = <20>;
-		//reset-gpios = <&gpio2 RK_PB2 GPIO_ACTIVE_LOW>;
-		//reset-value = <0>;
-		//reset-delay-ms = <10>;
+		enable-gpios = <&gpio2 RK_PB3 GPIO_ACTIVE_LOW>;
+		enable-delay-ms = <20>;
+		reset-gpios = <&gpio2 RK_PB2 GPIO_ACTIVE_LOW>;
+		reset-value = <0>;
+		reset-delay-ms = <10>;
 		status = "okay";
 
 		display-timings {
@@ -97,7 +98,7 @@
 		cma {
 			compatible = "shared-dma-pool";
 			reusable;
-			size = <0x0 0x1800000>;
+			size = <0x0 0x1000000>;
 			linux,cma-default;
 		};
 	};
