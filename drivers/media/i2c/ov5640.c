@@ -817,7 +817,7 @@ static const struct ov5640_framesize ov5640_mipi_framesizes[] = {
 };
 
 static const s64 link_freq_menu_items[] = {
-	240000000
+	300000000
 };
 
 static const struct ov5640_pixfmt ov5640_formats[] = {
