@@ -4869,22 +4869,44 @@ static void vop2_dovi_enable(struct drm_crtc *crtc)
 	struct hdr_extend *hdr_data;
 	int i = 0;
 
-	if (vp->dovi_hdr_en)
-		return;
+	if (!vcstate->hdr_ext_data)
+		goto DISABLE_DOVI;
 
 	hdr_data = (struct hdr_extend *)vcstate->hdr_ext_data->data;
-	if (!hdr_data)
-		return;
+	if (!hdr_data || hdr_data->hdr_type != HDR_DOVI)
+		goto DISABLE_DOVI;
+
 	dovi_data = &hdr_data->dovi_data;
 	for (i = 0; i < vop2_data->dovi->nr_dovi_cores; i++) {
 		dovi_core = &vop2->dovi_cores[i];
 
-		if (vop2_check_dovi_core_enabled(dovi_core->id, dovi_data->valid))
+		if (vop2_check_dovi_core_enabled(dovi_core->id, dovi_data->valid)) {
 			VOP_MODULE_SET(vop2, dovi_core, enable, 1);
+		} else {
+			VOP_MODULE_SET(vop2, dovi_core, enable, 0);
+			VOP_MODULE_SET(vop2, dovi_core, lut_update, 0);
+			if (dovi_core->id == 2)
+				VOP_MODULE_SET(vop2, dovi_core, dly_en, 0);
+		}
 	}
 
 	vp->dovi_hdr_en = true;
-	DRM_DEV_INFO(vop2->dev, "vp%d dovi enabled\n", vp->id);
+	DRM_DEV_DEBUG(vop2->dev, "vp%d dovi enabled\n", vp->id);
+
+	return;
+
+DISABLE_DOVI:
+	if (!vp->dovi_hdr_en)
+		return;
+
+	for (i = 0; i < vop2_data->dovi->nr_dovi_cores; i++) {
+		dovi_core = &vop2->dovi_cores[i];
+
+		VOP_MODULE_SET(vop2, dovi_core, enable, 0);
+		VOP_MODULE_SET(vop2, dovi_core, lut_update, 0);
+		if (dovi_core->id == 2)
+			VOP_MODULE_SET(vop2, dovi_core, dly_en, 0);
+	}
 }
 
 static int vop2_dovi_init(struct drm_crtc *crtc)
@@ -4979,6 +5001,13 @@ static void vop2_dovi_post_disable(struct drm_crtc *crtc)
 	vp->dovi_hdr_mode = false;
 	vp->dovi_hdr_en = false;
 	vp->dovi_hdr_in = false;
+
+	/**
+	 * The burr of the vsync signal maybe lead to core1 work abnormally,
+	 * so add aclk reset when exit from dovi mode.
+	 */
+	vop2_clk_reset(vop2->axi_rst);
+
 	drm_info(vop2, "vp%d dovi disabled\n", vp->id);
 }
 
@@ -5653,7 +5682,6 @@ static void vop2_crtc_atomic_disable(struct drm_crtc *crtc,
 		VOP_MODULE_SET(vop2, vp, hdr_lut_update_en, 0);
 	vop2_dovi_pre_disable(crtc);
 	vop2_disable_all_planes_for_crtc(crtc);
-	vop2_dovi_post_disable(crtc);
 
 	if (vop2->dscs[vcstate->dsc_id].enabled &&
 	    vop2->dscs[vcstate->dsc_id].attach_vp_id == vp->id &&
@@ -5742,6 +5770,7 @@ static void vop2_crtc_atomic_disable(struct drm_crtc *crtc,
 
 	vop2_dsp_hold_valid_irq_disable(crtc);
 
+	vop2_dovi_post_disable(crtc);
 	vop2_disable(crtc);
 
 	vop2->active_vp_mask &= ~BIT(vp->id);
@@ -8399,6 +8428,7 @@ static int vop2_crtc_debugfs_init(struct drm_minor *minor, struct drm_crtc *crtc
 	rockchip_drm_debugfs_add_color_bar(crtc, vop2->debugfs);
 	rockchip_drm_debugfs_add_regs_write(crtc, vop2->debugfs);
 	rockchip_drm_debugfs_add_dclk_rate(crtc, vop2->debugfs);
+	rockchip_drm_debugfs_add_dovi_mode(crtc, vop2->debugfs);
 #endif
 	for (i = 0; i < ARRAY_SIZE(vop2_debugfs_files); i++)
 		vop2->debugfs_files[i].data = vop2;
@@ -10607,23 +10637,56 @@ static void vop2_update_post_csc_info(struct vop2_video_port *vp,
 }
 
 /*
- * Check hdr_ext_data switch from valid to NULL or
- * NULL to valid.
- * This is used to check a switch from dynamic HDR2SDR
- * or SDR2HDR output mode switch.
+ * DOVI will set mode changed at the following case:
+ * (1) Enter or Exit dovi output mode[judge by old/new crtc state];
+ * (2) Keep dovi output mode, and change from non dovi video to dovi video[judge
+ *     by core1 bypass_composer state], except dovi_mode changed to non zero value
+ *     by userspace.
  */
-static bool vop_hdr_ext_data_switch(struct drm_crtc_state *old_state,
-				   struct drm_crtc_state *new_state)
+static bool vop2_dovi_mode_changed(struct drm_crtc *crtc,
+				   struct drm_atomic_state *state)
 {
-	struct rockchip_crtc_state *new_vcstate = to_rockchip_crtc_state(new_state);
-	struct rockchip_crtc_state *old_vcstate = to_rockchip_crtc_state(old_state);
+	struct drm_crtc_state *new_crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
+	struct drm_crtc_state *old_crtc_state = drm_atomic_get_old_crtc_state(state, crtc);
+	struct rockchip_crtc_state *new_vcstate = to_rockchip_crtc_state(new_crtc_state);
+	struct rockchip_crtc_state *old_vcstate = to_rockchip_crtc_state(old_crtc_state);
 	struct drm_property_blob *new_blob = new_vcstate->hdr_ext_data;
 	struct drm_property_blob *old_blob = old_vcstate->hdr_ext_data;
+	struct rockchip_drm_private *private = crtc->dev->dev_private;
+	struct hdr_extend *old_hdr_data, *new_hdr_data;
+	bool mode_changed = false;
 
-	if ((!old_blob && new_blob) || (!new_blob && old_blob))
-		return false;
+	if (!old_blob && new_blob) {
+		new_hdr_data = (struct hdr_extend *)new_vcstate->hdr_ext_data->data;
+		if (new_hdr_data->hdr_type == HDR_DOVI)
+			mode_changed = true;
+	} else if (!new_blob && old_blob) {
+		old_hdr_data = (struct hdr_extend *)old_vcstate->hdr_ext_data->data;
+		if (old_hdr_data->hdr_type == HDR_DOVI)
+			mode_changed = true;
+	} else if (old_blob && new_blob) {
+		struct dovi_regs *old_dovi_reg_data, *new_dovi_reg_data;
 
-	return true;
+		new_hdr_data = (struct hdr_extend *)new_vcstate->hdr_ext_data->data;
+		old_hdr_data = (struct hdr_extend *)old_vcstate->hdr_ext_data->data;
+		if (old_hdr_data->hdr_type != new_hdr_data->hdr_type) {
+			mode_changed = true;
+		} else if (old_hdr_data->hdr_type == new_hdr_data->hdr_type &&
+			   old_hdr_data->hdr_type == HDR_DOVI &&
++			   private->dovi_mode == 0) {
+			old_dovi_reg_data = &old_hdr_data->dovi_data;
+			new_dovi_reg_data = &new_hdr_data->dovi_data;
+
+			/* dovi core1 bypass_composer change from 1 to 0 must enter mode_changed */
+			if ((old_dovi_reg_data->core1[1] & BIT(0)) == 1 &&
+			    (new_dovi_reg_data->core1[1] & BIT(0)) == 0) {
+				mode_changed = true;
+				DRM_INFO("dovi core1 bypass_composer from 1 to 0\n");
+			}
+		}
+	}
+
+	return mode_changed;
 }
 
 static int vop2_crtc_atomic_check(struct drm_crtc *crtc,
@@ -10640,7 +10703,6 @@ static int vop2_crtc_atomic_check(struct drm_crtc *crtc,
 	struct rockchip_crtc_state *new_vcstate = to_rockchip_crtc_state(new_crtc_state);
 	struct rockchip_crtc_state *old_vcstate = to_rockchip_crtc_state(old_crtc_state);
 	struct drm_display_mode *adjusted_mode = &crtc->state->adjusted_mode;
-	bool hdr_ext_data_change;
 
 	if (vop2_has_feature(vop2, VOP_FEATURE_SPLICE)) {
 		if (adjusted_mode->hdisplay > VOP2_MAX_VP_OUTPUT_WIDTH) {
@@ -10665,10 +10727,9 @@ static int vop2_crtc_atomic_check(struct drm_crtc *crtc,
 	else
 		vp->acm_state_changed = false;
 
-	hdr_ext_data_change = !vop_hdr_ext_data_switch(old_crtc_state, new_crtc_state) |
-					new_crtc_state->active_changed;
-	if (hdr_ext_data_change)
-		new_crtc_state->mode_changed = true;
+	if (vp_data->feature & VOP_FEATURE_DOVI)
+		new_crtc_state->mode_changed |=
+			vop2_dovi_mode_changed(crtc, state);
 
 	return 0;
 }
@@ -12254,6 +12315,83 @@ static bool post_sharp_enabled(struct drm_crtc *crtc)
 	return true;
 }
 
+static void vop2_crtc_update_zpos_for_dovi(struct drm_crtc *crtc, struct vop2_zpos *vop2_zpos)
+{
+	struct vop2_video_port *vp = to_vop2_video_port(crtc);
+	struct vop2 *vop2 = vp->vop2;
+	const struct vop2_data *vop2_data = vop2->data;
+	struct drm_plane *plane;
+	struct vop2_plane_state *vpstate;
+	bool has_base_layer = false;
+	uint8_t nr_layers = 0;
+
+	drm_atomic_crtc_for_each_plane(plane, crtc) {
+		vpstate = to_vop2_plane_state(plane->state);
+		if (vpstate->dovi_input_type == DOVI_BASE_LAYER)
+			has_base_layer = true;
+	}
+
+	/*
+	 * At RK3588 force DOVI mode[only have UI->coer2 and none base layer to core1]
+	 * the UI layer must from layer2 and connect to core2, so insert unused win to
+	 * layer0.
+	 */
+	if (vp->nr_layers == 1 && has_base_layer == false) {
+		struct vop2_zpos vop2_zpos0;
+		int phys_id, freed_phy_id = ROCKCHIP_VOP2_PHY_ID_INVALID;
+		int zpos0_phy_id = vop2_zpos[0].win_phys_id;
+		unsigned long win_mask = vp->win_mask;
+
+		/* find freed layer to core1 */
+		for_each_set_bit(phys_id, &win_mask, ROCKCHIP_MAX_LAYER) {
+			if (phys_id != zpos0_phy_id &&
+			    phys_id != vop2_data->dovi->enhance_layer_phy_id) {
+				freed_phy_id = phys_id;
+				break;
+			}
+		}
+		if (freed_phy_id == ROCKCHIP_VOP2_PHY_ID_INVALID) {
+			DRM_DEV_ERROR(vop2->dev, "Can't find freed phy id for dovi core1\n");
+			return;
+		}
+
+		memcpy(&vop2_zpos0, &vop2_zpos[0], sizeof(struct vop2_zpos));
+		vp->nr_layers++;
+		vop2_zpos[0].zpos = 0;
+		vop2_zpos[0].win_phys_id = freed_phy_id;
+
+		memcpy(&vop2_zpos[1], &vop2_zpos0, sizeof(struct vop2_zpos));
+		vop2_zpos[1].zpos = 1;
+	}
+	nr_layers = vp->nr_layers;
+
+	/*
+	 * At RK3588 dovi mode, the layer0 and layer1 is used for dovi layer,
+	 * layer0 for base layer, layer1 for enhance layer, the enhance layer
+	 * is option, but it's always occupy this layer, and the other layer
+	 * must be assigned from layer2, so copy the other layers to &vop_zpos[2].
+	 */
+	if (vp->nr_layers > 1) {
+		struct vop2_zpos *vop2_zpos_tmp;
+		int i = 0;
+
+		vop2_zpos_tmp = kmalloc_array(nr_layers - 1, sizeof(struct vop2_zpos), GFP_KERNEL);
+		if (!vop2_zpos_tmp)
+			return;
+
+		/* Insert esmart3 as core1 enhance layer to zpos1 */
+		memcpy(vop2_zpos_tmp, &vop2_zpos[1], (nr_layers - 1) * sizeof(struct vop2_zpos));
+		vp->nr_layers++;
+		vop2_zpos[1].zpos = 1;
+		vop2_zpos[1].win_phys_id = vop2_data->dovi->enhance_layer_phy_id;
+		memcpy(&vop2_zpos[2], vop2_zpos_tmp, (nr_layers - 1) * sizeof(struct vop2_zpos));
+		for (i = 0; i < nr_layers - 1; i++)
+			vop2_zpos[2 + i].zpos = 2 + i;
+
+		kfree(vop2_zpos_tmp);
+	}
+}
+
 static void vop2_crtc_atomic_begin(struct drm_crtc *crtc, struct drm_atomic_state *state)
 {
 	struct vop2_video_port *vp = to_vop2_video_port(crtc);
@@ -12378,33 +12516,9 @@ static void vop2_crtc_atomic_begin(struct drm_crtc *crtc, struct drm_atomic_stat
 		vp->nr_layers = nr_layers;
 
 		sort(vop2_zpos, nr_layers, sizeof(vop2_zpos[0]), vop2_zpos_cmp, NULL);
-		/*
-		 * At RK3588 dovi mode, the layer0 and layer1 is used for dovi layer,
-		 * layer0 for base layer, layer1 for enhance layer, the enhance layer
-		 * is option, but it's always occupy this layer, and the other layer
-		 * must be assigned from layer2, so copy the other layers to &vop_zpos[2].
-		 */
-		if (vop2->version == VOP_VERSION_RK3588 &&
-		    vop2_is_dovi_mode(vp) && vp->nr_layers > 1) {
-			const struct vop2_data *vop2_data = vop2->data;
-			struct vop2_zpos *vop2_zpos_tmp;
-			int i = 0;
 
-			vop2_zpos_tmp = kmalloc_array(nr_layers - 1, sizeof(struct vop2_zpos), GFP_KERNEL);
-			if (!vop2_zpos_tmp)
-				goto dovi_err;
-
-			/* Insert esmart3 as core1 enhance layer to zpos1 */
-			memcpy(vop2_zpos_tmp, &vop2_zpos[1], (nr_layers - 1) * sizeof(struct vop2_zpos));
-			vp->nr_layers++;
-			vop2_zpos[1].zpos = 1;
-			vop2_zpos[1].win_phys_id = vop2_data->dovi->enhance_layer_phy_id;
-			memcpy(&vop2_zpos[2], vop2_zpos_tmp, (nr_layers - 1) * sizeof(struct vop2_zpos));
-			for (i = 0; i < nr_layers - 1; i++)
-				vop2_zpos[2 + i].zpos = 2 + i;
-
-			kfree(vop2_zpos_tmp);
-		}
+		if (vop2->version == VOP_VERSION_RK3588 && vop2_is_dovi_mode(vp))
+			vop2_crtc_update_zpos_for_dovi(crtc, vop2_zpos);
 
 		if (!vp->hdr10_at_splice_mode) {
 			if (is_vop3(vop2)) {
@@ -12481,9 +12595,6 @@ static void vop2_crtc_atomic_begin(struct drm_crtc *crtc, struct drm_atomic_stat
 		}
 	}
 
-dovi_err:
-	if (vcstate->splice_mode)
-		kfree(vop2_zpos_splice);
 out:
 	kfree(vop2_zpos);
 }
@@ -12894,6 +13005,8 @@ static void vop2_cfg_update(struct drm_crtc *crtc,
 	if (vp_data->feature & VOP_FEATURE_OVERSCAN)
 		vop2_post_config(crtc);
 
+	if (vp_data->feature & VOP_FEATURE_DOVI)
+		vop2_dovi_enable(crtc);
 	if (vop2_is_dovi_mode(vp) && vp->enabled_win_mask) {
 		vop2_dovi_mode_config(crtc);
 		vop2_load_dovi_coe_table(crtc);
