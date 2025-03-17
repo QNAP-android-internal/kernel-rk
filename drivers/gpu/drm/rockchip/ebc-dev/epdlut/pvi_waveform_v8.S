@@ -991,6 +991,82 @@ pvi_wf_normal_fix:
 .Lfunc_end4:
 	.size	pvi_wf_normal_fix, .Lfunc_end4-pvi_wf_normal_fix
 
+	.globl	pvi_wf_get_original_lut
+	.p2align	2
+	.type	pvi_wf_get_original_lut,@function
+pvi_wf_get_original_lut:
+	str	x30, [x18], #8
+	stp	x29, x30, [sp, #-32]!
+	adrp	x8, global_waveform
+	stp	x20, x19, [sp, #16]
+	mov	x29, sp
+	ldr	x10, [x8, :lo12:global_waveform]
+	cbz	x10, .LBB5_8
+	mov	x19, x0
+	cbnz	x0, .LBB5_3
+	mov	w8, #16
+	ldr	x8, [x8]
+	cbz	x8, .LBB5_14
+.LBB5_3:
+	adrp	x9, need_pic
+	ldr	x11, [x19, #16]
+	adrp	x12, waveformdata
+	ldrb	w8, [x10, #38]
+	str	w3, [x9, :lo12:need_pic]
+	str	x11, [x12, :lo12:waveformdata]
+	cbz	w8, .LBB5_9
+	mov	x9, xzr
+	add	x10, x10, #48
+.LBB5_5:
+	ldrb	w11, [x10, x9]
+	cmp	w11, w2
+	b.ge	.LBB5_10
+	add	x9, x9, #1
+	cmp	x8, x9
+	b.ne	.LBB5_5
+	mov	w10, #-1
+	mov	w9, w8
+	b	.LBB5_11
+.LBB5_8:
+	mov	w0, #-19
+	b	.LBB5_13
+.LBB5_9:
+	mov	w9, wzr
+	mov	w10, #-1
+	b	.LBB5_11
+.LBB5_10:
+	mov	w10, w9
+.LBB5_11:
+	mov	w0, w1
+	sub	w11, w9, #1
+	cmp	w9, w8
+	csel	w20, w11, w10, eq
+	bl	get_wf_mode_index
+	and	w0, w0, #0xff
+	mov	w1, w20
+	bl	get_wf_frm_num
+	tbnz	w0, #31, .LBB5_15
+	ldrb	w8, [x19, #1]
+	orr	w8, w0, w8, lsl #8
+	mov	w0, wzr
+	str	w8, [x19]
+.LBB5_13:
+	ldp	x20, x19, [sp, #16]
+	ldp	x29, x30, [sp], #32
+	ldr	x30, [x18, #-8]!
+	ret
+.LBB5_14:
+	mov	w0, #-22
+	b	.LBB5_13
+.LBB5_15:
+	adrp	x0, .L.str
+	add	x0, x0, :lo12:.L.str
+	bl	_printk
+	mov	w0, #-5
+	b	.LBB5_13
+.Lfunc_end5:
+	.size	pvi_wf_get_original_lut, .Lfunc_end5-pvi_wf_get_original_lut
+
 	.globl	pvi_wf_input
 	.p2align	2
 	.type	pvi_wf_input,@function
@@ -1001,14 +1077,14 @@ pvi_wf_input:
 	adrp	x20, global_waveform
 	mov	x29, sp
 	ldr	x8, [x20, :lo12:global_waveform]
-	cbz	x8, .LBB5_3
+	cbz	x8, .LBB6_3
 	mov	w0, #-16
-.LBB5_2:
+.LBB6_2:
 	ldp	x20, x19, [sp, #16]
 	ldp	x29, x30, [sp], #32
 	ldr	x30, [x18, #-8]!
 	ret
-.LBB5_3:
+.LBB6_3:
 	mov	x19, x0
 	ldrb	w1, [x0, #16]
 	adrp	x0, .L.str.2
@@ -1017,146 +1093,146 @@ pvi_wf_input:
 	ldrb	w1, [x19, #16]
 	sub	w9, w1, #9
 	cmp	w9, #105
-	b.hi	.LBB5_7
-	adrp	x10, .LJTI5_0
+	b.hi	.LBB6_7
+	adrp	x10, .LJTI6_0
 	mov	w8, #32
-	add	x10, x10, :lo12:.LJTI5_0
-	adr	x11, .LBB5_5
+	add	x10, x10, :lo12:.LJTI6_0
+	adr	x11, .LBB6_5
 	ldrb	w12, [x10, x9]
 	add	x11, x11, x12, lsl #2
 	br	x11
-.LBB5_5:
+.LBB6_5:
 	adrp	x9, maxpic
 	str	w8, [x9, :lo12:maxpic]
-.LBB5_6:
+.LBB6_6:
 	mov	w0, wzr
 	str	x19, [x20, :lo12:global_waveform]
-	b	.LBB5_2
-.LBB5_7:
+	b	.LBB6_2
+.LBB6_7:
 	adrp	x8, custom_mode_table+9
 	ldrb	w8, [x8, :lo12:custom_mode_table+9]
 	cmp	w1, w8
-	b.ne	.LBB5_9
+	b.ne	.LBB6_9
 	adrp	x8, custom_mode_table+12
 	ldr	w8, [x8, :lo12:custom_mode_table+12]
-	b	.LBB5_5
-.LBB5_9:
+	b	.LBB6_5
+.LBB6_9:
 	adrp	x0, .L.str.3
 	ldrb	w2, [x19, #22]
 	add	x0, x0, :lo12:.L.str.3
 	bl	_printk
 	mov	w0, #-8
-	b	.LBB5_2
-.Lfunc_end5:
-	.size	pvi_wf_input, .Lfunc_end5-pvi_wf_input
+	b	.LBB6_2
+.Lfunc_end6:
+	.size	pvi_wf_input, .Lfunc_end6-pvi_wf_input
 	.section	.rodata,"a",@progbits
-.LJTI5_0:
-	.byte	(.LBB5_6-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_6-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_5-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_5-.LBB5_5)>>2
-	.byte	(.LBB5_5-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_5-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_6-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_5-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_5-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_6-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_7-.LBB5_5)>>2
-	.byte	(.LBB5_5-.LBB5_5)>>2
+.LJTI6_0:
+	.byte	(.LBB6_6-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_6-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_5-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_5-.LBB6_5)>>2
+	.byte	(.LBB6_5-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_5-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_6-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_5-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_5-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_6-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_7-.LBB6_5)>>2
+	.byte	(.LBB6_5-.LBB6_5)>>2
 
 	.text
 	.globl	pvi_wf_get_version
@@ -1165,24 +1241,24 @@ pvi_wf_input:
 pvi_wf_get_version:
 	adrp	x8, global_waveform
 	ldr	x9, [x8, :lo12:global_waveform]
-	cbz	x9, .LBB6_4
+	cbz	x9, .LBB7_4
 	adrp	x0, pvi_wf_get_version.spi_id_buffer
 	mov	x8, xzr
 	add	x9, x9, #65
 	add	x0, x0, :lo12:pvi_wf_get_version.spi_id_buffer
-.LBB6_2:
+.LBB7_2:
 	ldrb	w10, [x9, x8]
 	strb	w10, [x0, x8]
 	add	x8, x8, #1
 	cmp	x8, #31
-	b.ne	.LBB6_2
+	b.ne	.LBB7_2
 	strb	wzr, [x0, #31]
 	ret
-.LBB6_4:
+.LBB7_4:
 	mov	x0, xzr
 	ret
-.Lfunc_end6:
-	.size	pvi_wf_get_version, .Lfunc_end6-pvi_wf_get_version
+.Lfunc_end7:
+	.size	pvi_wf_get_version, .Lfunc_end7-pvi_wf_get_version
 
 	.type	pvi_mode_table,@object
 	.section	.rodata,"a",@progbits
