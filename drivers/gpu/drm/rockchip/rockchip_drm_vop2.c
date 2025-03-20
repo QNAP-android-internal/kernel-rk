@@ -1233,6 +1233,11 @@ static bool vop2_is_mirror_win(struct vop2_win *win)
 	return soc_is_rk3566() && (win->feature & WIN_FEATURE_MIRROR);
 }
 
+static bool vop2_win_can_attach_to_vp(struct vop2_video_port *vp, struct vop2_win *win)
+{
+	return win->possible_vp_mask & BIT(vp->id);
+}
+
 static uint64_t vop2_soc_id_fixup(uint64_t soc_id)
 {
 	switch (soc_id) {
@@ -14425,6 +14430,13 @@ static struct drm_plane *vop2_cursor_plane_init(struct vop2_video_port *vp, u8 e
 
 	win = vop2_find_win_by_phys_id(vop2, vp->cursor_win_id);
 	if (win) {
+		if (!vop2_win_can_attach_to_vp(vp, win)) {
+			DRM_DEV_ERROR(vop2->dev,
+				      "Assigned cursor plane: %s can not attach to VP%d\n",
+				      vop2_plane_phys_id_to_string(vp->cursor_win_id), vp->id);
+			return NULL;
+		}
+
 		if (vop2->disable_win_move)
 			possible_crtcs = BIT(registered_num_crtcs);
 		else
@@ -14681,11 +14693,6 @@ static int vop2_crtc_create_post_sharp_property(struct vop2 *vop2, struct drm_cr
 }
 #define RK3566_MIRROR_PLANE_MASK (BIT(ROCKCHIP_VOP2_CLUSTER1) | BIT(ROCKCHIP_VOP2_ESMART1) | \
 				  BIT(ROCKCHIP_VOP2_SMART1))
-
-static inline bool vop2_win_can_attach_to_vp(struct vop2_video_port *vp, struct vop2_win *win)
-{
-	return win->possible_vp_mask & BIT(vp->id);
-}
 
 /*
  * Returns:
@@ -15282,29 +15289,117 @@ static void post_buf_empty_work_event(struct work_struct *work)
 	}
 }
 
+static void vop2_plane_mask_to_possible_vp_mask(struct vop2 *vop2)
+{
+	const struct vop2_data *vop2_data = vop2->data;
+	struct vop2_video_port *vp;
+	struct vop2_win *win;
+	uint32_t plane_mask;
+	uint32_t nr_planes;
+	uint32_t phys_id;
+	int i, j, k;
+
+	for (i = 0; i < vop2->registered_num_wins; i++) {
+		win = &vop2->win[i];
+		win->possible_vp_mask = 0;
+	}
+
+	for (i = 0; i < vop2_data->nr_vps; i++) {
+		vp = &vop2->vps[i];
+		plane_mask = vp->plane_mask;
+		nr_planes = hweight32(plane_mask);
+
+		for (j = 0; j < nr_planes; j++) {
+			phys_id = ffs(plane_mask) - 1;
+
+			for (k = 0; k < vop2->registered_num_wins; k++) {
+				win = &vop2->win[k];
+				if (win->phys_id == phys_id)
+					win->possible_vp_mask |= BIT(i);
+			}
+
+			plane_mask &= ~BIT(phys_id);
+		}
+	}
+}
+
+/*
+ * The function checks whether the 'rockchip,plane-mask' property assigned
+ * in DTS is valid.
+ */
 static bool vop2_plane_mask_check(struct vop2 *vop2)
 {
 	const struct vop2_data *vop2_data = vop2->data;
+	struct vop2_video_port *vp;
+	struct vop2_win *win;
 	char *full_plane, *current_plane;
-	u32 plane_mask = 0;
-	int i;
+	u32 full_plane_mask = 0, plane_mask = 0;
+	u32 phys_id;
+	u32 nr_planes;
+	int primary_plane_id;
+	int i, j;
 
 	/*
-	 * For RK3568 and RK3588, all windows need to be assigned to
-	 * one of all vps, and two of vps can not share the same window.
+	 * If plane_mask is assigned in DTS, then every plane need to be assigned to
+	 * one of all the VPs, and no single plane can be assigned to more than one
+	 * VP.
 	 */
-	if (vop2->version != VOP_VERSION_RK3568 && vop2->version != VOP_VERSION_RK3588)
-		return true;
-
 	for (i = 0; i < vop2_data->nr_vps; i++) {
-		if (plane_mask & vop2->vps[i].plane_mask) {
+		vp = &vop2->vps[i];
+		plane_mask = vp->plane_mask;
+		primary_plane_id = vp->primary_plane_phy_id;
+		nr_planes = hweight32(plane_mask);
+
+		/*
+		 * If the plane mask and primary plane both are assigned in DTS, the
+		 * primary plane should be included in the plane mask of VPx.
+		 */
+		if (plane_mask && primary_plane_id != ROCKCHIP_VOP2_PHY_ID_INVALID &&
+		    !(BIT(primary_plane_id) & plane_mask)) {
+			DRM_WARN("Invalid primary plane %s[0x%lx] for VP%d[plane mask: 0x%08x]\n",
+				 vop2_plane_phys_id_to_string(primary_plane_id),
+				 BIT(primary_plane_id), i, plane_mask);
+			return false;
+		}
+
+		/*
+		 * Every plane assigned to the specific VP should follow the constraints
+		 * of default &vop2_win.possible_vp_mask.
+		 */
+		for (j = 0; j < nr_planes; j++) {
+			phys_id = ffs(plane_mask) - 1;
+			win = vop2_find_win_by_phys_id(vop2, phys_id);
+			if (!win) {
+				DRM_WARN("Invalid plane id %d in VP%d assigned plane mask\n",
+					 phys_id, i);
+				return false;
+			}
+
+			if (!(win->possible_vp_mask & BIT(i))) {
+				DRM_WARN("%s can not attach to VP%d\n",
+					 vop2_plane_phys_id_to_string(phys_id), i);
+				return false;
+			}
+
+			plane_mask &= ~BIT(phys_id);
+		}
+
+		if (full_plane_mask & vop2->vps[i].plane_mask) {
 			DRM_WARN("the same window can't be assigned to two vp\n");
 			return false;
 		}
-		plane_mask |= vop2->vps[i].plane_mask;
+		full_plane_mask |= vop2->vps[i].plane_mask;
 	}
 
-	if (plane_mask != vop2_data->plane_mask_base) {
+	/*
+	 * For VOP3, the DTS assignment of plane_mask is not mandatory. If no plane_mask
+	 * assignment, the planes can be switched between different CRTCs according to
+	 * the &drm_plane.possible_crtcs.
+	 */
+	if (is_vop3(vop2) && !full_plane_mask)
+		return true;
+
+	if (full_plane_mask != vop2_data->plane_mask_base) {
 		full_plane = vop2_plane_mask_to_string(vop2_data->plane_mask_base);
 		current_plane = vop2_plane_mask_to_string(plane_mask);
 		DRM_WARN("all windows should be assigned, full plane mask: %s[0x%x], current plane mask: %s[0x%x]\n",
@@ -15313,6 +15408,12 @@ static bool vop2_plane_mask_check(struct vop2 *vop2)
 		kfree(current_plane);
 		return false;
 	}
+
+	/*
+	 * If plane_mask assigned in DTS is valid, then convert it to &vop2_win.possible_vp_mask
+	 * and replace the default one with it.
+	 */
+	vop2_plane_mask_to_possible_vp_mask(vop2);
 
 	return true;
 }
@@ -15352,7 +15453,23 @@ static void vop2_plane_mask_assign(struct vop2 *vop2, struct device_node *vop_ou
 	struct device_node *child;
 	int active_vp_num = 0;
 	int vp_id;
+	int splice_vp_id = -1;
 	int i = 0;
+
+	/*
+	 * For VOP3, users can switch planes between different CRTCs base on the
+	 * &drm_plane.possible_crtcs that exported to the userspace. Therefore,
+	 * there is no need to set the &vop2_video_port.plane_mask and
+	 * &vop2_video_port.primary_plane_phy_id by default, which are used to
+	 * fix the binding relationship between the plane and the CRTC for VOP2.
+	 */
+	if (is_vop3(vop2)) {
+		for (i = 0; i < vop2->data->nr_vps; i++) {
+			vop2->vps[i].plane_mask = 0;
+			vop2->vps[i].primary_plane_phy_id = ROCKCHIP_VOP2_PHY_ID_INVALID;
+		}
+		return;
+	}
 
 	for_each_child_of_node(vop_out_node, child) {
 		if (vop2_get_vp_of_status(child))
@@ -15364,12 +15481,37 @@ static void vop2_plane_mask_assign(struct vop2 *vop2, struct device_node *vop_ou
 	plane_mask = vop2_data->plane_mask;
 	plane_mask += (active_vp_num - 1) * ROCKCHIP_MAX_CRTC;
 
+	i = 0;
 	for_each_child_of_node(vop_out_node, child) {
 		of_property_read_u32(child, "reg", &vp_id);
+
+		if (vp_id == splice_vp_id)
+			continue;
+
 		if (vop2_get_vp_of_status(child)) {
 			vop2->vps[vp_id].plane_mask = vop2_vp_plane_mask_to_bitmap(&plane_mask[i]);
 			vop2->vps[vp_id].primary_plane_phy_id = plane_mask[i].primary_plane_id;
 			i++;
+
+			/*
+			 * For rk3588, the main window should attach to the VP0 while
+			 * the splice window should attach to the VP1 when the display
+			 * mode is over 4k.
+			 * If only one VP is enabled and the plane mask is not assigned
+			 * in DTS, all main windows will be assigned to the enabled VPx,
+			 * and all splice windows will be assigned to the VPx+1, in order
+			 * to ensure that the splice mode work well.
+			 */
+			if (vop2->version == VOP_VERSION_RK3588) {
+				if (active_vp_num == 1) {
+					splice_vp_id = (vp_id + 1) % vop2->data->nr_vps;
+					vop2->vps[splice_vp_id].plane_mask =
+							vop2_vp_plane_mask_to_bitmap(&plane_mask[i]);
+					vop2->vps[splice_vp_id].primary_plane_phy_id =
+							plane_mask[i].primary_plane_id;
+					continue;
+				}
+			}
 		} else {
 			vop2->vps[vp_id].plane_mask = 0;
 			vop2->vps[vp_id].primary_plane_phy_id = ROCKCHIP_VOP2_PHY_ID_INVALID;
@@ -15846,7 +15988,7 @@ static int vop2_bind(struct device *dev, struct device *master, void *data)
 
 		for_each_child_of_node(vop_out_node, child) {
 			u32 plane_mask = 0;
-			u32 primary_plane_phy_id = 0;
+			u32 primary_plane_phy_id = ROCKCHIP_VOP2_PHY_ID_INVALID;
 			u32 vp_id = 0;
 			u32 val = 0;
 
