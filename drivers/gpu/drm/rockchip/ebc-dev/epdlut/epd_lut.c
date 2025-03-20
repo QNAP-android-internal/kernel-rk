@@ -69,15 +69,15 @@ const char *epd_lut_get_wf_version(void)
 	return NULL;
 }
 
-int epd_lut_get(struct epd_lut_data *output, enum epd_lut_type lut_type, int temperture, int pic, int regal_pix)
+int epd_lut_get(struct epd_lut_data *output, enum epd_lut_type lut_type, int temperature, int pic, int regal_pix)
 {
-	return lut_get(output, lut_type, temperture, pic, regal_pix);
+	return lut_get(output, lut_type, temperature, pic, regal_pix);
 }
 
-int epd_lut_get_original(struct epd_lut_data *output, enum epd_lut_type lut_type, int temperture, int pic)
+int epd_lut_get_original(struct epd_lut_data *output, enum epd_lut_type lut_type, int temperature, int pic)
 {
 	if (lut_get_original)
-		return lut_get_original(output, lut_type, temperture, pic);
+		return lut_get_original(output, lut_type, temperature, pic);
 	else
 		return 0;
 }
