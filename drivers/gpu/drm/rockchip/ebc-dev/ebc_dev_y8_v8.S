@@ -9,7 +9,7 @@
 	.file	"ebc_dev_y8.c"
 
 	.section	.initcall6s.init,"a",@progbits
-__initcall__kmod_rkebc__465_4507_ebc_init6s:
+__initcall__kmod_rkebc__465_4518_ebc_init6s:
 .Ltmp0:
 	.word	ebc_init-.Ltmp0
 	.text
@@ -1774,7 +1774,7 @@ ebc_lut_table_init:
 	ldr	x0, [x19, #96]
 	add	x1, x1, :lo12:.L.str.64
 	add	x2, x2, :lo12:.L__func__.ebc_lut_table_init
-	mov	w3, #3949
+	mov	w3, #3960
 	bl	_dev_err
 	mov	w0, #-12
 	b	.LBB9_9
@@ -2107,9 +2107,9 @@ ebc_other_init:
 	str	w9, [x19, #556]
 	str	w9, [x19, #564]
 	b.eq	.LBB11_2
-	adrp	x8, .L.str.104
+	adrp	x8, .L.str.105
 	stp	xzr, xzr, [x19, #424]
-	add	x8, x8, :lo12:.L.str.104
+	add	x8, x8, :lo12:.L.str.105
 	stp	xzr, xzr, [x19, #408]
 	stp	xzr, xzr, [x19, #392]
 	stp	xzr, xzr, [x19, #376]
@@ -2172,24 +2172,24 @@ ebc_logo_init:
 	mrs	x8, SP_EL0
 	ldr	x8, [x8, #1584]
 	mov	x20, x1
-	adrp	x1, .L.str.106
+	adrp	x1, .L.str.107
 	mov	x19, x0
-	add	x1, x1, :lo12:.L.str.106
+	add	x1, x1, :lo12:.L.str.107
 	str	x8, [sp, #8]
 	ldr	x22, [x9, :lo12:saved_command_line]
 	str	xzr, [sp]
 	mov	x0, x22
 	bl	strstr
-	adrp	x1, .L.str.107
+	adrp	x1, .L.str.108
 	mov	x21, x0
-	add	x1, x1, :lo12:.L.str.107
+	add	x1, x1, :lo12:.L.str.108
 	mov	x0, x22
 	bl	strstr
 	mov	x22, x0
 	cbz	x21, .LBB12_3
-	adrp	x1, .L.str.108
+	adrp	x1, .L.str.109
 	add	x2, sp, #4
-	add	x1, x1, :lo12:.L.str.108
+	add	x1, x1, :lo12:.L.str.109
 	mov	x0, x21
 	bl	sscanf
 	ldr	w2, [sp, #4]
@@ -2201,9 +2201,9 @@ ebc_logo_init:
 	mov	w23, #1
 	cbz	x22, .LBB12_28
 .LBB12_4:
-	adrp	x1, .L.str.111
+	adrp	x1, .L.str.112
 	mov	x2, sp
-	add	x1, x1, :lo12:.L.str.111
+	add	x1, x1, :lo12:.L.str.112
 	mov	x0, x22
 	bl	sscanf
 	ldr	w2, [sp]
@@ -2214,8 +2214,8 @@ ebc_logo_init:
 	mov	w24, #1
 	cbnz	w23, .LBB12_29
 .LBB12_6:
-	adrp	x0, .L.str.115
-	add	x0, x0, :lo12:.L.str.115
+	adrp	x0, .L.str.116
+	add	x0, x0, :lo12:.L.str.116
 	bl	ebc_empty_buf_get
 	cbz	x0, .LBB12_12
 	ldp	w8, w9, [x20, #76]
@@ -2247,8 +2247,8 @@ ebc_logo_init:
 	bl	ebc_add_to_dsp_buf_list
 .LBB12_12:
 	tbnz	w24, #0, .LBB12_18
-	adrp	x0, .L.str.115
-	add	x0, x0, :lo12:.L.str.115
+	adrp	x0, .L.str.116
+	add	x0, x0, :lo12:.L.str.116
 	bl	ebc_empty_buf_get
 	cbz	x0, .LBB12_18
 	ldp	w8, w9, [x20, #76]
@@ -2308,9 +2308,9 @@ ebc_logo_init:
 	add	sp, sp, #80
 	ret
 .LBB12_26:
-	adrp	x1, .L.str.109
+	adrp	x1, .L.str.110
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.109
+	add	x1, x1, :lo12:.L.str.110
 	bl	_dev_info
 	ldp	w9, w8, [x20, #76]
 	mov	w1, #3520
@@ -2333,18 +2333,18 @@ ebc_logo_init:
 	mov	w24, #1
 	cbz	w23, .LBB12_6
 .LBB12_29:
-	adrp	x1, .L.str.114
+	adrp	x1, .L.str.115
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.114
+	add	x1, x1, :lo12:.L.str.115
 	bl	_dev_info
 	ldr	x0, [x19, #16]
 	cbz	x0, .LBB12_33
 	bl	ebc_pmic_verity_vcom
 	b	.LBB12_34
 .LBB12_31:
-	adrp	x1, .L.str.112
+	adrp	x1, .L.str.113
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.112
+	add	x1, x1, :lo12:.L.str.113
 	bl	_dev_info
 	ldp	w9, w8, [x20, #76]
 	mov	w1, #3520
@@ -2368,8 +2368,8 @@ ebc_logo_init:
 	ldr	x0, [x19, #24]
 	bl	ebc_regulator_verity_vcom
 .LBB12_34:
-	adrp	x0, .L.str.116
-	add	x0, x0, :lo12:.L.str.116
+	adrp	x0, .L.str.117
+	add	x0, x0, :lo12:.L.str.117
 	bl	ebc_empty_buf_get
 	ldp	w8, w9, [x20, #76]
 	mov	x23, x0
@@ -2388,15 +2388,15 @@ ebc_logo_init:
 	stp	w8, w9, [x23, #60]
 	b	.LBB12_11
 .LBB12_35:
-	adrp	x1, .L.str.110
+	adrp	x1, .L.str.111
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.110
+	add	x1, x1, :lo12:.L.str.111
 	bl	_dev_err
 	b	.LBB12_24
 .LBB12_36:
-	adrp	x1, .L.str.113
+	adrp	x1, .L.str.114
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.113
+	add	x1, x1, :lo12:.L.str.114
 	bl	_dev_err
 	b	.LBB12_24
 .LBB12_37:
@@ -3018,36 +3018,34 @@ ebc_auto_assist_tast_function:
 	.p2align	2
 	.type	ebc_thread,@function
 ebc_thread:
-	sub	sp, sp, #208
+	sub	sp, sp, #240
 	str	x30, [x18], #8
 	adrp	x8, global_ebc
-	stp	x20, x19, [sp, #192]
-	stp	x29, x30, [sp, #112]
-	add	x29, sp, #112
-	stp	x28, x27, [sp, #128]
-	mov	x27, #263882790666240
+	stp	x20, x19, [sp, #224]
+	stp	x29, x30, [sp, #144]
+	add	x29, sp, #144
+	stp	x28, x27, [sp, #160]
+	mov	x28, #1030792151040
 	ldr	x19, [x8, :lo12:global_ebc]
-	stp	x26, x25, [sp, #144]
-	stp	x24, x23, [sp, #160]
-	mov	w25, #1
-	stp	x22, x21, [sp, #176]
-	mov	w24, #-268435456
-	add	x8, x19, #800
-	add	x9, x19, #224
-	mov	x22, #1030792151040
-	mov	x21, #67553994410557440
-	str	x8, [sp, #56]
-	add	x8, x19, #320
-	stp	x8, x9, [sp, #24]
-	add	x8, x19, #368
+	stp	x26, x25, [sp, #176]
+	stp	x24, x23, [sp, #192]
+	mov	w25, #-268435456
+	stp	x22, x21, [sp, #208]
+	mov	x24, #263882790666240
+	add	x8, x19, #224
 	add	x9, x19, #40
-	str	x8, [sp, #16]
+	mov	x22, #67553994410557440
+	str	x8, [sp, #48]
+	add	x8, x19, #800
+	stur	x8, [x29, #-56]
+	add	x8, x19, #320
+	str	x8, [sp, #40]
 	add	x8, x19, #276
 	stur	x8, [x29, #-48]
 	add	x8, x19, #672
-	stp	x8, x9, [sp]
+	stp	x8, x9, [sp, #16]
 	add	x8, x19, #712
-	str	x8, [sp, #40]
+	str	x8, [sp, #72]
 	b	.LBB16_3
 .LBB16_1:
 	ldr	x0, [x19, #432]
@@ -3064,10 +3062,10 @@ ebc_thread:
 	ldr	w8, [x19, #756]
 	cbz	w8, .LBB16_24
 .LBB16_6:
-	ldr	x8, [sp, #56]
+	ldur	x8, [x29, #-56]
 	ldr	w8, [x8]
 	cmp	w8, #1
-	b.ge	.LBB16_61
+	b.ge	.LBB16_62
 .LBB16_7:
 	mov	x0, x20
 	bl	ebc_buf_release
@@ -3085,6 +3083,7 @@ ebc_thread:
 	cbz	x0, .LBB16_19
 	ldr	w2, [x0, #40]
 	mov	x20, x0
+	mov	w3, #1
 	cmp	w2, #21
 	b.ne	.LBB16_21
 .LBB16_13:
@@ -3094,37 +3093,38 @@ ebc_thread:
 	ldr	w2, [x20, #40]
 .LBB16_15:
 	cmp	w2, #23
-	b.hi	.LBB16_371
-	lsl	w8, w25, w2
+	b.hi	.LBB16_390
+	lsl	w8, w3, w2
 	tst	w8, #0x1ff80
-	b.ne	.LBB16_27
+	b.ne	.LBB16_28
 	mov	w9, #124
 	movk	w9, #34, lsl #16
 	tst	w8, w9
-	b.eq	.LBB16_80
-	mov	w26, #1
-	b	.LBB16_28
+	b.eq	.LBB16_162
+	mov	w8, #2
+	b	.LBB16_29
 .LBB16_19:
 	ldr	w8, [x19, #312]
-	cbz	w8, .LBB16_34
+	cbz	w8, .LBB16_35
 .LBB16_20:
 	str	wzr, [x19, #312]
 	b	.LBB16_3
 .LBB16_21:
 	ldr	w9, [x19, #760]
 	ldr	w8, [x19, #464]
-	cbz	w9, .LBB16_59
+	cbz	w9, .LBB16_60
 	cmp	w8, #1
-	b.eq	.LBB16_69
+	b.eq	.LBB16_151
 	cmp	w8, #2
-	b.eq	.LBB16_72
-	b	.LBB16_73
+	b.eq	.LBB16_154
+	b	.LBB16_155
 .LBB16_24:
 	ldr	w8, [x19, #464]
 	cmp	w8, #1
-	b.eq	.LBB16_62
+	b.eq	.LBB16_63
+	mov	w26, #1
 	cmp	w8, #2
-	b.ne	.LBB16_273
+	b.ne	.LBB16_66
 .LBB16_26:
 	ldr	x8, [x19, #432]
 	ldr	x0, [x19, #368]
@@ -3136,25 +3136,28 @@ ebc_thread:
 	ldrsw	x2, [x19, #252]
 	ldr	x1, [x8, #16]
 	bl	memcpy
-	b	.LBB16_273
 .LBB16_27:
-	mov	w26, wzr
+	mov	w26, #1
+	b	.LBB16_66
 .LBB16_28:
+	mov	w8, #1
+.LBB16_29:
+	stur	w8, [x29, #-64]
 	ldur	x8, [x29, #-48]
 	ldr	w8, [x8]
-	cbz	w8, .LBB16_44
-	ldr	x8, [sp, #56]
+	cbz	w8, .LBB16_45
+	ldur	x8, [x29, #-56]
 	ldr	w8, [x8]
 	cmp	w8, #1
-	b.ge	.LBB16_257
-.LBB16_30:
+	b.ge	.LBB16_355
+.LBB16_31:
 	sub	x0, x29, #40
 	mov	w1, wzr
 	stp	xzr, xzr, [x29, #-16]
 	stp	xzr, xzr, [x29, #-32]
 	stur	xzr, [x29, #-40]
 	bl	init_wait_entry
-.LBB16_31:
+.LBB16_32:
 	adrp	x0, ebc_thread_wq
 	sub	x1, x29, #40
 	add	x0, x0, :lo12:ebc_thread_wq
@@ -3162,11 +3165,11 @@ ebc_thread:
 	bl	prepare_to_wait_event
 	ldur	x8, [x29, #-48]
 	ldr	w8, [x8]
-	cbz	w8, .LBB16_42
-	cbnz	x0, .LBB16_43
+	cbz	w8, .LBB16_43
+	cbnz	x0, .LBB16_44
 	bl	schedule
-	b	.LBB16_31
-.LBB16_34:
+	b	.LBB16_32
+.LBB16_35:
 	sub	x0, x29, #40
 	mov	w1, wzr
 	stp	xzr, xzr, [x29, #-16]
@@ -3179,53 +3182,54 @@ ebc_thread:
 	mov	w2, #1
 	bl	prepare_to_wait_event
 	ldr	w8, [x19, #312]
-	cbz	w8, .LBB16_65
-.LBB16_35:
+	cbz	w8, .LBB16_147
+.LBB16_36:
 	adrp	x0, ebc_thread_wq
 	sub	x1, x29, #40
 	add	x0, x0, :lo12:ebc_thread_wq
 	bl	finish_wait
 	ldr	w8, [x19, #312]
 	cbnz	w8, .LBB16_3
-.LBB16_36:
+.LBB16_37:
 	ldur	x20, [x29, #-48]
 	ldr	w8, [x20]
 	cmp	w8, #1
-	b.ne	.LBB16_100
+	b.ne	.LBB16_180
 	sub	x0, x29, #40
 	mov	w1, wzr
 	stp	xzr, xzr, [x29, #-16]
 	stp	xzr, xzr, [x29, #-32]
 	stur	xzr, [x29, #-40]
 	bl	init_wait_entry
-.LBB16_38:
+.LBB16_39:
 	adrp	x0, ebc_thread_wq
 	sub	x1, x29, #40
 	add	x0, x0, :lo12:ebc_thread_wq
 	mov	w2, #1
 	bl	prepare_to_wait_event
 	ldr	w8, [x20]
-	cbz	w8, .LBB16_108
+	cbz	w8, .LBB16_188
 	ldr	w8, [x19, #312]
-	cbnz	w8, .LBB16_108
-	cbnz	x0, .LBB16_109
+	cbnz	w8, .LBB16_188
+	cbnz	x0, .LBB16_189
 	bl	schedule
-	b	.LBB16_38
-.LBB16_42:
+	b	.LBB16_39
+.LBB16_43:
 	adrp	x0, ebc_thread_wq
 	sub	x1, x29, #40
 	add	x0, x0, :lo12:ebc_thread_wq
 	bl	finish_wait
-.LBB16_43:
-	ldr	x8, [sp, #56]
+.LBB16_44:
+	ldur	x8, [x29, #-56]
+	mov	w3, #1
 	ldr	w8, [x8]
 	cmp	w8, #1
-	b.ge	.LBB16_258
-.LBB16_44:
+	b.ge	.LBB16_356
+.LBB16_45:
 	ldr	w8, [x19, #464]
 	sub	w8, w8, #3
 	cmp	w8, #1
-	b.hi	.LBB16_46
+	b.hi	.LBB16_47
 	ldr	x8, [x19, #432]
 	str	wzr, [x19, #776]
 	str	wzr, [x19, #784]
@@ -3233,1157 +3237,97 @@ ebc_thread:
 	ldrsw	x2, [x19, #252]
 	ldr	x0, [x8, #16]
 	bl	memcpy
-.LBB16_46:
+	mov	w3, #1
+.LBB16_47:
 	ldr	w8, [x20, #40]
 	cmp	w8, #11
-	b.hi	.LBB16_134
-	lsl	w8, w25, w8
-	mov	w9, #2124
-	tst	w8, w9
-	b.eq	.LBB16_52
-	ldr	w8, [x19, #252]
-	add	w9, w8, #7
-	cmp	w8, #0
-	csel	w9, w9, w8, lt
-	cmp	w8, #8
-	b.lt	.LBB16_106
-	ldr	x8, [x19, #432]
-	asr	w9, w9, #3
-	ldr	x10, [x20, #16]
-	ldr	x8, [x8, #16]
-.LBB16_50:
-	ldr	x11, [x10]
-	ldr	x12, [x8]
-	cmp	x11, x12
-	b.ne	.LBB16_134
-	add	x8, x8, #8
-	add	x10, x10, #8
-	subs	w9, w9, #1
-	b.ne	.LBB16_50
-	b	.LBB16_106
-.LBB16_52:
-	tst	w8, #0x180
-	b.eq	.LBB16_134
-	ldr	w8, [x19, #788]
+	b.hi	.LBB16_218
+	lsl	w9, w3, w8
+	mov	w10, #2124
+	tst	w9, w10
+	b.eq	.LBB16_53
 	ldr	w9, [x19, #252]
-	cbz	w8, .LBB16_102
-	add	w8, w9, #7
+	add	w10, w9, #7
 	cmp	w9, #0
-	csel	w11, w8, w9, lt
+	csel	w10, w10, w9, lt
 	cmp	w9, #8
-	b.lt	.LBB16_106
-	mov	w10, #50
-	mov	w12, #34079
-	movk	w12, #20971, lsl #16
-	mov	w8, wzr
-	mul	w9, w9, w10
-	ldr	x10, [x19, #432]
-	asr	w11, w11, #3
-	smull	x9, w9, w12
-	lsr	x12, x9, #63
-	asr	x13, x9, #40
-	ldr	x9, [x10, #16]
-	add	w10, w13, w12
-	ldr	x12, [x20, #16]
-.LBB16_56:
-	ldr	x13, [x12]
-	ldr	x14, [x9]
-	cmp	x13, x14
-	cinc	w8, w8, ne
-	cmp	w8, w10
-	b.gt	.LBB16_132
+	b.lt	.LBB16_186
+	ldr	x9, [x19, #432]
+	asr	w10, w10, #3
+	ldr	x11, [x20, #16]
+	ldr	x9, [x9, #16]
+.LBB16_51:
+	ldr	x12, [x11]
+	ldr	x13, [x9]
+	cmp	x12, x13
+	b.ne	.LBB16_218
 	add	x9, x9, #8
-	add	x12, x12, #8
-	subs	w11, w11, #1
-	b.ne	.LBB16_56
-	cbnz	w8, .LBB16_134
-	b	.LBB16_106
-.LBB16_59:
+	add	x11, x11, #8
+	subs	w10, w10, #1
+	b.ne	.LBB16_51
+	b	.LBB16_186
+.LBB16_53:
+	tst	w9, #0x180
+	b.eq	.LBB16_218
+	ldr	w9, [x19, #788]
+	ldr	w10, [x19, #252]
+	cbz	w9, .LBB16_182
+	add	w9, w10, #7
+	cmp	w10, #0
+	csel	w12, w9, w10, lt
+	cmp	w10, #8
+	b.lt	.LBB16_186
+	mov	w11, #50
+	mov	w13, #34079
+	movk	w13, #20971, lsl #16
+	mov	w9, wzr
+	mul	w10, w10, w11
+	ldr	x11, [x19, #432]
+	asr	w12, w12, #3
+	smull	x10, w10, w13
+	lsr	x13, x10, #63
+	asr	x14, x10, #40
+	ldr	x10, [x11, #16]
+	add	w11, w14, w13
+	ldr	x13, [x20, #16]
+.LBB16_57:
+	ldr	x14, [x13]
+	ldr	x15, [x10]
+	cmp	x14, x15
+	cinc	w9, w9, ne
+	cmp	w9, w11
+	b.gt	.LBB16_216
+	add	x10, x10, #8
+	add	x13, x13, #8
+	subs	w12, w12, #1
+	b.ne	.LBB16_57
+	cbnz	w9, .LBB16_218
+	b	.LBB16_186
+.LBB16_60:
 	cmp	w8, #4
 	b.ne	.LBB16_13
 	ldur	x8, [x29, #-48]
 	ldr	w8, [x8]
-	cbnz	w8, .LBB16_73
+	cbnz	w8, .LBB16_155
 	b	.LBB16_13
-.LBB16_61:
-	ldr	x8, [sp, #24]
+.LBB16_62:
+	ldr	x8, [sp, #40]
 	adrp	x1, .L.str.73
 	add	x1, x1, :lo12:.L.str.73
 	ldr	x0, [x8]
 	bl	_dev_info
 	b	.LBB16_7
-.LBB16_62:
+.LBB16_63:
 	ldr	w2, [x19, #296]
-	cbz	w2, .LBB16_116
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_359
-.LBB16_64:
-	str	wzr, [x19, #296]
-	b	.LBB16_273
-.LBB16_65:
-	mov	w8, #13
-.LBB16_66:
-	cbnz	x0, .LBB16_36
-	mov	x0, x8
-	bl	schedule_timeout
-	mov	x20, x0
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldr	w9, [x19, #312]
-	cmp	x20, #0
-	ccmp	w9, #0, #4, eq
-	csinc	x8, x20, xzr, eq
-	cbnz	w9, .LBB16_35
-	cbnz	x8, .LBB16_66
-	b	.LBB16_35
-.LBB16_69:
-	ldr	w2, [x19, #296]
-	cbz	w2, .LBB16_72
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_362
-.LBB16_71:
-	str	wzr, [x19, #296]
-	b	.LBB16_73
-.LBB16_72:
-	ldr	x8, [x19, #432]
-	ldr	x0, [x19, #368]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-	ldr	x8, [x19, #440]
-	ldr	x0, [x19, #360]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-.LBB16_73:
-	ldr	x8, [x19, #440]
-	ldr	w9, [x20, #40]
-	ldr	w8, [x8, #40]
-	cmp	w9, w8
-	b.eq	.LBB16_94
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_94
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_356
-.LBB16_76:
-	sub	x0, x29, #40
-	mov	w1, wzr
-	stp	xzr, xzr, [x29, #-16]
-	stp	xzr, xzr, [x29, #-32]
-	stur	xzr, [x29, #-40]
-	bl	init_wait_entry
-.LBB16_77:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_92
-	cbnz	x0, .LBB16_93
-	bl	schedule
-	b	.LBB16_77
-.LBB16_80:
-	mov	w9, #1
-	movk	w9, #192, lsl #16
-	tst	w8, w9
-	b.eq	.LBB16_371
-	ldr	w8, [x19, #464]
-	str	x20, [x19, #440]
-	cmp	w8, #4
-	b.eq	.LBB16_236
-	cmp	w8, #2
-	b.eq	.LBB16_124
-	cmp	w8, #1
-	b.ne	.LBB16_242
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_124
-	ldr	w8, [x19, #776]
-	cbnz	w8, .LBB16_87
-	ldr	w8, [x19, #784]
-	cbz	w8, .LBB16_124
-.LBB16_87:
-	ldr	x8, [sp, #56]
-	mov	x9, x20
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_391
-.LBB16_88:
-	ldr	w8, [x19, #252]
-	ldr	x1, [x19, #376]
-	cmp	w8, #1
-	b.lt	.LBB16_360
-	ldr	x9, [x9, #16]
-.LBB16_90:
-	ldrb	w10, [x9], #1
-	ldrb	w11, [x1]
-	mvn	w12, w10
-	and	w12, w12, #0xf0
-	cmp	w11, #8
-	csel	w10, w10, w12, eq
-	subs	x8, x8, #1
-	strb	w10, [x1], #1
-	b.ne	.LBB16_90
-	ldr	x1, [x19, #376]
-	ldr	w8, [x19, #252]
-	b	.LBB16_361
-.LBB16_92:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-.LBB16_93:
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_357
-.LBB16_94:
-	mov	w8, #4
-	str	x20, [x19, #440]
-	ldp	x3, x4, [x19, #384]
-	str	w8, [x19, #464]
-	ldr	x0, [x19, #360]
-	ldr	x1, [x19, #240]
-	ldr	x2, [x20, #16]
-	ldr	x5, [sp, #32]
-	bl	refresh_new_image
-	ldr	w8, [x19, #276]
-	cbnz	w8, .LBB16_127
-	str	w25, [x19, #276]
-	mov	x0, x19
-	ldr	w1, [x20, #40]
-	mov	w2, wzr
-	bl	ebc_lut_update
-	ldr	w9, [x19, #800]
-	ldr	w8, [x19, #328]
-	cmp	w9, #1
-	strh	w8, [x19, #280]
-	b.ge	.LBB16_355
-.LBB16_96:
-	ldr	x20, [sp, #32]
-	mov	w6, #1
-	ldp	x4, x0, [x19, #392]
-	ldp	x1, x2, [x19, #360]
-	mov	x5, x20
-	ldr	w8, [x19, #204]
-	ldr	x3, [x19, #384]
-	cbz	w8, .LBB16_113
-	bl	get_overlay_image2
-	ldr	w8, [x19, #284]
-	cbz	w8, .LBB16_114
-.LBB16_98:
-	ldp	x1, x2, [x19, #360]
-	mov	x5, x20
-	mov	w6, #1
-	ldp	x3, x4, [x19, #384]
-	ldr	w8, [x19, #204]
-	ldr	x0, [x19, #408]
-	cbz	w8, .LBB16_125
-	bl	get_overlay_image2
-	b	.LBB16_126
-.LBB16_100:
-	bl	ebc_get_dsp_list_enum_num
-	cbnz	w0, .LBB16_3
-	bl	ebc_get_osd_list_enum_num
-	cbnz	w0, .LBB16_3
-	b	.LBB16_266
-.LBB16_102:
-	add	w8, w9, #7
-	cmp	w9, #0
-	csel	w10, w8, w9, lt
-	cmp	w9, #8
-	b.lt	.LBB16_106
-	ldr	x8, [x19, #432]
-	asr	w9, w10, #3
-	ldr	x10, [x20, #16]
-	ldr	x8, [x8, #16]
-.LBB16_104:
-	ldr	x11, [x10]
-	ldr	x12, [x8]
-	cmp	x11, x12
-	b.ne	.LBB16_134
-	add	x8, x8, #8
-	add	x10, x10, #8
-	subs	w9, w9, #1
-	b.ne	.LBB16_104
-.LBB16_106:
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_259
-.LBB16_107:
-	str	x20, [x19, #440]
-	b	.LBB16_386
-.LBB16_108:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-.LBB16_109:
-	bl	ebc_get_dsp_list_enum_num
-	cbnz	w0, .LBB16_3
-	bl	ebc_get_osd_list_enum_num
-	cbnz	w0, .LBB16_3
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_266
-	ldr	w8, [x19, #312]
-	cbnz	w8, .LBB16_20
-	b	.LBB16_267
-.LBB16_113:
-	bl	get_overlay_image
-	ldr	w8, [x19, #284]
-	cbnz	w8, .LBB16_98
-.LBB16_114:
-	ldr	w8, [x19, #800]
-	str	wzr, [x19, #276]
-	str	w25, [x19, #764]
-	cmp	w8, #1
-	b.lt	.LBB16_127
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.101
-	adrp	x2, .L__func__.ebc_overlay_bg_frame_start
-	add	x1, x1, :lo12:.L.str.101
-	add	x2, x2, :lo12:.L__func__.ebc_overlay_bg_frame_start
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_127
-.LBB16_116:
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_26
-	ldr	w8, [x19, #776]
-	cbnz	w8, .LBB16_119
-	ldr	w8, [x19, #784]
-	cbz	w8, .LBB16_26
-.LBB16_119:
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_381
-.LBB16_120:
-	ldr	w8, [x19, #252]
-	ldr	x1, [x19, #376]
-	cmp	w8, #1
-	b.lt	.LBB16_271
-	ldr	x9, [x19, #440]
-	ldr	x9, [x9, #16]
-.LBB16_122:
-	ldrb	w10, [x9], #1
-	ldrb	w11, [x1]
-	mvn	w12, w10
-	and	w12, w12, #0xf0
-	cmp	w11, #8
-	csel	w10, w10, w12, eq
-	subs	x8, x8, #1
-	strb	w10, [x1], #1
-	b.ne	.LBB16_122
-	ldr	x1, [x19, #376]
-	ldr	w8, [x19, #252]
-	b	.LBB16_272
-.LBB16_124:
-	ldr	x8, [x19, #432]
-	ldr	x0, [x19, #368]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-	b	.LBB16_262
-.LBB16_125:
-	bl	get_overlay_image
-.LBB16_126:
-	ldr	x0, [sp, #8]
-	mov	x1, x20
-	str	wzr, [x19, #112]
-	bl	flip
-.LBB16_127:
-	ldr	x8, [x19, #440]
-	ldr	w8, [x8, #40]
-	cmp	w8, #23
-	b.hi	.LBB16_129
-	mov	w9, #1
-	lsl	w8, w25, w8
-	movk	w9, #192, lsl #16
-	tst	w8, w9
-	b.ne	.LBB16_386
-.LBB16_129:
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_386
-	ldr	w8, [x19, #800]
-	str	wzr, [x19, #764]
-	cmp	w8, #1
-	b.ge	.LBB16_367
-.LBB16_131:
-	adrp	x8, jiffies
-	ldr	x20, [x8, :lo12:jiffies]
-	ldrb	w8, [x19, #280]
-	add	w8, w8, w8, lsl #1
-	lsl	w0, w8, #2
-	bl	__msecs_to_jiffies
-	add	x1, x0, x20
-	ldr	x0, [sp]
-	b	.LBB16_385
-.LBB16_132:
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_389
-.LBB16_133:
 	mov	w26, #1
-.LBB16_134:
-	str	x20, [x19, #440]
-	cmp	w26, #0
-	ldr	w1, [x20, #40]
-	cset	w2, ne
-	cinc	w8, w25, ne
-	cmp	w1, #12
-	str	w8, [sp, #52]
-	b.eq	.LBB16_139
-	cmp	w1, #14
-	b.eq	.LBB16_141
-	cmp	w1, #13
-	b.ne	.LBB16_144
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_144
-	mov	x0, x19
-	mov	w1, #14
-	bl	ebc_lut_update
-	ldrb	w8, [x19, #328]
-	mov	w9, #171
-	mul	w8, w8, w9
-	mov	w9, #3
-	lsr	w8, w8, #9
-	strb	w9, [x19, #280]
-	strb	w9, [x19, #872]
-	strb	w8, [x19, #873]
-	ldr	w8, [x19, #780]
-	cbnz	w8, .LBB16_145
-	b	.LBB16_149
-.LBB16_139:
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_144
-	mov	x0, x19
-	mov	w1, #14
-	bl	ebc_lut_update
-	ldrb	w8, [x19, #328]
-	mov	w9, #4
-	lsr	w8, w8, #2
-	b	.LBB16_143
-.LBB16_141:
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_144
-	mov	x0, x19
-	mov	w1, #14
-	bl	ebc_lut_update
-	ldrb	w8, [x19, #328]
-	mov	w9, #205
-	mul	w8, w8, w9
-	mov	w9, #5
-	lsr	w8, w8, #10
-.LBB16_143:
-	strb	w9, [x19, #280]
-	mov	w9, #2
-	strb	w8, [x19, #873]
-	strb	w9, [x19, #872]
-	ldr	w8, [x19, #780]
-	cbnz	w8, .LBB16_145
-	b	.LBB16_149
-.LBB16_144:
-	mov	x0, x19
-	bl	ebc_lut_update
-	ldr	w8, [x19, #328]
-	strb	w8, [x19, #280]
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_149
-.LBB16_145:
-	ldr	w9, [x20, #40]
-	sub	w9, w9, #12
-	cmp	w9, #2
-	b.hi	.LBB16_149
-	ldr	w8, [x19, #776]
-	ldr	x9, [x19, #432]
-	ldr	x10, [sp, #16]
-	cmp	w8, #0
-	ldrsw	x2, [x19, #252]
-	add	x9, x9, #16
-	csel	x8, x10, x9, eq
-	csel	x9, x9, x10, eq
-	ldr	x0, [x8]
-	ldr	x1, [x9]
-	bl	memcpy
-	ldr	w8, [x19, #784]
-	cbnz	w8, .LBB16_148
-	ldr	x0, [x19, #376]
-	mov	w1, wzr
-	ldrsw	x2, [x19, #252]
-	bl	memset
-	ldr	x0, [x19, #360]
-	mov	w1, wzr
-	ldrsw	x2, [x19, #252]
-	bl	memset
-.LBB16_148:
-	str	w25, [x19, #784]
-	b	.LBB16_156
-.LBB16_149:
-	cbz	w8, .LBB16_154
-	ldr	w8, [x19, #784]
-	cbnz	w8, .LBB16_152
-	ldr	w8, [x19, #776]
-	cbz	w8, .LBB16_154
-.LBB16_152:
-	ldr	x8, [sp, #56]
+	cbz	w2, .LBB16_199
+	ldur	x8, [x29, #-56]
 	ldr	w8, [x8]
 	cmp	w8, #1
-	b.ge	.LBB16_368
-.LBB16_153:
-	mov	w8, #21
-	str	w8, [x20, #40]
-	mov	w8, #2
-	str	w8, [sp, #52]
-.LBB16_154:
-	str	wzr, [x19, #784]
-	str	wzr, [x19, #776]
-	b	.LBB16_156
-.LBB16_155:
-	ldr	x8, [x19, #432]
-	ldr	x1, [x19, #368]
-	ldrsw	x2, [x19, #252]
-	ldr	x0, [x8, #16]
-	bl	memcpy
-.LBB16_156:
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_200
-.LBB16_157:
-	ldr	w8, [sp, #52]
-	mov	x0, x19
-	str	w25, [x19, #276]
-	str	w8, [x19, #464]
-	bl	ebc_frame_start
-	adrp	x8, jiffies
-	ldr	x8, [x8, :lo12:jiffies]
-	ldr	x0, [sp, #40]
-	add	x1, x8, #750
-	bl	mod_timer
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_178
-	ldr	w9, [x20, #40]
-	sub	w9, w9, #12
-	cmp	w9, #2
-	b.hi	.LBB16_178
-	ldr	w9, [x19, #784]
-	cbz	w9, .LBB16_178
-	ldr	x9, [sp, #56]
-	ldr	w9, [x9]
-	cmp	w9, #1
-	b.ge	.LBB16_203
-.LBB16_161:
-	ldr	w9, [x19, #304]
-	cmp	w9, #1
-	b.lt	.LBB16_176
-	ldr	x14, [x19, #440]
-	mov	w11, wzr
-	ldrsb	w0, [x19, #872]
-	mov	w12, wzr
-	ldrsb	w15, [x19, #873]
-	mov	w10, wzr
-	ldp	x1, x16, [x19, #368]
-	and	w17, w0, #0xff
-	neg	w0, w0
-	ldr	w13, [x19, #308]
-	neg	w2, w15
-	ldr	x14, [x14, #16]
-	ldr	x3, [x19, #360]
-	b	.LBB16_164
-.LBB16_163:
-	add	w12, w12, #1
-	add	w11, w11, w13
-	cmp	w12, w9
-	b.eq	.LBB16_177
-.LBB16_164:
-	cmp	w13, #1
-	b.lt	.LBB16_163
-	mov	w5, w11
-	mov	x4, x13
-	b	.LBB16_170
-.LBB16_166:
-	cmp	w8, #1
-	cset	w6, gt
-	cmp	w7, w15
-	cset	w28, lt
-	orr	w6, w6, w28
-	orr	w28, w30, #0x1
-	cmp	w6, #0
-	mov	w6, #-16
-.LBB16_167:
-	csel	w6, w28, w6, ne
-	csinc	w10, w10, wzr, eq
-.LBB16_168:
-	strb	w6, [x1, x5]
-	strb	w7, [x3, x5]
-	strb	w26, [x16, x5]
-.LBB16_169:
-	subs	x4, x4, #1
-	add	w5, w5, #1
-	b.eq	.LBB16_163
-.LBB16_170:
-	sxtw	x5, w5
-	ldrb	w6, [x14, x5]
-	ldrb	w30, [x1, x5]
-	cmp	w30, w6
-	b.eq	.LBB16_169
-	ldrsb	w26, [x16, x5]
-	cmp	w6, #240
-	ldrb	w7, [x3, x5]
-	b.ne	.LBB16_174
-	add	w6, w7, #1
-	cmp	w26, #0
-	sxtb	w7, w6
-	csinc	w26, w25, w26, lt
-	cmp	w17, w26, uxtb
-	b.ne	.LBB16_166
-	mov	w6, #240
-	mov	w26, w17
-	b	.LBB16_168
-.LBB16_174:
-	sub	w28, w26, #1
-	cmp	w26, #0
-	csinv	w26, w28, wzr, le
-	sub	w7, w7, #1
-	cmp	w0, w26, sxtb
-	b.eq	.LBB16_168
-	cmp	w8, #1
-	cset	w28, gt
-	cmp	w2, w7, sxtb
-	cset	w23, lt
-	orr	w23, w28, w23
-	orr	w28, w30, #0x1
-	cmp	w23, #0
-	b	.LBB16_167
-.LBB16_176:
-	mov	w10, wzr
-.LBB16_177:
-	str	w10, [x19, #776]
-.LBB16_178:
-	ldur	x8, [x29, #-48]
-	ldr	w9, [x8]
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cbz	w9, .LBB16_185
-	cmp	w8, #1
-	b.ge	.LBB16_201
-.LBB16_180:
-	sub	x0, x29, #40
-	mov	w1, wzr
-	stp	xzr, xzr, [x29, #-16]
-	stp	xzr, xzr, [x29, #-32]
-	stur	xzr, [x29, #-40]
-	bl	init_wait_entry
-.LBB16_181:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_184
-	cbnz	x0, .LBB16_186
-	bl	schedule
-	b	.LBB16_181
-.LBB16_184:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-	b	.LBB16_186
-.LBB16_185:
-	tbz	w8, #31, .LBB16_202
-.LBB16_186:
-	ldr	w8, [x19, #296]
-	cbnz	w8, .LBB16_204
-	ldr	w8, [x19, #780]
-	cbz	w8, .LBB16_384
-	ldr	w8, [x20, #40]
-	sub	w8, w8, #12
-	cmp	w8, #2
-	b.hi	.LBB16_384
-	ldr	w8, [x19, #776]
-	cbz	w8, .LBB16_210
-	bl	ebc_get_dsp_list_enum_num
-	cbnz	w0, .LBB16_384
-	sub	x0, x29, #40
-	mov	w1, wzr
-	str	wzr, [x19, #312]
-	stp	xzr, xzr, [x29, #-16]
-	stp	xzr, xzr, [x29, #-32]
-	stur	xzr, [x29, #-40]
-	bl	init_wait_entry
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldr	w8, [x19, #312]
-	cbz	w8, .LBB16_196
-.LBB16_192:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-.LBB16_193:
-	bl	ebc_get_dsp_list_enum_num
-	cbnz	w0, .LBB16_384
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.lt	.LBB16_155
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.90
-	add	x1, x1, :lo12:.L.str.90
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_155
-.LBB16_196:
-	mov	w8, #3
-.LBB16_197:
-	cbnz	x0, .LBB16_193
-	mov	x0, x8
-	bl	schedule_timeout
-	mov	x26, x0
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldr	w9, [x19, #312]
-	cmp	x26, #0
-	ccmp	w9, #0, #4, eq
-	csinc	x8, x26, xzr, eq
-	cbnz	w9, .LBB16_192
-	cbnz	x8, .LBB16_197
-	b	.LBB16_192
-.LBB16_200:
-	ldr	x8, [x19, #440]
-	adrp	x1, .L.str.85
-	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.85
-	ldrb	w3, [x19, #280]
-	ldr	w2, [x8, #40]
-	ldrb	w4, [x19, #328]
-	bl	_dev_info
-	b	.LBB16_157
-.LBB16_201:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.87
-	add	x1, x1, :lo12:.L.str.87
-	ldr	x0, [x8]
-	bl	_dev_info
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbnz	w8, .LBB16_180
-	b	.LBB16_186
-.LBB16_202:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.88
-	add	x1, x1, :lo12:.L.str.88
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_186
-.LBB16_203:
-	adrp	x1, .L.str.86
-	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.86
-	bl	_dev_info
-	ldr	w8, [x19, #780]
-	b	.LBB16_161
-.LBB16_204:
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_369
-.LBB16_205:
-	ldr	x8, [x19, #432]
-	ldr	x0, [x19, #368]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-	ldr	x8, [x19, #440]
-	ldr	x0, [x19, #360]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-	ldr	x0, [x19, #384]
-	mov	w1, wzr
-	ldrsw	x2, [x19, #252]
-	bl	memset
-	ldr	w8, [x19, #252]
-	cmp	w8, #1
-	b.lt	.LBB16_384
-	ldrb	w11, [x19, #280]
-	ldrb	w12, [x19, #296]
-	ldr	x9, [x19, #384]
-	sub	w11, w11, w12
-	ldp	x12, x10, [x19, #360]
-	b	.LBB16_208
-.LBB16_207:
-	add	x9, x9, #1
-	add	x10, x10, #1
-	add	x12, x12, #1
-	subs	w8, w8, #1
-	b.eq	.LBB16_384
-.LBB16_208:
-	ldrb	w13, [x10]
-	ldrb	w14, [x12]
-	cmp	w13, w14
-	b.eq	.LBB16_207
-	strb	w11, [x9]
-	b	.LBB16_207
-.LBB16_210:
-	ldr	w8, [x19, #784]
-	cbz	w8, .LBB16_384
-	bl	ebc_get_dsp_list_enum_num
-	cbnz	w0, .LBB16_384
-	sub	x0, x29, #40
-	mov	w1, wzr
-	str	wzr, [x19, #312]
-	stp	xzr, xzr, [x29, #-16]
-	stp	xzr, xzr, [x29, #-32]
-	stur	xzr, [x29, #-40]
-	bl	init_wait_entry
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldr	w8, [x19, #312]
-	cbz	w8, .LBB16_363
-.LBB16_213:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-.LBB16_214:
-	bl	ebc_get_dsp_list_enum_num
-	cbnz	w0, .LBB16_384
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_393
-.LBB16_216:
-	ldr	w8, [x19, #304]
-	ldr	x1, [x19, #368]
-	sub	w8, w8, #1
-	cmp	w8, #1
-	b.le	.LBB16_372
-	ldr	w10, [x19, #308]
-	mov	x9, xzr
-	ldr	x12, [x19, #440]
-	mov	w16, #1
-	ldr	x11, [x19, #376]
-	mov	w4, #232
-	sub	w13, w10, #1
-	lsl	w15, w10, #1
-	ldr	x12, [x12, #16]
-	sub	x14, x13, #1
-	orr	x15, x15, #0x1
-	mov	x17, x10
-	ldur	x20, [x29, #-48]
-	mov	w5, #248
-	b	.LBB16_219
-.LBB16_218:
-	add	w16, w16, #1
-	add	x17, x17, x10
-	add	x15, x15, x10
-	add	x9, x9, x10
-	cmp	w16, w8
-	b.eq	.LBB16_373
-.LBB16_219:
-	cmp	w13, #2
-	b.lt	.LBB16_218
-	mov	x0, xzr
-	b	.LBB16_222
-.LBB16_221:
-	add	x0, x0, #1
-	cmp	x14, x0
-	b.eq	.LBB16_218
-.LBB16_222:
-	add	w2, w17, w0
-	add	w2, w2, #1
-	sxtw	x2, w2
-	ldrb	w3, [x11, x2]
-	cbz	w3, .LBB16_221
-	ldrb	w3, [x12, x2]
-	strb	w4, [x1, x2]
-	cmp	w3, #240
-	b.ne	.LBB16_221
-	add	w2, w9, w0
-	add	w2, w2, #1
-	sxtw	x2, w2
-	ldrb	w3, [x11, x2]
-	cbnz	w3, .LBB16_227
-	ldrb	w3, [x12, x2]
-	cmp	w3, #240
-	b.ne	.LBB16_227
-	strb	w5, [x1, x2]
-.LBB16_227:
-	add	w2, w15, w0
-	sxtw	x2, w2
-	ldrb	w3, [x11, x2]
-	cbnz	w3, .LBB16_230
-	ldrb	w3, [x12, x2]
-	cmp	w3, #240
-	b.ne	.LBB16_230
-	strb	w5, [x1, x2]
-.LBB16_230:
-	add	w2, w17, w0
-	sxtw	x2, w2
-	ldrb	w3, [x11, x2]
-	cbnz	w3, .LBB16_233
-	ldrb	w3, [x12, x2]
-	cmp	w3, #240
-	b.ne	.LBB16_233
-	strb	w5, [x1, x2]
-.LBB16_233:
-	add	w2, w17, w0
-	add	w2, w2, #2
-	sxtw	x2, w2
-	ldrb	w3, [x11, x2]
-	cbnz	w3, .LBB16_221
-	ldrb	w3, [x12, x2]
-	cmp	w3, #240
-	b.ne	.LBB16_221
-	strb	w5, [x1, x2]
-	b	.LBB16_221
-.LBB16_236:
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_242
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_390
-.LBB16_238:
-	sub	x0, x29, #40
-	mov	w1, wzr
-	stp	xzr, xzr, [x29, #-16]
-	stp	xzr, xzr, [x29, #-32]
-	stur	xzr, [x29, #-40]
-	bl	init_wait_entry
-.LBB16_239:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_260
-	cbnz	x0, .LBB16_261
-	bl	schedule
-	b	.LBB16_239
-.LBB16_242:
-	ldr	x8, [x19, #432]
-	ldr	w9, [x20, #40]
-	ldr	w8, [x8, #40]
-	cmp	w9, w8
-	b.eq	.LBB16_249
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_249
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_392
-.LBB16_245:
-	sub	x0, x29, #40
-	mov	w1, wzr
-	stp	xzr, xzr, [x29, #-16]
-	stp	xzr, xzr, [x29, #-32]
-	stur	xzr, [x29, #-40]
-	bl	init_wait_entry
-.LBB16_246:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbz	w8, .LBB16_260
-	cbnz	x0, .LBB16_261
-	bl	schedule
-	b	.LBB16_246
-.LBB16_249:
-	ldr	w8, [x19, #308]
-	mov	w3, #255
-	ldr	w9, [x19, #304]
-	add	w10, w8, #7
-	cmp	w8, #0
-	csel	w13, w10, w8, lt
-	cmp	w9, #1
-	b.lt	.LBB16_263
-	mov	w10, wzr
-	ldr	x11, [x19, #384]
-	ldr	x12, [x20, #16]
-	asr	w13, w13, #3
-	ldr	x14, [x19, #360]
-	b	.LBB16_252
-.LBB16_251:
-	add	w10, w10, #1
-	cmp	w10, w9
-	b.eq	.LBB16_263
-.LBB16_252:
-	cmp	w8, #8
-	b.lt	.LBB16_251
-	mov	w15, w13
-	b	.LBB16_255
-.LBB16_254:
-	add	x14, x14, #8
-	subs	w15, w15, #1
-	b.eq	.LBB16_251
-.LBB16_255:
-	ldr	x16, [x12], #8
-	ldr	x17, [x14]
-	ldr	x0, [x11], #8
-	cmp	x16, x17
-	b.eq	.LBB16_254
-	tst	x0, #0xff
-	csel	x1, x3, xzr, eq
-	tst	x0, #0xff00
-	orr	x2, x1, #0xff00
-	csel	x1, x2, x1, eq
-	tst	x0, #0xff0000
-	orr	x2, x1, #0xff0000
-	csel	x1, x2, x1, eq
-	tst	x0, #0xff000000
-	orr	x2, x1, #0xff000000
-	csel	x1, x2, x1, eq
-	tst	x0, #0xff00000000
-	orr	x2, x1, #0xff00000000
-	csel	x1, x2, x1, eq
-	tst	x0, #0xff0000000000
-	orr	x2, x1, #0xff0000000000
-	csel	x1, x2, x1, eq
-	tst	x0, #0xff000000000000
-	orr	x2, x1, #0xff000000000000
-	lsr	x0, x0, #56
-	csel	x1, x2, x1, eq
-	cmp	x0, #0
-	orr	x2, x1, #0xff00000000000000
-	csel	x0, x2, x1, eq
-	bic	x17, x17, x0
-	and	x16, x0, x16
-	orr	x16, x17, x16
-	str	x16, [x14]
-	b	.LBB16_254
-.LBB16_257:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.77
-	add	x1, x1, :lo12:.L.str.77
-	ldr	x0, [x8]
-	bl	_dev_info
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbnz	w8, .LBB16_30
-	b	.LBB16_43
-.LBB16_258:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.78
-	add	x1, x1, :lo12:.L.str.78
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_44
-.LBB16_259:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.82
-	add	x1, x1, :lo12:.L.str.82
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_107
-.LBB16_260:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-.LBB16_261:
-	ldr	x8, [sp, #56]
-	ldr	w8, [x8]
-	cmp	w8, #1
-	b.ge	.LBB16_388
-.LBB16_262:
-	ldr	x8, [x19, #440]
-	ldr	x0, [x19, #360]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-.LBB16_263:
-	ldr	w8, [x19, #276]
-	mov	w9, #3
-	str	w9, [x19, #464]
-	cbnz	w8, .LBB16_386
-	str	w25, [x19, #276]
-	mov	x0, x19
-	ldr	w1, [x20, #40]
-	mov	w2, wzr
-	bl	ebc_lut_update
-	ldr	w9, [x19, #800]
-	ldr	w8, [x19, #328]
-	cmp	w9, #1
-	strh	w8, [x19, #280]
-	b.ge	.LBB16_370
-.LBB16_265:
-	mov	x0, x19
-	bl	ebc_frame_start
-	b	.LBB16_386
-.LBB16_266:
-	mov	x0, x19
-	mov	w1, wzr
-	bl	ebc_power_set
-	ldr	w8, [x19, #312]
-	cbnz	w8, .LBB16_20
-.LBB16_267:
-	sub	x0, x29, #40
-	mov	w1, wzr
-	stp	xzr, xzr, [x29, #-16]
-	stp	xzr, xzr, [x29, #-32]
-	stur	xzr, [x29, #-40]
-	bl	init_wait_entry
-.LBB16_268:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	mov	w2, #1
-	bl	prepare_to_wait_event
-	ldr	w8, [x19, #312]
-	cbnz	w8, .LBB16_358
-	cbnz	x0, .LBB16_20
-	bl	schedule
-	b	.LBB16_268
-.LBB16_271:
-.LBB16_272:
-	ldr	x0, [x19, #368]
-	sxtw	x2, w8
-	bl	memcpy
-	ldr	x8, [x19, #440]
-	ldr	x0, [x19, #360]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-	str	wzr, [x19, #784]
-	str	wzr, [x19, #776]
-.LBB16_273:
+	b.ge	.LBB16_378
+.LBB16_65:
+	str	wzr, [x19, #296]
+.LBB16_66:
 	mov	w8, #4
 	str	x20, [x19, #456]
 	ldr	w9, [x19, #308]
@@ -4410,23 +3354,23 @@ ebc_thread:
 	cmp	w14, w10
 	csel	w10, w14, w15, lt
 	cmp	w8, w10
-	b.le	.LBB16_278
-.LBB16_274:
+	b.le	.LBB16_71
+.LBB16_67:
 	ldur	x8, [x29, #-48]
 	ldr	w8, [x8]
-	cbz	w8, .LBB16_352
+	cbz	w8, .LBB16_145
 	adrp	x8, ebc_auto_task
 	ldr	x0, [x8, :lo12:ebc_auto_task]
 	bl	wake_up_process
 	ldr	x0, [x19, #448]
-	cbz	x0, .LBB16_277
-.LBB16_276:
+	cbz	x0, .LBB16_70
+.LBB16_69:
 	bl	ebc_buf_release
-.LBB16_277:
+.LBB16_70:
 	ldr	x8, [x19, #456]
 	str	x8, [x19, #448]
 	b	.LBB16_3
-.LBB16_278:
+.LBB16_71:
 	ldr	x14, [x19, #440]
 	mul	w13, w13, w8
 	ldp	x16, x15, [x19, #384]
@@ -4446,8 +3390,8 @@ ebc_thread:
 	add	w0, w9, #1
 	sxtw	x0, w0
 	lsl	x1, x2, #3
-	b	.LBB16_280
-.LBB16_279:
+	b	.LBB16_73
+.LBB16_72:
 	add	w8, w8, #1
 	add	x12, x12, x1
 	add	x13, x13, x1
@@ -4455,19 +3399,19 @@ ebc_thread:
 	add	x15, x15, x1
 	add	x16, x16, x1
 	cmp	w8, w10
-	b.gt	.LBB16_274
-.LBB16_280:
+	b.gt	.LBB16_67
+.LBB16_73:
 	cmp	w11, w9
-	b.gt	.LBB16_279
+	b.gt	.LBB16_72
 	mov	x2, x17
-	b	.LBB16_284
-.LBB16_282:
+	b	.LBB16_77
+.LBB16_75:
 	lsr	x20, x5, #56
-	orr	x26, x4, #0x100000000000000
+	orr	x21, x4, #0x100000000000000
 	cmp	x20, #240
 	orr	x7, x7, #0xff00000000000000
-	csel	x4, x26, x4, eq
-.LBB16_283:
+	csel	x4, x21, x4, eq
+.LBB16_76:
 	bic	x6, x6, x7
 	and	x5, x7, x5
 	add	x2, x2, #1
@@ -4475,363 +3419,295 @@ ebc_thread:
 	cmp	x0, x2
 	str	x4, [x12, x3]
 	str	x5, [x16, x3]
-	b.eq	.LBB16_279
-.LBB16_284:
+	b.eq	.LBB16_72
+.LBB16_77:
 	lsl	x3, x2, #3
-	ldr	x26, [x13, x3]
+	ldr	x27, [x13, x3]
 	ldr	x6, [x16, x3]
 	ldr	x20, [x15, x3]
 	ldr	x5, [x14, x3]
 	ldr	x4, [x12, x3]
-	tst	x26, #0xff
-	b.eq	.LBB16_286
+	tst	x27, #0xff
+	b.eq	.LBB16_79
 	mov	x7, xzr
-	b	.LBB16_288
-.LBB16_286:
+	b	.LBB16_81
+.LBB16_79:
 	and	x4, x4, #0xffffffffffffff00
-	and	x30, x20, #0xf0
-	cmp	w30, #240
-	b.ne	.LBB16_311
+	and	x21, x20, #0xf0
+	cmp	w21, #240
+	b.ne	.LBB16_104
 	and	x7, x5, #0xff
 	cmp	x7, #240
 	cset	w7, eq
 	orr	x4, x4, x7
 	mov	w7, #255
-.LBB16_288:
-	tst	x26, #0xff00
-	b.eq	.LBB16_295
-	tst	x26, #0xff0000
-	b.eq	.LBB16_297
-.LBB16_290:
-	tst	x26, #0xff000000
-	b.eq	.LBB16_299
-.LBB16_291:
-	tst	x26, #0xff00000000
-	b.eq	.LBB16_301
-.LBB16_292:
-	tst	x26, #0xff0000000000
-	b.eq	.LBB16_303
-.LBB16_293:
-	tst	x26, #0xff000000000000
-	b.eq	.LBB16_305
-.LBB16_294:
-	lsr	x26, x26, #56
-	cbnz	x26, .LBB16_283
-	b	.LBB16_307
-.LBB16_295:
+.LBB16_81:
+	tst	x27, #0xff00
+	b.eq	.LBB16_88
+	tst	x27, #0xff0000
+	b.eq	.LBB16_90
+.LBB16_83:
+	tst	x27, #0xff000000
+	b.eq	.LBB16_92
+.LBB16_84:
+	tst	x27, #0xff00000000
+	b.eq	.LBB16_94
+.LBB16_85:
+	tst	x27, #0xff0000000000
+	b.eq	.LBB16_96
+.LBB16_86:
+	tst	x27, #0xff000000000000
+	b.eq	.LBB16_98
+.LBB16_87:
+	lsr	x21, x27, #56
+	cbnz	x21, .LBB16_76
+	b	.LBB16_100
+.LBB16_88:
 	and	x4, x4, #0xffffffffffff00ff
-	and	x30, x20, #0xf000
-	cmp	w30, #15, lsl #12
-	b.ne	.LBB16_313
-	and	x30, x5, #0xff00
-	orr	x28, x4, #0x100
-	cmp	x30, #15, lsl #12
+	and	x21, x20, #0xf000
+	cmp	w21, #15, lsl #12
+	b.ne	.LBB16_106
+	and	x21, x5, #0xff00
+	orr	x23, x4, #0x100
+	cmp	x21, #15, lsl #12
 	orr	x7, x7, #0xff00
-	csel	x4, x28, x4, eq
-	tst	x26, #0xff0000
-	b.ne	.LBB16_290
-.LBB16_297:
+	csel	x4, x23, x4, eq
+	tst	x27, #0xff0000
+	b.ne	.LBB16_83
+.LBB16_90:
 	and	x4, x4, #0xffffffffff00ffff
-	and	x30, x20, #0xf00000
-	cmp	x30, #3840, lsl #12
-	b.ne	.LBB16_317
-	and	x28, x5, #0xff0000
-	orr	x30, x4, #0x10000
-	cmp	x28, #3840, lsl #12
+	and	x21, x20, #0xf00000
+	cmp	x21, #3840, lsl #12
+	b.ne	.LBB16_110
+	and	x21, x5, #0xff0000
+	orr	x23, x4, #0x10000
+	cmp	x21, #3840, lsl #12
 	orr	x7, x7, #0xff0000
-	csel	x4, x30, x4, eq
-	tst	x26, #0xff000000
-	b.ne	.LBB16_291
-.LBB16_299:
+	csel	x4, x23, x4, eq
+	tst	x27, #0xff000000
+	b.ne	.LBB16_84
+.LBB16_92:
 	and	x4, x4, #0xffffffff00ffffff
-	and	x30, x20, #0xf0000000
-	cmp	w30, w24
-	b.ne	.LBB16_321
-	and	x28, x5, #0xff000000
-	orr	x30, x4, #0x1000000
-	cmp	x28, x24
+	and	x21, x20, #0xf0000000
+	cmp	w21, w25
+	b.ne	.LBB16_114
+	and	x21, x5, #0xff000000
+	orr	x23, x4, #0x1000000
+	cmp	x21, x25
 	orr	x7, x7, #0xff000000
-	csel	x4, x30, x4, eq
-	tst	x26, #0xff00000000
-	b.ne	.LBB16_292
-.LBB16_301:
+	csel	x4, x23, x4, eq
+	tst	x27, #0xff00000000
+	b.ne	.LBB16_85
+.LBB16_94:
 	and	x4, x4, #0xffffff00ffffffff
-	and	x30, x20, #0xf000000000
-	cmp	x30, x22
-	b.ne	.LBB16_323
-	and	x28, x5, #0xff00000000
-	orr	x30, x4, #0x100000000
-	cmp	x28, x22
+	and	x21, x20, #0xf000000000
+	cmp	x21, x28
+	b.ne	.LBB16_116
+	and	x21, x5, #0xff00000000
+	orr	x23, x4, #0x100000000
+	cmp	x21, x28
 	orr	x7, x7, #0xff00000000
-	csel	x4, x30, x4, eq
-	tst	x26, #0xff0000000000
-	b.ne	.LBB16_293
-.LBB16_303:
+	csel	x4, x23, x4, eq
+	tst	x27, #0xff0000000000
+	b.ne	.LBB16_86
+.LBB16_96:
 	and	x4, x4, #0xffff00ffffffffff
-	and	x30, x20, #0xf00000000000
-	cmp	x30, x27
-	b.ne	.LBB16_325
-	and	x28, x5, #0xff0000000000
-	orr	x30, x4, #0x10000000000
-	cmp	x28, x27
+	and	x21, x20, #0xf00000000000
+	cmp	x21, x24
+	b.ne	.LBB16_118
+	and	x21, x5, #0xff0000000000
+	orr	x23, x4, #0x10000000000
+	cmp	x21, x24
 	orr	x7, x7, #0xff0000000000
-	csel	x4, x30, x4, eq
-	tst	x26, #0xff000000000000
-	b.ne	.LBB16_294
-.LBB16_305:
+	csel	x4, x23, x4, eq
+	tst	x27, #0xff000000000000
+	b.ne	.LBB16_87
+.LBB16_98:
 	and	x4, x4, #0xff00ffffffffffff
-	and	x30, x20, #0xf0000000000000
-	cmp	x30, x21
-	b.ne	.LBB16_327
-	and	x28, x5, #0xff000000000000
-	orr	x30, x4, #0x1000000000000
-	cmp	x28, x21
+	and	x21, x20, #0xf0000000000000
+	cmp	x21, x22
+	b.ne	.LBB16_120
+	and	x21, x5, #0xff000000000000
+	orr	x23, x4, #0x1000000000000
+	cmp	x21, x22
 	orr	x7, x7, #0xff000000000000
-	csel	x4, x30, x4, eq
-	lsr	x26, x26, #56
-	cbnz	x26, .LBB16_283
-.LBB16_307:
+	csel	x4, x23, x4, eq
+	lsr	x21, x27, #56
+	cbnz	x21, .LBB16_76
+.LBB16_100:
 	and	x4, x4, #0xffffffffffffff
-	lsr	x26, x20, #60
-	cmp	x26, #15
-	b.hs	.LBB16_282
+	lsr	x21, x20, #60
+	cmp	x21, #15
+	b.hs	.LBB16_75
 	and	x20, x20, #0xf000000000000000
-	mov	x23, #-2305843009213693952
-	cmp	x20, x23
-	b.eq	.LBB16_343
+	mov	x21, #-2305843009213693952
+	cmp	x20, x21
+	b.eq	.LBB16_136
 	and	x6, x6, #0xffffffffffffff
-	cbnz	x20, .LBB16_344
+	cbnz	x20, .LBB16_137
 	orr	x4, x4, #0x100000000000000
-	b	.LBB16_283
-.LBB16_311:
-	cbnz	w30, .LBB16_329
+	b	.LBB16_76
+.LBB16_104:
+	cbnz	w21, .LBB16_122
 	mov	x7, xzr
 	and	x6, x6, #0xffffffffffffff00
 	orr	x4, x4, #0x1
-	b	.LBB16_288
-.LBB16_313:
+	b	.LBB16_81
+.LBB16_106:
 	and	x6, x6, #0xffffffffffff00ff
-	cbz	w30, .LBB16_316
-	cmp	w30, #14, lsl #12
-	b.ne	.LBB16_345
+	cbz	w21, .LBB16_109
+	cmp	w21, #14, lsl #12
+	b.ne	.LBB16_138
 	orr	x6, x6, #0xf000
-.LBB16_316:
+.LBB16_109:
 	orr	x4, x4, #0x100
-	tst	x26, #0xff0000
-	b.ne	.LBB16_290
-	b	.LBB16_297
-.LBB16_317:
+	tst	x27, #0xff0000
+	b.ne	.LBB16_83
+	b	.LBB16_90
+.LBB16_110:
 	and	x6, x6, #0xffffffffff00ffff
-	cbz	x30, .LBB16_320
-	cmp	x30, #3584, lsl #12
-	b.ne	.LBB16_346
+	cbz	x21, .LBB16_113
+	cmp	x21, #3584, lsl #12
+	b.ne	.LBB16_139
 	orr	x6, x6, #0xf00000
-.LBB16_320:
+.LBB16_113:
 	orr	x4, x4, #0x10000
-	tst	x26, #0xff000000
-	b.ne	.LBB16_291
-	b	.LBB16_299
-.LBB16_321:
-	cbnz	w30, .LBB16_331
+	tst	x27, #0xff000000
+	b.ne	.LBB16_84
+	b	.LBB16_92
+.LBB16_114:
+	cbnz	w21, .LBB16_124
 	and	x6, x6, #0xffffffff00ffffff
-	b	.LBB16_333
-.LBB16_323:
-	cbnz	x30, .LBB16_334
+	b	.LBB16_126
+.LBB16_116:
+	cbnz	x21, .LBB16_127
 	and	x6, x6, #0xffffff00ffffffff
-	b	.LBB16_336
-.LBB16_325:
-	cbnz	x30, .LBB16_337
+	b	.LBB16_129
+.LBB16_118:
+	cbnz	x21, .LBB16_130
 	and	x6, x6, #0xffff00ffffffffff
-	b	.LBB16_339
-.LBB16_327:
-	cbnz	x30, .LBB16_340
+	b	.LBB16_132
+.LBB16_120:
+	cbnz	x21, .LBB16_133
 	and	x6, x6, #0xff00ffffffffffff
-	b	.LBB16_342
-.LBB16_329:
-	cmp	w30, #224
-	b.ne	.LBB16_347
+	b	.LBB16_135
+.LBB16_122:
+	cmp	w21, #224
+	b.ne	.LBB16_140
 	and	x6, x6, #0xffffffffffffff00
 	mov	x7, xzr
 	orr	x6, x6, #0xf0
 	orr	x4, x4, #0x1
-	b	.LBB16_288
-.LBB16_331:
+	b	.LBB16_81
+.LBB16_124:
 	and	x6, x6, #0xffffffff00ffffff
 	mov	w23, #-536870912
-	cmp	w30, w23
-	b.ne	.LBB16_348
+	cmp	w21, w23
+	b.ne	.LBB16_141
 	orr	x6, x6, #0xf0000000
-.LBB16_333:
+.LBB16_126:
 	orr	x4, x4, #0x1000000
-	tst	x26, #0xff00000000
-	b.ne	.LBB16_292
-	b	.LBB16_301
-.LBB16_334:
+	tst	x27, #0xff00000000
+	b.ne	.LBB16_85
+	b	.LBB16_94
+.LBB16_127:
 	and	x6, x6, #0xffffff00ffffffff
 	mov	x23, #962072674304
-	cmp	x30, x23
-	b.ne	.LBB16_349
+	cmp	x21, x23
+	b.ne	.LBB16_142
 	orr	x6, x6, #0xf000000000
-.LBB16_336:
+.LBB16_129:
 	orr	x4, x4, #0x100000000
-	tst	x26, #0xff0000000000
-	b.ne	.LBB16_293
-	b	.LBB16_303
-.LBB16_337:
+	tst	x27, #0xff0000000000
+	b.ne	.LBB16_86
+	b	.LBB16_96
+.LBB16_130:
 	and	x6, x6, #0xffff00ffffffffff
 	mov	x23, #246290604621824
-	cmp	x30, x23
-	b.ne	.LBB16_350
+	cmp	x21, x23
+	b.ne	.LBB16_143
 	orr	x6, x6, #0xf00000000000
-.LBB16_339:
+.LBB16_132:
 	orr	x4, x4, #0x10000000000
-	tst	x26, #0xff000000000000
-	b.ne	.LBB16_294
-	b	.LBB16_305
-.LBB16_340:
+	tst	x27, #0xff000000000000
+	b.ne	.LBB16_87
+	b	.LBB16_98
+.LBB16_133:
 	and	x6, x6, #0xff00ffffffffffff
 	mov	x23, #63050394783186944
-	cmp	x30, x23
-	b.ne	.LBB16_351
+	cmp	x21, x23
+	b.ne	.LBB16_144
 	orr	x6, x6, #0xf0000000000000
-.LBB16_342:
+.LBB16_135:
 	orr	x4, x4, #0x1000000000000
-	lsr	x26, x26, #56
-	cbnz	x26, .LBB16_283
-	b	.LBB16_307
-.LBB16_343:
+	lsr	x21, x27, #56
+	cbnz	x21, .LBB16_76
+	b	.LBB16_100
+.LBB16_136:
 	mov	x20, #-1152921504606846976
 	orr	x4, x4, #0x100000000000000
 	bfxil	x20, x6, #0, #56
 	mov	x6, x20
-	b	.LBB16_283
-.LBB16_344:
+	b	.LBB16_76
+.LBB16_137:
 	orr	x6, x6, x20
-	b	.LBB16_283
-.LBB16_345:
-	orr	x6, x6, x30
-	tst	x26, #0xff0000
-	b.ne	.LBB16_290
-	b	.LBB16_297
-.LBB16_346:
-	orr	x6, x6, x30
-	tst	x26, #0xff000000
-	b.ne	.LBB16_291
-	b	.LBB16_299
-.LBB16_347:
+	b	.LBB16_76
+.LBB16_138:
+	orr	x6, x6, x21
+	tst	x27, #0xff0000
+	b.ne	.LBB16_83
+	b	.LBB16_90
+.LBB16_139:
+	orr	x6, x6, x21
+	tst	x27, #0xff000000
+	b.ne	.LBB16_84
+	b	.LBB16_92
+.LBB16_140:
 	and	x6, x6, #0xffffffffffffff00
 	mov	x7, xzr
-	orr	x6, x30, x6
-	b	.LBB16_288
-.LBB16_348:
-	orr	x6, x6, x30
-	tst	x26, #0xff00000000
-	b.ne	.LBB16_292
-	b	.LBB16_301
-.LBB16_349:
-	orr	x6, x6, x30
-	tst	x26, #0xff0000000000
-	b.ne	.LBB16_293
-	b	.LBB16_303
-.LBB16_350:
-	orr	x6, x6, x30
-	tst	x26, #0xff000000000000
-	b.ne	.LBB16_294
-	b	.LBB16_305
-.LBB16_351:
-	orr	x6, x6, x30
-	lsr	x26, x26, #56
-	cbnz	x26, .LBB16_283
-	b	.LBB16_307
-.LBB16_352:
+	orr	x6, x21, x6
+	b	.LBB16_81
+.LBB16_141:
+	orr	x6, x6, x21
+	tst	x27, #0xff00000000
+	b.ne	.LBB16_85
+	b	.LBB16_94
+.LBB16_142:
+	orr	x6, x6, x21
+	tst	x27, #0xff0000000000
+	b.ne	.LBB16_86
+	b	.LBB16_96
+.LBB16_143:
+	orr	x6, x6, x21
+	tst	x27, #0xff000000000000
+	b.ne	.LBB16_87
+	b	.LBB16_98
+.LBB16_144:
+	orr	x6, x6, x21
+	lsr	x21, x27, #56
+	cbnz	x21, .LBB16_76
+	b	.LBB16_100
+.LBB16_145:
 	mov	x0, x19
 	mov	w1, #1
 	mov	w2, wzr
-	str	w25, [x19, #276]
+	str	w26, [x19, #276]
 	bl	ebc_lut_update
 	ldr	w9, [x19, #800]
 	ldr	w8, [x19, #328]
 	cmp	w9, #1
 	strh	w8, [x19, #280]
-	b.ge	.LBB16_354
-.LBB16_353:
+	b.ge	.LBB16_373
+.LBB16_146:
 	mov	x0, x19
 	bl	ebc_frame_start
 	ldr	x0, [x19, #448]
-	cbnz	x0, .LBB16_276
-	b	.LBB16_277
-.LBB16_354:
-	ldr	x9, [sp, #24]
-	adrp	x1, .L.str.76
-	and	w2, w8, #0xff
-	ubfx	w3, w8, #8, #8
-	add	x1, x1, :lo12:.L.str.76
-	ldr	x0, [x9]
-	bl	_dev_info
-	b	.LBB16_353
-.LBB16_355:
-	ldr	x9, [x19, #440]
-	adrp	x1, .L.str.79
-	ldr	x0, [x19, #320]
-	and	w3, w8, #0xff
-	add	x1, x1, :lo12:.L.str.79
-	ldr	w2, [x9, #40]
-	bl	_dev_info
-	b	.LBB16_96
-.LBB16_356:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.77
-	add	x1, x1, :lo12:.L.str.77
-	ldr	x0, [x8]
-	bl	_dev_info
-	ldur	x8, [x29, #-48]
-	ldr	w8, [x8]
-	cbnz	w8, .LBB16_76
-	b	.LBB16_93
-.LBB16_357:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.78
-	add	x1, x1, :lo12:.L.str.78
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_94
-.LBB16_358:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-	b	.LBB16_20
-.LBB16_359:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.74
-	add	x1, x1, :lo12:.L.str.74
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_64
-.LBB16_360:
-.LBB16_361:
-	ldr	x0, [x19, #368]
-	sxtw	x2, w8
-	bl	memcpy
-	ldr	x8, [x19, #440]
-	ldr	x0, [x19, #360]
-	ldrsw	x2, [x19, #252]
-	ldr	x1, [x8, #16]
-	bl	memcpy
-	str	wzr, [x19, #784]
-	str	wzr, [x19, #776]
-	b	.LBB16_263
-.LBB16_362:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.74
-	add	x1, x1, :lo12:.L.str.74
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_71
-.LBB16_363:
-	mov	w8, #3
-.LBB16_364:
-	cbnz	x0, .LBB16_214
+	cbnz	x0, .LBB16_69
+	b	.LBB16_70
+.LBB16_147:
+	mov	w8, #13
+.LBB16_148:
+	cbnz	x0, .LBB16_37
 	mov	x0, x8
 	bl	schedule_timeout
 	mov	x20, x0
@@ -4844,186 +3720,1407 @@ ebc_thread:
 	cmp	x20, #0
 	ccmp	w9, #0, #4, eq
 	csinc	x8, x20, xzr, eq
-	cbnz	w9, .LBB16_213
-	cbnz	x8, .LBB16_364
-	b	.LBB16_213
-.LBB16_367:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.80
-	add	x1, x1, :lo12:.L.str.80
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_131
-.LBB16_368:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.84
-	add	x1, x1, :lo12:.L.str.84
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_153
-.LBB16_369:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.89
-	add	x1, x1, :lo12:.L.str.89
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_205
-.LBB16_370:
-	ldr	x9, [sp, #24]
-	adrp	x1, .L.str.81
-	and	w2, w8, #0xff
-	add	x1, x1, :lo12:.L.str.81
-	ldr	x0, [x9]
-	bl	_dev_info
-	b	.LBB16_265
-.LBB16_371:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.93
-	add	x1, x1, :lo12:.L.str.93
-	ldr	x0, [x8]
-	bl	_dev_err
-	b	.LBB16_7
-.LBB16_372:
-	ldur	x20, [x29, #-48]
-	b	.LBB16_374
-.LBB16_373:
-	ldr	x8, [sp, #16]
-	ldr	x1, [x8]
-.LBB16_374:
+	cbnz	w9, .LBB16_36
+	cbnz	x8, .LBB16_148
+	b	.LBB16_36
+.LBB16_151:
+	ldr	w2, [x19, #296]
+	cbz	w2, .LBB16_154
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_381
+.LBB16_153:
+	str	wzr, [x19, #296]
+	b	.LBB16_155
+.LBB16_154:
 	ldr	x8, [x19, #432]
+	ldr	x0, [x19, #368]
 	ldrsw	x2, [x19, #252]
-	ldr	x0, [x8, #16]
+	ldr	x1, [x8, #16]
 	bl	memcpy
-	ldr	w8, [x19, #800]
-	mov	w9, #6
-	str	w25, [x19, #276]
+	ldr	x8, [x19, #440]
+	ldr	x0, [x19, #360]
+	ldrsw	x2, [x19, #252]
+	ldr	x1, [x8, #16]
+	bl	memcpy
+.LBB16_155:
+	ldr	x8, [x19, #440]
+	ldr	w9, [x20, #40]
+	ldr	w8, [x8, #40]
+	cmp	w9, w8
+	b.eq	.LBB16_176
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_176
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
 	cmp	w8, #1
-	strb	w9, [x19, #280]
-	b.ge	.LBB16_394
-.LBB16_375:
-	mov	x0, x19
-	bl	ebc_frame_start
-	adrp	x8, jiffies
-	ldr	x8, [x8, :lo12:jiffies]
-	ldr	x0, [sp, #40]
-	add	x1, x8, #750
-	bl	mod_timer
-	ldr	w8, [x19, #800]
-	cmp	w8, #1
-	b.ge	.LBB16_395
-	ldr	w8, [x20]
-	cbz	w8, .LBB16_383
-.LBB16_377:
+	b.ge	.LBB16_375
+.LBB16_158:
 	sub	x0, x29, #40
 	mov	w1, wzr
 	stp	xzr, xzr, [x29, #-16]
 	stp	xzr, xzr, [x29, #-32]
 	stur	xzr, [x29, #-40]
 	bl	init_wait_entry
+.LBB16_159:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_174
+	cbnz	x0, .LBB16_175
+	bl	schedule
+	b	.LBB16_159
+.LBB16_162:
+	mov	w9, #1
+	movk	w9, #192, lsl #16
+	tst	w8, w9
+	b.eq	.LBB16_390
+	ldr	w8, [x19, #464]
+	str	x20, [x19, #440]
+	cmp	w8, #4
+	b.eq	.LBB16_334
+	cmp	w8, #2
+	b.eq	.LBB16_207
+	cmp	w8, #1
+	b.ne	.LBB16_340
+	ldr	w8, [x19, #780]
+	cbz	w8, .LBB16_207
+	ldr	w8, [x19, #776]
+	cbnz	w8, .LBB16_169
+	ldr	w8, [x19, #784]
+	cbz	w8, .LBB16_207
+.LBB16_169:
+	ldur	x8, [x29, #-56]
+	mov	x9, x20
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_410
+.LBB16_170:
+	ldr	w8, [x19, #252]
+	ldr	x1, [x19, #376]
+	cmp	w8, #1
+	b.lt	.LBB16_379
+	ldr	x9, [x9, #16]
+.LBB16_172:
+	ldrb	w10, [x9], #1
+	ldrb	w11, [x1]
+	mvn	w12, w10
+	and	w12, w12, #0xf0
+	cmp	w11, #8
+	csel	w10, w10, w12, eq
+	subs	x8, x8, #1
+	strb	w10, [x1], #1
+	b.ne	.LBB16_172
+	ldr	x1, [x19, #376]
+	ldr	w8, [x19, #252]
+	b	.LBB16_380
+.LBB16_174:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+.LBB16_175:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_376
+.LBB16_176:
+	mov	w8, #4
+	str	x20, [x19, #440]
+	ldp	x3, x4, [x19, #384]
+	str	w8, [x19, #464]
+	ldr	x0, [x19, #360]
+	ldr	x1, [x19, #240]
+	ldr	x2, [x20, #16]
+	ldr	x5, [sp, #48]
+	bl	refresh_new_image
+	ldr	w8, [x19, #276]
+	mov	w3, #1
+	cbnz	w8, .LBB16_211
+	str	w3, [x19, #276]
+	mov	x0, x19
+	ldr	w1, [x20, #40]
+	mov	w2, wzr
+	bl	ebc_lut_update
+	ldr	w9, [x19, #800]
+	ldr	w8, [x19, #328]
+	cmp	w9, #1
+	strh	w8, [x19, #280]
+	b.ge	.LBB16_374
+.LBB16_178:
+	ldr	x20, [sp, #48]
+	mov	w6, #1
+	ldp	x4, x0, [x19, #392]
+	ldp	x1, x2, [x19, #360]
+	mov	x5, x20
+	ldr	w8, [x19, #204]
+	ldr	x3, [x19, #384]
+	cbz	w8, .LBB16_193
+	bl	get_overlay_image2
+	b	.LBB16_194
+.LBB16_180:
+	bl	ebc_get_dsp_list_enum_num
+	cbnz	w0, .LBB16_3
+	bl	ebc_get_osd_list_enum_num
+	cbnz	w0, .LBB16_3
+	b	.LBB16_365
+.LBB16_182:
+	add	w9, w10, #7
+	cmp	w10, #0
+	csel	w11, w9, w10, lt
+	cmp	w10, #8
+	b.lt	.LBB16_186
+	ldr	x9, [x19, #432]
+	asr	w10, w11, #3
+	ldr	x11, [x20, #16]
+	ldr	x9, [x9, #16]
+.LBB16_184:
+	ldr	x12, [x11]
+	ldr	x13, [x9]
+	cmp	x12, x13
+	b.ne	.LBB16_218
+	add	x9, x9, #8
+	add	x11, x11, #8
+	subs	w10, w10, #1
+	b.ne	.LBB16_184
+.LBB16_186:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_357
+.LBB16_187:
+	str	x20, [x19, #440]
+	b	.LBB16_407
+.LBB16_188:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+.LBB16_189:
+	bl	ebc_get_dsp_list_enum_num
+	cbnz	w0, .LBB16_3
+	bl	ebc_get_osd_list_enum_num
+	cbnz	w0, .LBB16_3
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_365
+	ldr	w8, [x19, #312]
+	cbnz	w8, .LBB16_20
+	b	.LBB16_366
+.LBB16_193:
+	bl	get_overlay_image
+.LBB16_194:
+	mov	w3, #1
+	ldr	w8, [x19, #284]
+	cbz	w8, .LBB16_197
+	ldp	x1, x2, [x19, #360]
+	mov	x5, x20
+	mov	w6, #1
+	ldp	x3, x4, [x19, #384]
+	ldr	w8, [x19, #204]
+	ldr	x0, [x19, #408]
+	cbz	w8, .LBB16_208
+	bl	get_overlay_image2
+	b	.LBB16_209
+.LBB16_197:
+	ldr	w8, [x19, #800]
+	str	wzr, [x19, #276]
+	str	w3, [x19, #764]
+	cmp	w8, #1
+	b.lt	.LBB16_211
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.102
+	adrp	x2, .L__func__.ebc_overlay_bg_frame_start
+	add	x1, x1, :lo12:.L.str.102
+	add	x2, x2, :lo12:.L__func__.ebc_overlay_bg_frame_start
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_210
+.LBB16_199:
+	ldr	w8, [x19, #780]
+	cbz	w8, .LBB16_26
+	ldr	w8, [x19, #776]
+	cbnz	w8, .LBB16_202
+	ldr	w8, [x19, #784]
+	cbz	w8, .LBB16_26
+.LBB16_202:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_391
+.LBB16_203:
+	ldr	w8, [x19, #252]
+	ldr	x1, [x19, #376]
+	cmp	w8, #1
+	b.lt	.LBB16_370
+	ldr	x9, [x19, #440]
+	ldr	x9, [x9, #16]
+.LBB16_205:
+	ldrb	w10, [x9], #1
+	ldrb	w11, [x1]
+	mvn	w12, w10
+	and	w12, w12, #0xf0
+	cmp	w11, #8
+	csel	w10, w10, w12, eq
+	subs	x8, x8, #1
+	strb	w10, [x1], #1
+	b.ne	.LBB16_205
+	ldr	x1, [x19, #376]
+	ldr	w8, [x19, #252]
+	b	.LBB16_371
+.LBB16_207:
+	ldr	x8, [x19, #432]
+	ldr	x0, [x19, #368]
+	ldrsw	x2, [x19, #252]
+	ldr	x1, [x8, #16]
+	bl	memcpy
+	b	.LBB16_361
+.LBB16_208:
+	bl	get_overlay_image
+.LBB16_209:
+	ldr	x0, [sp, #24]
+	mov	x1, x20
+	str	wzr, [x19, #112]
+	bl	flip
+.LBB16_210:
+	mov	w3, #1
+.LBB16_211:
+	ldr	x8, [x19, #440]
+	ldr	w8, [x8, #40]
+	cmp	w8, #23
+	b.hi	.LBB16_213
+	mov	w9, #1
+	lsl	w8, w3, w8
+	movk	w9, #192, lsl #16
+	tst	w8, w9
+	b.ne	.LBB16_407
+.LBB16_213:
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_407
+	ldr	w8, [x19, #800]
+	str	wzr, [x19, #764]
+	cmp	w8, #1
+	b.ge	.LBB16_382
+.LBB16_215:
+	adrp	x8, jiffies
+	ldr	x20, [x8, :lo12:jiffies]
+	ldrb	w8, [x19, #280]
+	add	w8, w8, w8, lsl #1
+	lsl	w0, w8, #2
+	bl	__msecs_to_jiffies
+	add	x1, x0, x20
+	ldr	x0, [sp, #16]
+	b	.LBB16_405
+.LBB16_216:
+	ldur	x9, [x29, #-56]
+	ldr	w9, [x9]
+	cmp	w9, #1
+	b.ge	.LBB16_401
+.LBB16_217:
+	mov	w9, #2
+	stur	w9, [x29, #-64]
+.LBB16_218:
+	ldr	w9, [x19, #780]
+	cbz	w9, .LBB16_222
+	sub	w8, w8, #12
+	cmp	w8, #2
+	b.hi	.LBB16_222
+	ldr	w8, [x19, #776]
+	cbz	w8, .LBB16_294
+	ldr	x8, [x19, #432]
+	ldr	x1, [x19, #368]
+	ldrsw	x2, [x19, #252]
+	ldr	x0, [x8, #16]
+	bl	memcpy
+	b	.LBB16_228
+.LBB16_222:
+	cbz	w9, .LBB16_227
+	ldr	w8, [x19, #784]
+	cbnz	w8, .LBB16_225
+	ldr	w8, [x19, #776]
+	cbz	w8, .LBB16_227
+.LBB16_225:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_383
+.LBB16_226:
+	mov	w8, #21
+	str	w8, [x20, #40]
+	mov	w8, #2
+	stur	w8, [x29, #-64]
+.LBB16_227:
+	str	wzr, [x19, #784]
+	str	wzr, [x19, #776]
+.LBB16_228:
+	str	x20, [x19, #440]
+	ldr	w1, [x20, #40]
+	cmp	w1, #12
+	b.eq	.LBB16_233
+	cmp	w1, #14
+	b.eq	.LBB16_235
+	cmp	w1, #13
+	b.ne	.LBB16_239
+	ldr	w8, [x19, #780]
+	cbz	w8, .LBB16_239
+	ldur	w8, [x29, #-64]
+	mov	x0, x19
+	mov	w1, #14
+	cmp	w8, #2
+	cset	w2, eq
+	bl	ebc_lut_update
+	ldrb	w8, [x19, #328]
+	mov	w10, #21846
+	sub	w9, w8, #6
+	mul	w9, w9, w10
+	mov	w10, #171
+	mul	w8, w8, w10
+	lsr	w10, w9, #16
+	add	w9, w10, w9, lsr #31
+	mov	w10, #3
+	lsr	w8, w8, #9
+	strb	w10, [x19, #280]
+	b	.LBB16_238
+.LBB16_233:
+	ldr	w8, [x19, #780]
+	cbz	w8, .LBB16_239
+	ldur	w8, [x29, #-64]
+	mov	x0, x19
+	mov	w1, #14
+	cmp	w8, #2
+	cset	w2, eq
+	bl	ebc_lut_update
+	ldrb	w8, [x19, #328]
+	sub	w9, w8, #6
+	lsr	w8, w8, #2
+	and	w10, w9, #0xc000
+	add	w9, w9, w10, lsr #14
+	mov	w10, #4
+	lsr	w9, w9, #2
+	b	.LBB16_237
+.LBB16_235:
+	ldr	w8, [x19, #780]
+	cbz	w8, .LBB16_239
+	ldur	w8, [x29, #-64]
+	mov	x0, x19
+	mov	w1, #14
+	cmp	w8, #2
+	cset	w2, eq
+	bl	ebc_lut_update
+	ldrb	w8, [x19, #328]
+	mov	w10, #26215
+	sub	w9, w8, #6
+	mul	w9, w9, w10
+	mov	w10, #205
+	mul	w8, w8, w10
+	lsr	w10, w9, #17
+	add	w9, w10, w9, lsr #31
+	mov	w10, #5
+	lsr	w8, w8, #10
+.LBB16_237:
+	strb	w10, [x19, #280]
+.LBB16_238:
+	strb	w9, [x19, #872]
+	strb	w8, [x19, #873]
+	b	.LBB16_240
+.LBB16_239:
+	ldur	w8, [x29, #-64]
+	mov	x0, x19
+	cmp	w8, #2
+	cset	w2, eq
+	bl	ebc_lut_update
+	ldr	w8, [x19, #328]
+	strb	w8, [x19, #280]
+.LBB16_240:
+	ldr	w8, [x19, #780]
+	mov	w9, #1
+	cbz	w8, .LBB16_246
+	ldr	w8, [x20, #40]
+	sub	w8, w8, #12
+	cmp	w8, #2
+	b.hi	.LBB16_246
+	ldr	w8, [x19, #784]
+	cbnz	w8, .LBB16_244
+	ldr	x0, [x19, #376]
+	mov	w1, wzr
+	ldrsw	x2, [x19, #252]
+	bl	memset
+	ldr	x0, [x19, #360]
+	mov	w1, wzr
+	ldrsw	x2, [x19, #252]
+	bl	memset
+	mov	w9, #1
+.LBB16_244:
+	str	w9, [x19, #784]
+	b	.LBB16_246
+.LBB16_245:
+	ldr	x8, [x19, #432]
+	ldr	x1, [x19, #368]
+	ldrsw	x2, [x19, #252]
+	ldr	x0, [x8, #16]
+	bl	memcpy
+	mov	w9, #1
+.LBB16_246:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_290
+.LBB16_247:
+	ldur	w8, [x29, #-64]
+	mov	x0, x19
+	str	w9, [x19, #276]
+	str	w8, [x19, #464]
+	bl	ebc_frame_start
+	adrp	x8, jiffies
+	ldr	x8, [x8, :lo12:jiffies]
+	ldr	x0, [sp, #72]
+	add	x1, x8, #750
+	bl	mod_timer
+	ldr	w8, [x19, #780]
+	cbz	w8, .LBB16_268
+	ldr	w9, [x20, #40]
+	sub	w9, w9, #12
+	cmp	w9, #2
+	b.hi	.LBB16_268
+	ldr	w9, [x19, #784]
+	cbz	w9, .LBB16_268
+	ldur	x9, [x29, #-56]
+	ldr	w9, [x9]
+	cmp	w9, #1
+	b.ge	.LBB16_293
+.LBB16_251:
+	ldr	w9, [x19, #304]
+	cmp	w9, #1
+	b.lt	.LBB16_266
+	ldr	x14, [x19, #440]
+	mov	w11, wzr
+	ldrsb	w0, [x19, #872]
+	mov	w12, wzr
+	ldrsb	w15, [x19, #873]
+	mov	w10, wzr
+	ldp	x1, x16, [x19, #368]
+	and	w17, w0, #0xff
+	neg	w0, w0
+	ldr	w13, [x19, #308]
+	neg	w2, w15
+	ldr	x14, [x14, #16]
+	mov	w30, #1
+	ldr	x3, [x19, #360]
+	b	.LBB16_254
+.LBB16_253:
+	add	w12, w12, #1
+	add	w11, w11, w13
+	cmp	w12, w9
+	b.eq	.LBB16_267
+.LBB16_254:
+	cmp	w13, #1
+	b.lt	.LBB16_253
+	mov	w5, w11
+	mov	x4, x13
+	b	.LBB16_260
+.LBB16_256:
+	cmp	w8, #1
+	orr	w23, w23, #0x1
+	cset	w6, gt
+	cmp	w7, w15
+	cset	w26, lt
+	orr	w6, w6, w26
+	cmp	w6, #0
+	mov	w6, #-16
+.LBB16_257:
+	csel	w6, w23, w6, ne
+	csinc	w10, w10, wzr, eq
+.LBB16_258:
+	strb	w6, [x1, x5]
+	strb	w7, [x3, x5]
+	strb	w21, [x16, x5]
+.LBB16_259:
+	subs	x4, x4, #1
+	add	w5, w5, #1
+	b.eq	.LBB16_253
+.LBB16_260:
+	sxtw	x5, w5
+	ldrb	w6, [x14, x5]
+	ldrb	w23, [x1, x5]
+	cmp	w23, w6
+	b.eq	.LBB16_259
+	ldrsb	w21, [x16, x5]
+	cmp	w6, #240
+	ldrb	w7, [x3, x5]
+	b.ne	.LBB16_264
+	add	w6, w7, #1
+	cmp	w21, #0
+	sxtb	w7, w6
+	csinc	w21, w30, w21, lt
+	cmp	w17, w21, uxtb
+	b.ne	.LBB16_256
+	mov	w6, #240
+	mov	w21, w17
+	b	.LBB16_258
+.LBB16_264:
+	sub	w26, w21, #1
+	cmp	w21, #0
+	csinv	w21, w26, wzr, le
+	sub	w7, w7, #1
+	cmp	w0, w21, sxtb
+	b.eq	.LBB16_258
+	cmp	w8, #1
+	orr	w23, w23, #0x1
+	cset	w26, gt
+	cmp	w2, w7, sxtb
+	cset	w27, lt
+	orr	w26, w26, w27
+	cmp	w26, #0
+	b	.LBB16_257
+.LBB16_266:
+	mov	w10, wzr
+.LBB16_267:
+	str	w10, [x19, #776]
+.LBB16_268:
+	ldur	x8, [x29, #-48]
+	ldr	w9, [x8]
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cbz	w9, .LBB16_275
+	cmp	w8, #1
+	b.ge	.LBB16_291
+.LBB16_270:
+	sub	x0, x29, #40
+	mov	w1, wzr
+	stp	xzr, xzr, [x29, #-16]
+	stp	xzr, xzr, [x29, #-32]
+	stur	xzr, [x29, #-40]
+	bl	init_wait_entry
+.LBB16_271:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_274
+	cbnz	x0, .LBB16_276
+	bl	schedule
+	b	.LBB16_271
+.LBB16_274:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+	b	.LBB16_276
+.LBB16_275:
+	tbz	w8, #31, .LBB16_292
+.LBB16_276:
+	ldr	w8, [x19, #296]
+	cbnz	w8, .LBB16_300
+	ldr	w8, [x19, #780]
+	cbz	w8, .LBB16_404
+	ldr	w8, [x20, #40]
+	sub	w8, w8, #12
+	cmp	w8, #2
+	b.hi	.LBB16_404
+	ldr	w8, [x19, #776]
+	cbz	w8, .LBB16_306
+	bl	ebc_get_dsp_list_enum_num
+	cbnz	w0, .LBB16_404
+	sub	x0, x29, #40
+	mov	w1, wzr
+	str	wzr, [x19, #312]
+	stp	xzr, xzr, [x29, #-16]
+	stp	xzr, xzr, [x29, #-32]
+	stur	xzr, [x29, #-40]
+	bl	init_wait_entry
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldr	w8, [x19, #312]
+	cbz	w8, .LBB16_286
+.LBB16_282:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+.LBB16_283:
+	bl	ebc_get_dsp_list_enum_num
+	cbnz	w0, .LBB16_404
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.lt	.LBB16_245
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.91
+	add	x1, x1, :lo12:.L.str.91
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_245
+.LBB16_286:
+	mov	w8, #3
+.LBB16_287:
+	cbnz	x0, .LBB16_283
+	mov	x0, x8
+	bl	schedule_timeout
+	mov	x27, x0
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldr	w9, [x19, #312]
+	cmp	x27, #0
+	ccmp	w9, #0, #4, eq
+	csinc	x8, x27, xzr, eq
+	cbnz	w9, .LBB16_282
+	cbnz	x8, .LBB16_287
+	b	.LBB16_282
+.LBB16_290:
+	ldr	x8, [x19, #440]
+	adrp	x1, .L.str.86
+	ldr	x0, [x19, #320]
+	add	x1, x1, :lo12:.L.str.86
+	ldrb	w3, [x19, #280]
+	ldr	w2, [x8, #40]
+	ldrb	w4, [x19, #328]
+	bl	_dev_info
+	mov	w9, #1
+	b	.LBB16_247
+.LBB16_291:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.88
+	add	x1, x1, :lo12:.L.str.88
+	ldr	x0, [x8]
+	bl	_dev_info
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbnz	w8, .LBB16_270
+	b	.LBB16_276
+.LBB16_292:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.89
+	add	x1, x1, :lo12:.L.str.89
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_276
+.LBB16_293:
+	adrp	x1, .L.str.87
+	ldr	x0, [x19, #320]
+	add	x1, x1, :lo12:.L.str.87
+	bl	_dev_info
+	ldr	w8, [x19, #780]
+	b	.LBB16_251
+.LBB16_294:
+	ldrsw	x2, [x19, #252]
+	add	w8, w2, #7
+	cmp	w2, #0
+	csel	w8, w8, w2, lt
+	cmp	w2, #8
+	b.lt	.LBB16_298
+	ldr	x9, [x19, #432]
+	asr	w8, w8, #3
+	ldr	x1, [x9, #16]
+	ldr	x9, [x20, #16]
+	mov	x10, x1
+.LBB16_296:
+	ldr	x11, [x9]
+	ldr	x12, [x10]
+	cmp	x11, x12
+	b.ne	.LBB16_372
+	add	x10, x10, #8
+	add	x9, x9, #8
+	subs	w8, w8, #1
+	b.ne	.LBB16_296
+.LBB16_298:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.lt	.LBB16_187
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.84
+	add	x1, x1, :lo12:.L.str.84
+	b	.LBB16_358
+.LBB16_300:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_388
+.LBB16_301:
+	ldr	x8, [x19, #432]
+	ldr	x0, [x19, #368]
+	ldrsw	x2, [x19, #252]
+	ldr	x1, [x8, #16]
+	bl	memcpy
+	ldr	x8, [x19, #440]
+	ldr	x0, [x19, #360]
+	ldrsw	x2, [x19, #252]
+	ldr	x1, [x8, #16]
+	bl	memcpy
+	ldr	x0, [x19, #384]
+	mov	w1, wzr
+	ldrsw	x2, [x19, #252]
+	bl	memset
+	ldr	w8, [x19, #252]
+	cmp	w8, #1
+	b.lt	.LBB16_404
+	ldrb	w11, [x19, #280]
+	ldrb	w12, [x19, #296]
+	ldr	x9, [x19, #384]
+	sub	w11, w11, w12
+	ldp	x12, x10, [x19, #360]
+	b	.LBB16_304
+.LBB16_303:
+	add	x9, x9, #1
+	add	x10, x10, #1
+	add	x12, x12, #1
+	subs	w8, w8, #1
+	b.eq	.LBB16_404
+.LBB16_304:
+	ldrb	w13, [x10]
+	ldrb	w14, [x12]
+	cmp	w13, w14
+	b.eq	.LBB16_303
+	strb	w11, [x9]
+	b	.LBB16_303
+.LBB16_306:
+	ldr	w8, [x19, #784]
+	cbz	w8, .LBB16_404
+	bl	ebc_get_dsp_list_enum_num
+	cbnz	w0, .LBB16_404
+	sub	x0, x29, #40
+	mov	w1, wzr
+	str	wzr, [x19, #312]
+	stp	xzr, xzr, [x29, #-16]
+	stp	xzr, xzr, [x29, #-32]
+	stur	xzr, [x29, #-40]
+	bl	init_wait_entry
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldr	w8, [x19, #312]
+	cbz	w8, .LBB16_384
+.LBB16_309:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+.LBB16_310:
+	bl	ebc_get_dsp_list_enum_num
+	cbnz	w0, .LBB16_404
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_412
+.LBB16_312:
+	ldr	w8, [x19, #304]
+	ldr	x23, [x19, #368]
+	sub	w8, w8, #1
+	cmp	w8, #1
+	str	w8, [sp, #12]
+	b.le	.LBB16_393
+	ldr	x8, [x19, #440]
+	ldr	w9, [x19, #308]
+	ldr	x27, [x19, #376]
+	ldr	x8, [x8, #16]
+	str	w9, [sp, #56]
+	stur	x8, [x29, #-64]
+	sub	w8, w9, #1
+	str	x8, [sp, #64]
+	mov	w8, #1
+	str	w8, [sp, #36]
+	b	.LBB16_315
+.LBB16_314:
+	ldr	w9, [sp, #36]
+	ldr	w8, [sp, #12]
+	add	w9, w9, #1
+	cmp	w9, w8
+	str	w9, [sp, #36]
+	b.eq	.LBB16_392
+.LBB16_315:
+	ldr	x8, [sp, #64]
+	cmp	w8, #2
+	b.lt	.LBB16_314
+	ldr	w8, [sp, #56]
+	mov	w26, #1
+	ldr	w9, [sp, #36]
+	mul	w8, w9, w8
+	str	w8, [sp, #60]
+	b	.LBB16_318
+.LBB16_317:
+	ldr	x8, [sp, #64]
+	add	x26, x26, #1
+	cmp	x26, x8
+	b.eq	.LBB16_314
+.LBB16_318:
+	ldr	w8, [sp, #60]
+	add	w8, w8, w26
+	sxtw	x20, w8
+	ldrb	w8, [x27, x20]
+	cbz	w8, .LBB16_317
+	ldur	x8, [x29, #-64]
+	ldrb	w21, [x8, x20]
+.LBB16_320:
+	bl	get_random_u8
+	and	w8, w0, #0xff
+	add	w8, w8, w0, uxtb #1
+	tst	w8, #0xff
+	b.eq	.LBB16_320
+	lsr	w8, w8, #4
+	cmp	w21, #240
+	and	w8, w8, #0x30
+	sub	w9, w8, #88
+	strb	w9, [x23, x20]
+	b.ne	.LBB16_317
+	ldr	w9, [sp, #56]
+	sub	w9, w20, w9
+	sxtw	x9, w9
+	ldrb	w10, [x27, x9]
+	cbnz	w10, .LBB16_325
+	ldur	x10, [x29, #-64]
+	ldrb	w10, [x10, x9]
+	cmp	w10, #240
+	b.ne	.LBB16_325
+	sub	w10, w8, #40
+	strb	w10, [x23, x9]
+.LBB16_325:
+	ldr	w9, [sp, #56]
+	add	w9, w20, w9
+	sxtw	x9, w9
+	ldrb	w10, [x27, x9]
+	cbnz	w10, .LBB16_328
+	ldur	x10, [x29, #-64]
+	ldrb	w10, [x10, x9]
+	cmp	w10, #240
+	b.ne	.LBB16_328
+	sub	w10, w8, #40
+	strb	w10, [x23, x9]
+.LBB16_328:
+	sub	w9, w20, #1
+	sxtw	x9, w9
+	ldrb	w10, [x27, x9]
+	cbnz	w10, .LBB16_331
+	ldur	x10, [x29, #-64]
+	ldrb	w10, [x10, x9]
+	cmp	w10, #240
+	b.ne	.LBB16_331
+	sub	w10, w8, #40
+	strb	w10, [x23, x9]
+.LBB16_331:
+	add	w9, w20, #1
+	sxtw	x9, w9
+	ldrb	w10, [x27, x9]
+	cbnz	w10, .LBB16_317
+	ldur	x10, [x29, #-64]
+	ldrb	w10, [x10, x9]
+	cmp	w10, #240
+	b.ne	.LBB16_317
+	sub	w8, w8, #40
+	strb	w8, [x23, x9]
+	b	.LBB16_317
+.LBB16_334:
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_340
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_409
+.LBB16_336:
+	sub	x0, x29, #40
+	mov	w1, wzr
+	stp	xzr, xzr, [x29, #-16]
+	stp	xzr, xzr, [x29, #-32]
+	stur	xzr, [x29, #-40]
+	bl	init_wait_entry
+.LBB16_337:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_359
+	cbnz	x0, .LBB16_360
+	bl	schedule
+	b	.LBB16_337
+.LBB16_340:
+	ldr	x8, [x19, #432]
+	ldr	w9, [x20, #40]
+	ldr	w8, [x8, #40]
+	cmp	w9, w8
+	b.eq	.LBB16_347
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_347
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_411
+.LBB16_343:
+	sub	x0, x29, #40
+	mov	w1, wzr
+	stp	xzr, xzr, [x29, #-16]
+	stp	xzr, xzr, [x29, #-32]
+	stur	xzr, [x29, #-40]
+	bl	init_wait_entry
+.LBB16_344:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbz	w8, .LBB16_359
+	cbnz	x0, .LBB16_360
+	bl	schedule
+	b	.LBB16_344
+.LBB16_347:
+	ldr	w8, [x19, #308]
+	mov	w4, #255
+	ldr	w9, [x19, #304]
+	add	w10, w8, #7
+	cmp	w8, #0
+	csel	w13, w10, w8, lt
+	cmp	w9, #1
+	b.lt	.LBB16_362
+	mov	w10, wzr
+	ldr	x11, [x19, #384]
+	ldr	x12, [x20, #16]
+	asr	w13, w13, #3
+	ldr	x14, [x19, #360]
+	b	.LBB16_350
+.LBB16_349:
+	add	w10, w10, #1
+	cmp	w10, w9
+	b.eq	.LBB16_362
+.LBB16_350:
+	cmp	w8, #8
+	b.lt	.LBB16_349
+	mov	w15, w13
+	b	.LBB16_353
+.LBB16_352:
+	add	x14, x14, #8
+	subs	w15, w15, #1
+	b.eq	.LBB16_349
+.LBB16_353:
+	ldr	x16, [x12], #8
+	ldr	x17, [x14]
+	ldr	x0, [x11], #8
+	cmp	x16, x17
+	b.eq	.LBB16_352
+	tst	x0, #0xff
+	csel	x1, x4, xzr, eq
+	tst	x0, #0xff00
+	orr	x2, x1, #0xff00
+	csel	x1, x2, x1, eq
+	tst	x0, #0xff0000
+	orr	x2, x1, #0xff0000
+	csel	x1, x2, x1, eq
+	tst	x0, #0xff000000
+	orr	x2, x1, #0xff000000
+	csel	x1, x2, x1, eq
+	tst	x0, #0xff00000000
+	orr	x2, x1, #0xff00000000
+	csel	x1, x2, x1, eq
+	tst	x0, #0xff0000000000
+	orr	x2, x1, #0xff0000000000
+	csel	x1, x2, x1, eq
+	tst	x0, #0xff000000000000
+	orr	x2, x1, #0xff000000000000
+	lsr	x0, x0, #56
+	csel	x1, x2, x1, eq
+	cmp	x0, #0
+	orr	x2, x1, #0xff00000000000000
+	csel	x0, x2, x1, eq
+	bic	x17, x17, x0
+	and	x16, x0, x16
+	orr	x16, x17, x16
+	str	x16, [x14]
+	b	.LBB16_352
+.LBB16_355:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.77
+	add	x1, x1, :lo12:.L.str.77
+	ldr	x0, [x8]
+	bl	_dev_info
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbnz	w8, .LBB16_31
+	b	.LBB16_44
+.LBB16_356:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.78
+	add	x1, x1, :lo12:.L.str.78
+	ldr	x0, [x8]
+	bl	_dev_info
+	mov	w3, #1
+	b	.LBB16_45
+.LBB16_357:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.82
+	add	x1, x1, :lo12:.L.str.82
+.LBB16_358:
+	ldr	x0, [x8]
+	bl	_dev_info
+	mov	w3, #1
+	b	.LBB16_187
+.LBB16_359:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+.LBB16_360:
+	ldur	x8, [x29, #-56]
+	ldr	w8, [x8]
+	cmp	w8, #1
+	b.ge	.LBB16_400
+.LBB16_361:
+	ldr	x8, [x19, #440]
+	ldr	x0, [x19, #360]
+	ldrsw	x2, [x19, #252]
+	ldr	x1, [x8, #16]
+	bl	memcpy
+	mov	w3, #1
+.LBB16_362:
+	ldr	w8, [x19, #276]
+	mov	w9, #3
+	str	w9, [x19, #464]
+	cbnz	w8, .LBB16_407
+	str	w3, [x19, #276]
+	mov	x0, x19
+	ldr	w1, [x20, #40]
+	mov	w2, wzr
+	bl	ebc_lut_update
+	ldr	w9, [x19, #800]
+	ldr	w8, [x19, #328]
+	cmp	w9, #1
+	strh	w8, [x19, #280]
+	b.ge	.LBB16_389
+.LBB16_364:
+	mov	x0, x19
+	bl	ebc_frame_start
+	b	.LBB16_406
+.LBB16_365:
+	mov	x0, x19
+	mov	w1, wzr
+	bl	ebc_power_set
+	ldr	w8, [x19, #312]
+	cbnz	w8, .LBB16_20
+.LBB16_366:
+	sub	x0, x29, #40
+	mov	w1, wzr
+	stp	xzr, xzr, [x29, #-16]
+	stp	xzr, xzr, [x29, #-32]
+	stur	xzr, [x29, #-40]
+	bl	init_wait_entry
+.LBB16_367:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldr	w8, [x19, #312]
+	cbnz	w8, .LBB16_377
+	cbnz	x0, .LBB16_20
+	bl	schedule
+	b	.LBB16_367
+.LBB16_370:
+.LBB16_371:
+	ldr	x0, [x19, #368]
+	sxtw	x2, w8
+	bl	memcpy
+	ldr	x8, [x19, #440]
+	ldr	x0, [x19, #360]
+	ldrsw	x2, [x19, #252]
+	ldr	x1, [x8, #16]
+	bl	memcpy
+	str	wzr, [x19, #784]
+	str	wzr, [x19, #776]
+	b	.LBB16_27
+.LBB16_372:
+	ldr	x0, [x19, #368]
+	bl	memcpy
+	b	.LBB16_228
+.LBB16_373:
+	ldr	x9, [sp, #40]
+	adrp	x1, .L.str.76
+	and	w2, w8, #0xff
+	ubfx	w3, w8, #8, #8
+	add	x1, x1, :lo12:.L.str.76
+	ldr	x0, [x9]
+	bl	_dev_info
+	b	.LBB16_146
+.LBB16_374:
+	ldr	x9, [x19, #440]
+	adrp	x1, .L.str.79
+	ldr	x0, [x19, #320]
+	and	w3, w8, #0xff
+	add	x1, x1, :lo12:.L.str.79
+	ldr	w2, [x9, #40]
+	bl	_dev_info
+	b	.LBB16_178
+.LBB16_375:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.77
+	add	x1, x1, :lo12:.L.str.77
+	ldr	x0, [x8]
+	bl	_dev_info
+	ldur	x8, [x29, #-48]
+	ldr	w8, [x8]
+	cbnz	w8, .LBB16_158
+	b	.LBB16_175
+.LBB16_376:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.78
+	add	x1, x1, :lo12:.L.str.78
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_176
+.LBB16_377:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+	b	.LBB16_20
 .LBB16_378:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.74
+	add	x1, x1, :lo12:.L.str.74
+	ldr	x0, [x8]
+	bl	_dev_info
+	mov	w26, #1
+	b	.LBB16_65
+.LBB16_379:
+.LBB16_380:
+	ldr	x0, [x19, #368]
+	sxtw	x2, w8
+	bl	memcpy
+	ldr	x8, [x19, #440]
+	ldr	x0, [x19, #360]
+	ldrsw	x2, [x19, #252]
+	ldr	x1, [x8, #16]
+	bl	memcpy
+	str	wzr, [x19, #784]
+	mov	w3, #1
+	str	wzr, [x19, #776]
+	b	.LBB16_362
+.LBB16_381:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.74
+	add	x1, x1, :lo12:.L.str.74
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_153
+.LBB16_382:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.80
+	add	x1, x1, :lo12:.L.str.80
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_215
+.LBB16_383:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.85
+	add	x1, x1, :lo12:.L.str.85
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_226
+.LBB16_384:
+	mov	w8, #3
+.LBB16_385:
+	cbnz	x0, .LBB16_310
+	mov	x0, x8
+	bl	schedule_timeout
+	mov	x20, x0
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	mov	w2, #1
+	bl	prepare_to_wait_event
+	ldr	w9, [x19, #312]
+	cmp	x20, #0
+	ccmp	w9, #0, #4, eq
+	csinc	x8, x20, xzr, eq
+	cbnz	w9, .LBB16_309
+	cbnz	x8, .LBB16_385
+	b	.LBB16_309
+.LBB16_388:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.90
+	add	x1, x1, :lo12:.L.str.90
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_301
+.LBB16_389:
+	ldr	x9, [sp, #40]
+	adrp	x1, .L.str.81
+	and	w2, w8, #0xff
+	add	x1, x1, :lo12:.L.str.81
+	ldr	x0, [x9]
+	bl	_dev_info
+	b	.LBB16_364
+.LBB16_390:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.94
+	add	x1, x1, :lo12:.L.str.94
+	ldr	x0, [x8]
+	bl	_dev_err
+	b	.LBB16_7
+.LBB16_391:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.75
+	add	x1, x1, :lo12:.L.str.75
+	ldr	x0, [x8]
+	bl	_dev_info
+	b	.LBB16_203
+.LBB16_392:
+	ldr	x23, [x19, #368]
+.LBB16_393:
+	ldr	x8, [x19, #432]
+	mov	x1, x23
+	ldrsw	x2, [x19, #252]
+	ldr	x0, [x8, #16]
+	bl	memcpy
+	ldr	w8, [x19, #800]
+	mov	w9, #13
+	ldur	x20, [x29, #-48]
+	cmp	w8, #1
+	mov	w8, #1
+	strb	w9, [x19, #280]
+	str	w8, [x19, #276]
+	b.ge	.LBB16_413
+.LBB16_394:
+	mov	x0, x19
+	bl	ebc_frame_start
+	adrp	x8, jiffies
+	ldr	x8, [x8, :lo12:jiffies]
+	ldr	x0, [sp, #72]
+	add	x1, x8, #750
+	bl	mod_timer
+	ldr	w8, [x19, #800]
+	cmp	w8, #1
+	b.ge	.LBB16_414
+	ldr	w8, [x20]
+	cbz	w8, .LBB16_403
+.LBB16_396:
+	sub	x0, x29, #40
+	mov	w1, wzr
+	stp	xzr, xzr, [x29, #-16]
+	stp	xzr, xzr, [x29, #-32]
+	stur	xzr, [x29, #-40]
+	bl	init_wait_entry
+.LBB16_397:
 	adrp	x0, ebc_thread_wq
 	sub	x1, x29, #40
 	add	x0, x0, :lo12:ebc_thread_wq
 	mov	w2, #1
 	bl	prepare_to_wait_event
 	ldr	w8, [x20]
-	cbz	w8, .LBB16_382
-	cbnz	x0, .LBB16_383
+	cbz	w8, .LBB16_402
+	cbnz	x0, .LBB16_403
 	bl	schedule
-	b	.LBB16_378
-.LBB16_381:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.75
-	add	x1, x1, :lo12:.L.str.75
-	ldr	x0, [x8]
-	bl	_dev_info
-	b	.LBB16_120
-.LBB16_382:
-	adrp	x0, ebc_thread_wq
-	sub	x1, x29, #40
-	add	x0, x0, :lo12:ebc_thread_wq
-	bl	finish_wait
-.LBB16_383:
-	str	wzr, [x19, #784]
-.LBB16_384:
-	adrp	x8, jiffies
-	mov	w9, #335544320
-	ldr	x8, [x8, :lo12:jiffies]
-	ldr	x0, [sp, #40]
-	add	x1, x8, x9
-.LBB16_385:
-	bl	mod_timer
-.LBB16_386:
-	ldr	w8, [x19, #668]
-	cbnz	w8, .LBB16_1
-	str	w25, [x19, #668]
-	b	.LBB16_2
-.LBB16_388:
-	ldr	x8, [sp, #24]
+	b	.LBB16_397
+.LBB16_400:
+	ldr	x8, [sp, #40]
 	adrp	x1, .L.str.78
 	add	x1, x1, :lo12:.L.str.78
 	ldr	x0, [x8]
 	bl	_dev_info
-	b	.LBB16_262
-.LBB16_389:
-	ldr	x8, [sp, #24]
+	b	.LBB16_361
+.LBB16_401:
+	ldr	x8, [sp, #40]
 	adrp	x1, .L.str.83
 	add	x1, x1, :lo12:.L.str.83
 	ldr	x0, [x8]
 	bl	_dev_info
-	b	.LBB16_133
-.LBB16_390:
-	ldr	x8, [sp, #24]
+	ldr	w8, [x20, #40]
+	mov	w3, #1
+	b	.LBB16_217
+.LBB16_402:
+	adrp	x0, ebc_thread_wq
+	sub	x1, x29, #40
+	add	x0, x0, :lo12:ebc_thread_wq
+	bl	finish_wait
+.LBB16_403:
+	str	wzr, [x19, #784]
+.LBB16_404:
+	adrp	x8, jiffies
+	mov	w9, #335544320
+	ldr	x8, [x8, :lo12:jiffies]
+	ldr	x0, [sp, #72]
+	add	x1, x8, x9
+.LBB16_405:
+	bl	mod_timer
+.LBB16_406:
+	mov	w3, #1
+.LBB16_407:
+	ldr	w8, [x19, #668]
+	cbnz	w8, .LBB16_1
+	str	w3, [x19, #668]
+	b	.LBB16_2
+.LBB16_409:
+	ldr	x8, [sp, #40]
 	adrp	x1, .L.str.77
 	add	x1, x1, :lo12:.L.str.77
 	ldr	x0, [x8]
 	bl	_dev_info
 	ldur	x8, [x29, #-48]
 	ldr	w8, [x8]
-	cbnz	w8, .LBB16_238
-	b	.LBB16_261
-.LBB16_391:
+	cbnz	w8, .LBB16_336
+	b	.LBB16_360
+.LBB16_410:
 	adrp	x1, .L.str.75
 	ldr	x0, [x19, #320]
 	add	x1, x1, :lo12:.L.str.75
 	bl	_dev_info
 	ldr	x9, [x19, #440]
-	b	.LBB16_88
-.LBB16_392:
-	ldr	x8, [sp, #24]
+	b	.LBB16_170
+.LBB16_411:
+	ldr	x8, [sp, #40]
 	adrp	x1, .L.str.77
 	add	x1, x1, :lo12:.L.str.77
 	ldr	x0, [x8]
 	bl	_dev_info
 	ldur	x8, [x29, #-48]
 	ldr	w8, [x8]
-	cbnz	w8, .LBB16_245
-	b	.LBB16_261
-.LBB16_393:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.91
-	add	x1, x1, :lo12:.L.str.91
+	cbnz	w8, .LBB16_343
+	b	.LBB16_360
+.LBB16_412:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.92
+	add	x1, x1, :lo12:.L.str.92
 	ldr	x0, [x8]
 	bl	_dev_info
-	b	.LBB16_216
-.LBB16_394:
+	b	.LBB16_312
+.LBB16_413:
 	ldr	x8, [x19, #440]
-	adrp	x1, .L.str.92
+	adrp	x1, .L.str.93
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.92
-	mov	w3, #6
+	add	x1, x1, :lo12:.L.str.93
+	mov	w3, #13
 	ldr	w2, [x8, #40]
 	bl	_dev_info
-	b	.LBB16_375
-.LBB16_395:
-	ldr	x8, [sp, #24]
-	adrp	x1, .L.str.87
-	add	x1, x1, :lo12:.L.str.87
+	b	.LBB16_394
+.LBB16_414:
+	ldr	x8, [sp, #40]
+	adrp	x1, .L.str.88
+	add	x1, x1, :lo12:.L.str.88
 	ldr	x0, [x8]
 	bl	_dev_info
 	ldr	w8, [x20]
-	cbnz	w8, .LBB16_377
-	b	.LBB16_383
+	cbnz	w8, .LBB16_396
+	b	.LBB16_403
 .Lfunc_end16:
 	.size	ebc_thread, .Lfunc_end16-ebc_thread
 
@@ -8547,10 +8644,10 @@ ebc_lut_update:
 	mov	w1, #2
 	b	.LBB31_27
 .LBB31_18:
-	adrp	x1, .L.str.97
+	adrp	x1, .L.str.98
 	ldr	x0, [x19, #320]
 	ldr	w2, [sp, #4]
-	add	x1, x1, :lo12:.L.str.97
+	add	x1, x1, :lo12:.L.str.98
 	bl	_dev_info
 	cmp	w21, #23
 	b.ls	.LBB31_5
@@ -8608,27 +8705,27 @@ ebc_lut_update:
 	add	sp, sp, #64
 	ret
 .LBB31_30:
-	adrp	x1, .L.str.98
+	adrp	x1, .L.str.99
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.98
+	add	x1, x1, :lo12:.L.str.99
 	bl	_dev_err
 	b	.LBB31_28
 .LBB31_31:
-	adrp	x1, .L.str.96
+	adrp	x1, .L.str.97
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.96
+	add	x1, x1, :lo12:.L.str.97
 	bl	_dev_info
 	b	.LBB31_3
 .LBB31_32:
-	adrp	x1, .L.str.94
-	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.94
-	bl	_dev_info
-	b	.LBB31_13
-.LBB31_33:
 	adrp	x1, .L.str.95
 	ldr	x0, [x19, #320]
 	add	x1, x1, :lo12:.L.str.95
+	bl	_dev_info
+	b	.LBB31_13
+.LBB31_33:
+	adrp	x1, .L.str.96
+	ldr	x0, [x19, #320]
+	add	x1, x1, :lo12:.L.str.96
 	bl	_dev_info
 	b	.LBB31_11
 .LBB31_34:
@@ -8800,10 +8897,10 @@ ebc_frame_start:
 	ldr	w8, [x19, #800]
 	cmp	w8, #1
 	b.lt	.LBB32_26
-	adrp	x1, .L.str.99
+	adrp	x1, .L.str.100
 	adrp	x2, .L__func__.ebc_frame_start
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.99
+	add	x1, x1, :lo12:.L.str.100
 	b	.LBB32_41
 .LBB32_21:
 	bl	direct_mode_data_change_part
@@ -8891,10 +8988,10 @@ ebc_frame_start:
 	ldr	x30, [x18, #-8]!
 	ret
 .LBB32_40:
-	adrp	x1, .L.str.100
+	adrp	x1, .L.str.101
 	adrp	x2, .L__func__.ebc_frame_start
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.100
+	add	x1, x1, :lo12:.L.str.101
 .LBB32_41:
 	add	x2, x2, :lo12:.L__func__.ebc_frame_start
 	bl	_dev_info
@@ -8961,9 +9058,9 @@ ebc_power_set:
 	ldr	w8, [x19, #800]
 	cmp	w8, #1
 	b.lt	.LBB33_17
-	adrp	x1, .L.str.103
+	adrp	x1, .L.str.104
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.103
+	add	x1, x1, :lo12:.L.str.104
 	b	.LBB33_20
 .LBB33_15:
 	ldr	x0, [x19, #24]
@@ -8991,8 +9088,8 @@ ebc_power_set:
 	b	.LBB33_13
 .LBB33_19:
 	ldr	x0, [x19, #320]
-	adrp	x1, .L.str.102
-	add	x1, x1, :lo12:.L.str.102
+	adrp	x1, .L.str.103
+	add	x1, x1, :lo12:.L.str.103
 .LBB33_20:
 	mov	w2, w20
 	bl	_dev_info
@@ -9018,9 +9115,9 @@ ebc_frame_control_timeout:
 	ldr	x30, [x18, #-8]!
 	ret
 .LBB34_2:
-	adrp	x1, .L.str.105
+	adrp	x1, .L.str.106
 	ldr	x0, [x8, #320]
-	add	x1, x1, :lo12:.L.str.105
+	add	x1, x1, :lo12:.L.str.106
 	bl	_dev_info
 	b	.LBB34_1
 .Lfunc_end34:
@@ -9124,18 +9221,18 @@ ebc_io_ctl:
 	ldr	w9, [x21, #800]
 	str	w8, [x21, #760]
 	tbnz	w9, #31, .LBB36_56
-	adrp	x1, .L.str.121
+	adrp	x1, .L.str.122
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.121
+	add	x1, x1, :lo12:.L.str.122
 	bl	_dev_info
 	b	.LBB36_56
 .LBB36_11:
 	ldr	w8, [x21, #800]
 	str	wzr, [x21, #760]
 	tbnz	w8, #31, .LBB36_56
-	adrp	x1, .L.str.122
+	adrp	x1, .L.str.123
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.122
+	add	x1, x1, :lo12:.L.str.123
 	bl	_dev_info
 	b	.LBB36_56
 .LBB36_13:
@@ -9143,18 +9240,18 @@ ebc_io_ctl:
 	ldr	w9, [x21, #800]
 	str	w8, [x21, #768]
 	tbnz	w9, #31, .LBB36_56
-	adrp	x1, .L.str.119
+	adrp	x1, .L.str.120
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.119
+	add	x1, x1, :lo12:.L.str.120
 	bl	_dev_info
 	b	.LBB36_56
 .LBB36_15:
 	ldr	w8, [x21, #800]
 	str	wzr, [x21, #768]
 	tbnz	w8, #31, .LBB36_56
-	adrp	x1, .L.str.120
+	adrp	x1, .L.str.121
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.120
+	add	x1, x1, :lo12:.L.str.121
 	bl	_dev_info
 	b	.LBB36_56
 .LBB36_17:
@@ -9186,10 +9283,10 @@ ebc_io_ctl:
 	str	wzr, [x21, #772]
 	b	.LBB36_57
 .LBB36_24:
-	adrp	x1, .L.str.118
+	adrp	x1, .L.str.119
 	adrp	x2, .L__func__.ebc_io_ctl
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.118
+	add	x1, x1, :lo12:.L.str.119
 	add	x2, x2, :lo12:.L__func__.ebc_io_ctl
 	bl	_dev_err
 	mov	x0, #-14
@@ -9229,9 +9326,9 @@ ebc_io_ctl:
 	stp	w11, w8, [sp, #52]
 	bl	_copy_to_user
 	cbz	x0, .LBB36_57
-	adrp	x1, .L.str.123
+	adrp	x1, .L.str.124
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.123
+	add	x1, x1, :lo12:.L.str.124
 	bl	_dev_err
 	mov	x0, #-14
 	b	.LBB36_58
@@ -9333,10 +9430,10 @@ ebc_io_ctl:
 	cbnz	w0, .LBB36_51
 	ldr	w8, [x21, #800]
 	tbnz	w8, #31, .LBB36_56
-	adrp	x1, .L.str.127
+	adrp	x1, .L.str.128
 	ldr	x0, [x21, #320]
 	ldr	w2, [x21, #856]
-	add	x1, x1, :lo12:.L.str.127
+	add	x1, x1, :lo12:.L.str.128
 	bl	_dev_info
 	b	.LBB36_56
 .LBB36_50:
@@ -9354,17 +9451,17 @@ ebc_io_ctl:
 .LBB36_53:
 	ldr	w8, [x21, #800]
 	tbnz	w8, #31, .LBB36_56
-	adrp	x1, .L.str.128
+	adrp	x1, .L.str.129
 	ldr	x0, [x21, #320]
 	ldr	w2, [x21, #868]
-	add	x1, x1, :lo12:.L.str.128
+	add	x1, x1, :lo12:.L.str.129
 	bl	_dev_info
 	b	.LBB36_56
 .LBB36_55:
-	adrp	x1, .L.str.129
+	adrp	x1, .L.str.130
 	adrp	x2, .L__func__.ebc_io_ctl
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.129
+	add	x1, x1, :lo12:.L.str.130
 	add	x2, x2, :lo12:.L__func__.ebc_io_ctl
 	bl	_dev_err
 .LBB36_56:
@@ -9385,24 +9482,24 @@ ebc_io_ctl:
 	add	sp, sp, #160
 	ret
 .LBB36_60:
-	adrp	x1, .L.str.124
-	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.124
-	bl	_dev_info
-	b	.LBB36_19
-.LBB36_61:
 	adrp	x1, .L.str.125
 	ldr	x0, [x21, #320]
 	add	x1, x1, :lo12:.L.str.125
+	bl	_dev_info
+	b	.LBB36_19
+.LBB36_61:
+	adrp	x1, .L.str.126
+	ldr	x0, [x21, #320]
+	add	x1, x1, :lo12:.L.str.126
 	bl	_dev_info
 	ldr	w8, [x21, #752]
 	cbnz	w8, .LBB36_22
 	b	.LBB36_23
 .LBB36_62:
-	adrp	x1, .L.str.126
+	adrp	x1, .L.str.127
 	ldr	x0, [x21, #320]
 	ldr	w2, [sp, #12]
-	add	x1, x1, :lo12:.L.str.126
+	add	x1, x1, :lo12:.L.str.127
 	bl	_dev_info
 	b	.LBB36_44
 .LBB36_63:
@@ -11452,9 +11549,9 @@ waveform_version_read:
 	mov	x29, sp
 	mov	x19, x2
 	bl	epd_lut_get_wf_version
-	adrp	x1, .L.str.133
+	adrp	x1, .L.str.134
 	mov	x2, x0
-	add	x1, x1, :lo12:.L.str.133
+	add	x1, x1, :lo12:.L.str.134
 	mov	x0, x19
 	bl	sprintf
 	ldr	x19, [sp, #16]
@@ -11471,9 +11568,9 @@ pmic_name_read:
 	str	x30, [x18], #8
 	stp	x29, x30, [sp, #-16]!
 	adrp	x8, global_ebc
-	adrp	x1, .L.str.133
+	adrp	x1, .L.str.134
 	mov	x0, x2
-	add	x1, x1, :lo12:.L.str.133
+	add	x1, x1, :lo12:.L.str.134
 	mov	x29, sp
 	ldr	x8, [x8, :lo12:global_ebc]
 	ldr	x8, [x8, #16]
@@ -11512,9 +11609,9 @@ pmic_temp_read:
 	add	x1, sp, #4
 	bl	thermal_zone_get_temp
 .LBB46_3:
-	adrp	x1, .L.str.136
+	adrp	x1, .L.str.137
 	ldr	w2, [sp, #4]
-	add	x1, x1, :lo12:.L.str.136
+	add	x1, x1, :lo12:.L.str.137
 	mov	x0, x19
 	bl	sprintf
 	mrs	x8, SP_EL0
@@ -11559,9 +11656,9 @@ pmic_vcom_read:
 	asr	x8, x8, #38
 	add	w2, w8, w9
 .LBB47_3:
-	adrp	x1, .L.str.136
+	adrp	x1, .L.str.137
 	mov	x0, x19
-	add	x1, x1, :lo12:.L.str.136
+	add	x1, x1, :lo12:.L.str.137
 	bl	sprintf
 	ldr	x19, [sp, #16]
 	sxtw	x0, w0
@@ -11605,15 +11702,15 @@ pmic_vcom_write:
 	bl	ebc_regulator_set_vcom
 	cbz	w0, .LBB48_7
 .LBB48_4:
-	adrp	x1, .L.str.139
+	adrp	x1, .L.str.140
 	ldr	x0, [x21]
-	add	x1, x1, :lo12:.L.str.139
+	add	x1, x1, :lo12:.L.str.140
 	bl	_dev_err
 	b	.LBB48_6
 .LBB48_5:
-	adrp	x1, .L.str.138
+	adrp	x1, .L.str.139
 	ldr	x0, [x21]
-	add	x1, x1, :lo12:.L.str.138
+	add	x1, x1, :lo12:.L.str.139
 	mov	x2, x20
 	bl	_dev_err
 .LBB48_6:
@@ -11642,9 +11739,9 @@ ebc_version_read:
 	str	x30, [x18], #8
 	stp	x29, x30, [sp, #-16]!
 	mov	x0, x2
-	adrp	x1, .L.str.133
+	adrp	x1, .L.str.134
 	adrp	x2, .L.str.2
-	add	x1, x1, :lo12:.L.str.133
+	add	x1, x1, :lo12:.L.str.134
 	add	x2, x2, :lo12:.L.str.2
 	mov	x29, sp
 	bl	sprintf
@@ -11661,9 +11758,9 @@ ebc_state_read:
 	str	x30, [x18], #8
 	stp	x29, x30, [sp, #-16]!
 	adrp	x8, global_ebc
-	adrp	x1, .L.str.136
+	adrp	x1, .L.str.137
 	mov	x0, x2
-	add	x1, x1, :lo12:.L.str.136
+	add	x1, x1, :lo12:.L.str.137
 	mov	x29, sp
 	ldr	x8, [x8, :lo12:global_ebc]
 	ldr	w2, [x8, #664]
@@ -11716,9 +11813,9 @@ auto_frame_state_read:
 	strh	w8, [x2]
 	b	.LBB52_6
 .LBB52_5:
-	adrp	x1, .L.str.136
+	adrp	x1, .L.str.137
 	mov	x0, x2
-	add	x1, x1, :lo12:.L.str.136
+	add	x1, x1, :lo12:.L.str.137
 	mov	w2, w8
 	bl	sprintf
 	sxtw	x0, w0
@@ -11735,9 +11832,9 @@ ebc_debug_level_read:
 	str	x30, [x18], #8
 	stp	x29, x30, [sp, #-16]!
 	adrp	x8, global_ebc
-	adrp	x1, .L.str.136
+	adrp	x1, .L.str.137
 	mov	x0, x2
-	add	x1, x1, :lo12:.L.str.136
+	add	x1, x1, :lo12:.L.str.137
 	mov	x29, sp
 	ldr	x8, [x8, :lo12:global_ebc]
 	ldr	w2, [x8, #800]
@@ -11787,9 +11884,9 @@ ebc_debug_level_write:
 	add	sp, sp, #64
 	ret
 .LBB54_4:
-	adrp	x1, .L.str.138
+	adrp	x1, .L.str.139
 	ldr	x0, [x21, #320]
-	add	x1, x1, :lo12:.L.str.138
+	add	x1, x1, :lo12:.L.str.139
 	mov	x2, x20
 	bl	_dev_err
 	mov	x19, #-1
@@ -11805,9 +11902,9 @@ wf_data_write:
 	str	x30, [x18], #8
 	stp	x29, x30, [sp, #-96]!
 	adrp	x8, global_ebc
-	adrp	x1, .L.str.147
+	adrp	x1, .L.str.148
 	mov	x0, x2
-	add	x1, x1, :lo12:.L.str.147
+	add	x1, x1, :lo12:.L.str.148
 	stp	x26, x25, [sp, #32]
 	mov	x29, sp
 	ldr	x8, [x8, :lo12:global_ebc]
@@ -11831,15 +11928,15 @@ wf_data_write:
 	ldr	x30, [x18, #-8]!
 	ret
 .LBB55_2:
-	adrp	x0, .L.str.148
+	adrp	x0, .L.str.149
 	mov	w1, w20
-	add	x0, x0, :lo12:.L.str.148
+	add	x0, x0, :lo12:.L.str.149
 	bl	_printk
-	adrp	x22, .L.str.149
-	adrp	x23, .L.str.150
+	adrp	x22, .L.str.150
+	adrp	x23, .L.str.151
 	mov	x21, xzr
-	add	x22, x22, :lo12:.L.str.149
-	add	x23, x23, :lo12:.L.str.150
+	add	x22, x22, :lo12:.L.str.150
+	add	x23, x23, :lo12:.L.str.151
 .LBB55_3:
 	mov	x24, xzr
 	mov	x26, x25
@@ -11896,32 +11993,32 @@ ori_wf_data_write:
 	stp	xzr, xzr, [sp, #24]
 	bl	kmalloc_large
 	cbnz	x0, .LBB56_2
-	adrp	x0, .L.str.152
-	add	x0, x0, :lo12:.L.str.152
+	adrp	x0, .L.str.153
+	add	x0, x0, :lo12:.L.str.153
 	bl	_printk
 	b	.LBB56_17
 .LBB56_2:
-	adrp	x1, .L.str.147
+	adrp	x1, .L.str.148
 	mov	x19, x0
 	str	x0, [sp, #40]
-	add	x1, x1, :lo12:.L.str.147
+	add	x1, x1, :lo12:.L.str.148
 	mov	x0, x21
 	bl	strstr
 	cbnz	x0, .LBB56_4
-	adrp	x0, .L.str.155
-	add	x0, x0, :lo12:.L.str.155
+	adrp	x0, .L.str.156
+	add	x0, x0, :lo12:.L.str.156
 	b	.LBB56_16
 .LBB56_4:
-	adrp	x1, .L.str.153
+	adrp	x1, .L.str.154
 	add	x2, sp, #20
-	add	x1, x1, :lo12:.L.str.153
+	add	x1, x1, :lo12:.L.str.154
 	add	x3, sp, #16
 	mov	x0, x21
 	bl	sscanf
 	ldp	w3, w2, [sp, #16]
-	adrp	x0, .L.str.154
+	adrp	x0, .L.str.155
 	adrp	x1, .L__func__.ori_wf_data_write
-	add	x0, x0, :lo12:.L.str.154
+	add	x0, x0, :lo12:.L.str.155
 	add	x1, x1, :lo12:.L__func__.ori_wf_data_write
 	bl	_printk
 	ldr	w1, [sp, #20]
@@ -11936,16 +12033,16 @@ ori_wf_data_write:
 	str	x20, [sp, #8]
 	bl	epd_lut_get_original
 	ldrb	w21, [sp, #24]
-	adrp	x0, .L.str.148
-	add	x0, x0, :lo12:.L.str.148
+	adrp	x0, .L.str.149
+	add	x0, x0, :lo12:.L.str.149
 	mov	w1, w21
 	bl	_printk
-	adrp	x23, .L.str.149
-	adrp	x24, .L.str.150
+	adrp	x23, .L.str.150
+	adrp	x24, .L.str.151
 	mov	x22, xzr
 	mov	x20, x19
-	add	x23, x23, :lo12:.L.str.149
-	add	x24, x24, :lo12:.L.str.150
+	add	x23, x23, :lo12:.L.str.150
+	add	x24, x24, :lo12:.L.str.151
 .LBB56_8:
 	mov	x25, xzr
 	mov	x26, x20
@@ -11978,8 +12075,8 @@ ori_wf_data_write:
 	ldr	x20, [sp, #8]
 	b	.LBB56_17
 .LBB56_15:
-	adrp	x0, .L.str.156
-	add	x0, x0, :lo12:.L.str.156
+	adrp	x0, .L.str.157
+	add	x0, x0, :lo12:.L.str.157
 .LBB56_16:
 	adrp	x1, .L__func__.ori_wf_data_write
 	add	x1, x1, :lo12:.L__func__.ori_wf_data_write
@@ -12023,9 +12120,9 @@ ebc_suspend:
 	ldr	x8, [x0, #40]
 	blr	x8
 .LBB57_2:
-	adrp	x1, .L.str.157
+	adrp	x1, .L.str.158
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.157
+	add	x1, x1, :lo12:.L.str.158
 	bl	_dev_info
 	ldr	x19, [sp, #16]
 	mov	w0, wzr
@@ -12048,9 +12145,9 @@ ebc_resume:
 	ldr	x8, [x0, #48]
 	blr	x8
 .LBB58_2:
-	adrp	x1, .L.str.158
+	adrp	x1, .L.str.159
 	ldr	x0, [x19, #320]
-	add	x1, x1, :lo12:.L.str.158
+	add	x1, x1, :lo12:.L.str.159
 	str	wzr, [x19, #756]
 	bl	_dev_info
 	ldr	x19, [sp, #16]
@@ -12185,7 +12282,7 @@ ebc_pm:
 
 	.type	.L.str.2,@object
 .L.str.2:
-	.asciz	"7.09_y8"
+	.asciz	"7.10_y8"
 	.size	.L.str.2, 8
 
 	.type	.L.str.3,@object
@@ -12652,178 +12749,183 @@ ebc_auto_assist_thread_sem:
 
 	.type	.L.str.84,@object
 .L.str.84:
-	.asciz	"change from fast mode and not complete, force full\n"
-	.size	.L.str.84, 52
+	.asciz	"fast check_part_mode==0, no need refresh\n"
+	.size	.L.str.84, 42
 
 	.type	.L.str.85,@object
 .L.str.85:
-	.asciz	"frame start, mode = %d, framecount = %d vs %d\n"
-	.size	.L.str.85, 47
+	.asciz	"change from fast mode and not complete, force full\n"
+	.size	.L.str.85, 52
 
 	.type	.L.str.86,@object
 .L.str.86:
-	.asciz	"update repair buf\n"
-	.size	.L.str.86, 19
+	.asciz	"frame start, mode = %d, framecount = %d vs %d\n"
+	.size	.L.str.86, 47
 
 	.type	.L.str.87,@object
 .L.str.87:
-	.asciz	"waiting frame done\n"
-	.size	.L.str.87, 20
+	.asciz	"update repair buf\n"
+	.size	.L.str.87, 19
 
 	.type	.L.str.88,@object
 .L.str.88:
-	.asciz	"----update repair buf timeout----\n"
-	.size	.L.str.88, 35
+	.asciz	"waiting frame done\n"
+	.size	.L.str.88, 20
 
 	.type	.L.str.89,@object
 .L.str.89:
-	.asciz	"break from part work, do something before turn to overlay work\n"
-	.size	.L.str.89, 64
+	.asciz	"----update repair buf timeout----\n"
+	.size	.L.str.89, 35
 
 	.type	.L.str.90,@object
 .L.str.90:
-	.asciz	"no buffer, do repair..........\n"
-	.size	.L.str.90, 32
+	.asciz	"break from part work, do something before turn to overlay work\n"
+	.size	.L.str.90, 64
 
 	.type	.L.str.91,@object
 .L.str.91:
-	.asciz	"no buffer, do last ghost remove..........\n"
-	.size	.L.str.91, 43
+	.asciz	"no buffer, do repair..........\n"
+	.size	.L.str.91, 32
 
 	.type	.L.str.92,@object
 .L.str.92:
-	.asciz	"frame start, mode = %d, framecount = %d\n"
-	.size	.L.str.92, 41
+	.asciz	"no buffer, do last ghost remove..........\n"
+	.size	.L.str.92, 43
 
 	.type	.L.str.93,@object
 .L.str.93:
-	.asciz	"ebc buffer mode %d error!!!\n"
-	.size	.L.str.93, 29
+	.asciz	"frame start, mode = %d, framecount = %d\n"
+	.size	.L.str.93, 41
 
 	.type	.L.str.94,@object
 .L.str.94:
-	.asciz	"temperature = %d, out of range0~50 ,use 25 \n"
-	.size	.L.str.94, 45
+	.asciz	"ebc buffer mode %d error!!!\n"
+	.size	.L.str.94, 29
 
 	.type	.L.str.95,@object
 .L.str.95:
-	.asciz	"temperature = %d, out of range0~50 ,use 50 \n"
+	.asciz	"temperature = %d, out of range0~50 ,use 25 \n"
 	.size	.L.str.95, 45
 
 	.type	.L.str.96,@object
 .L.str.96:
-	.asciz	"ebc_pmic_read_temp failed, ret = %d, use 25 \n"
-	.size	.L.str.96, 46
+	.asciz	"temperature = %d, out of range0~50 ,use 50 \n"
+	.size	.L.str.96, 45
 
 	.type	.L.str.97,@object
 .L.str.97:
-	.asciz	"lut update use temperature = %d\n"
-	.size	.L.str.97, 33
+	.asciz	"ebc_pmic_read_temp failed, ret = %d, use 25 \n"
+	.size	.L.str.97, 46
 
 	.type	.L.str.98,@object
 .L.str.98:
-	.asciz	"get lut data failed\n"
-	.size	.L.str.98, 21
+	.asciz	"lut update use temperature = %d\n"
+	.size	.L.str.98, 33
 
 	.type	.L.str.99,@object
 .L.str.99:
+	.asciz	"get lut data failed\n"
+	.size	.L.str.99, 21
+
+	.type	.L.str.100,@object
+.L.str.100:
 	.asciz	"%s: overlay no need to update\n"
-	.size	.L.str.99, 31
+	.size	.L.str.100, 31
 
 	.type	.L__func__.ebc_frame_start,@object
 .L__func__.ebc_frame_start:
 	.asciz	"ebc_frame_start"
 	.size	.L__func__.ebc_frame_start, 16
 
-	.type	.L.str.100,@object
-.L.str.100:
-	.asciz	"%s: auto no need to update\n"
-	.size	.L.str.100, 28
-
 	.type	.L.str.101,@object
 .L.str.101:
+	.asciz	"%s: auto no need to update\n"
+	.size	.L.str.101, 28
+
+	.type	.L.str.102,@object
+.L.str.102:
 	.asciz	"%s: overlay bg no need to update, overlay_bg_update=1\n"
-	.size	.L.str.101, 55
+	.size	.L.str.102, 55
 
 	.type	.L__func__.ebc_overlay_bg_frame_start,@object
 .L__func__.ebc_overlay_bg_frame_start:
 	.asciz	"ebc_overlay_bg_frame_start"
 	.size	.L__func__.ebc_overlay_bg_frame_start, 27
 
-	.type	.L.str.102,@object
-.L.str.102:
-	.asciz	"ebc hw power on res:%d\n"
-	.size	.L.str.102, 24
-
 	.type	.L.str.103,@object
 .L.str.103:
-	.asciz	"ebc hw power off res:%d\n"
-	.size	.L.str.103, 25
+	.asciz	"ebc hw power on res:%d\n"
+	.size	.L.str.103, 24
 
 	.type	.L.str.104,@object
 .L.str.104:
-	.asciz	"ebc"
-	.size	.L.str.104, 4
+	.asciz	"ebc hw power off res:%d\n"
+	.size	.L.str.104, 25
 
 	.type	.L.str.105,@object
 .L.str.105:
-	.asciz	"ebc_frame_control_timeout, overlay_bg_update=1\n"
-	.size	.L.str.105, 48
+	.asciz	"ebc"
+	.size	.L.str.105, 4
 
 	.type	.L.str.106,@object
 .L.str.106:
-	.asciz	"ulogo_addr="
-	.size	.L.str.106, 12
+	.asciz	"ebc_frame_control_timeout, overlay_bg_update=1\n"
+	.size	.L.str.106, 48
 
 	.type	.L.str.107,@object
 .L.str.107:
-	.asciz	"klogo_addr="
+	.asciz	"ulogo_addr="
 	.size	.L.str.107, 12
 
 	.type	.L.str.108,@object
 .L.str.108:
-	.asciz	"ulogo_addr=0x%x"
-	.size	.L.str.108, 16
+	.asciz	"klogo_addr="
+	.size	.L.str.108, 12
 
 	.type	.L.str.109,@object
 .L.str.109:
-	.asciz	"have ulogo display, ulogo addr = 0x%x\n"
-	.size	.L.str.109, 39
+	.asciz	"ulogo_addr=0x%x"
+	.size	.L.str.109, 16
 
 	.type	.L.str.110,@object
 .L.str.110:
-	.asciz	"malloc ulogo buffer failed\n"
-	.size	.L.str.110, 28
+	.asciz	"have ulogo display, ulogo addr = 0x%x\n"
+	.size	.L.str.110, 39
 
 	.type	.L.str.111,@object
 .L.str.111:
-	.asciz	"klogo_addr=0x%x"
-	.size	.L.str.111, 16
+	.asciz	"malloc ulogo buffer failed\n"
+	.size	.L.str.111, 28
 
 	.type	.L.str.112,@object
 .L.str.112:
-	.asciz	"need show klogo, klogo addr = 0x%x\n"
-	.size	.L.str.112, 36
+	.asciz	"klogo_addr=0x%x"
+	.size	.L.str.112, 16
 
 	.type	.L.str.113,@object
 .L.str.113:
-	.asciz	"malloc klogo buffer failed\n"
-	.size	.L.str.113, 28
+	.asciz	"need show klogo, klogo addr = 0x%x\n"
+	.size	.L.str.113, 36
 
 	.type	.L.str.114,@object
 .L.str.114:
-	.asciz	"no uboot logo, panel init\n"
-	.size	.L.str.114, 27
+	.asciz	"malloc klogo buffer failed\n"
+	.size	.L.str.114, 28
 
 	.type	.L.str.115,@object
 .L.str.115:
-	.asciz	"ebc_dev_logo"
-	.size	.L.str.115, 13
+	.asciz	"no uboot logo, panel init\n"
+	.size	.L.str.115, 27
 
 	.type	.L.str.116,@object
 .L.str.116:
+	.asciz	"ebc_dev_logo"
+	.size	.L.str.116, 13
+
+	.type	.L.str.117,@object
+.L.str.117:
 	.asciz	"ebc_dev_reset"
-	.size	.L.str.116, 14
+	.size	.L.str.117, 14
 
 	.type	ebc_misc,@object
 	.data
@@ -12831,7 +12933,7 @@ ebc_auto_assist_thread_sem:
 ebc_misc:
 	.word	243
 	.zero	4
-	.xword	.L.str.104
+	.xword	.L.str.105
 	.xword	ebc_ops
 	.zero	16
 	.xword	0
@@ -12847,7 +12949,7 @@ ebc_misc:
 waveform_misc:
 	.word	244
 	.zero	4
-	.xword	.L.str.130
+	.xword	.L.str.131
 	.xword	waveform_ops
 	.zero	16
 	.xword	0
@@ -12861,7 +12963,7 @@ waveform_misc:
 	.type	dev_attr_waveform_version,@object
 	.p2align	3
 dev_attr_waveform_version:
-	.xword	.L.str.132
+	.xword	.L.str.133
 	.hword	292
 	.zero	6
 	.xword	waveform_version_read
@@ -12871,7 +12973,7 @@ dev_attr_waveform_version:
 	.type	dev_attr_pmic_name,@object
 	.p2align	3
 dev_attr_pmic_name:
-	.xword	.L.str.134
+	.xword	.L.str.135
 	.hword	292
 	.zero	6
 	.xword	pmic_name_read
@@ -12881,7 +12983,7 @@ dev_attr_pmic_name:
 	.type	dev_attr_pmic_temp,@object
 	.p2align	3
 dev_attr_pmic_temp:
-	.xword	.L.str.135
+	.xword	.L.str.136
 	.hword	292
 	.zero	6
 	.xword	pmic_temp_read
@@ -12891,7 +12993,7 @@ dev_attr_pmic_temp:
 	.type	dev_attr_pmic_vcom,@object
 	.p2align	3
 dev_attr_pmic_vcom:
-	.xword	.L.str.137
+	.xword	.L.str.138
 	.hword	420
 	.zero	6
 	.xword	pmic_vcom_read
@@ -12901,7 +13003,7 @@ dev_attr_pmic_vcom:
 	.type	dev_attr_ebc_version,@object
 	.p2align	3
 dev_attr_ebc_version:
-	.xword	.L.str.140
+	.xword	.L.str.141
 	.hword	292
 	.zero	6
 	.xword	ebc_version_read
@@ -12911,7 +13013,7 @@ dev_attr_ebc_version:
 	.type	dev_attr_ebc_state,@object
 	.p2align	3
 dev_attr_ebc_state:
-	.xword	.L.str.141
+	.xword	.L.str.142
 	.hword	292
 	.zero	6
 	.xword	ebc_state_read
@@ -12921,7 +13023,7 @@ dev_attr_ebc_state:
 	.type	dev_attr_ebc_buf_state,@object
 	.p2align	3
 dev_attr_ebc_buf_state:
-	.xword	.L.str.142
+	.xword	.L.str.143
 	.hword	292
 	.zero	6
 	.xword	ebc_buf_state_read
@@ -12931,7 +13033,7 @@ dev_attr_ebc_buf_state:
 	.type	dev_attr_auto_frame_state,@object
 	.p2align	3
 dev_attr_auto_frame_state:
-	.xword	.L.str.143
+	.xword	.L.str.144
 	.hword	292
 	.zero	6
 	.xword	auto_frame_state_read
@@ -12941,7 +13043,7 @@ dev_attr_auto_frame_state:
 	.type	dev_attr_ebc_debug_level,@object
 	.p2align	3
 dev_attr_ebc_debug_level:
-	.xword	.L.str.145
+	.xword	.L.str.146
 	.hword	420
 	.zero	6
 	.xword	ebc_debug_level_read
@@ -12951,7 +13053,7 @@ dev_attr_ebc_debug_level:
 	.type	dev_attr_wf_data,@object
 	.p2align	3
 dev_attr_wf_data:
-	.xword	.L.str.146
+	.xword	.L.str.147
 	.hword	128
 	.zero	6
 	.xword	0
@@ -12961,7 +13063,7 @@ dev_attr_wf_data:
 	.type	dev_attr_ori_wf_data,@object
 	.p2align	3
 dev_attr_ori_wf_data:
-	.xword	.L.str.151
+	.xword	.L.str.152
 	.hword	128
 	.zero	6
 	.xword	0
@@ -13008,76 +13110,76 @@ ebc_ops:
 	.xword	0
 	.size	ebc_ops, 272
 
-	.type	.L.str.118,@object
+	.type	.L.str.119,@object
 	.section	.rodata.str1.1,"aMS",@progbits,1
-.L.str.118:
+.L.str.119:
 	.asciz	"%s: argp NULL\n"
-	.size	.L.str.118, 15
+	.size	.L.str.119, 15
 
 	.type	.L__func__.ebc_io_ctl,@object
 .L__func__.ebc_io_ctl:
 	.asciz	"ebc_io_ctl"
 	.size	.L__func__.ebc_io_ctl, 11
 
-	.type	.L.str.119,@object
-.L.str.119:
-	.asciz	"enable bg control\n"
-	.size	.L.str.119, 19
-
 	.type	.L.str.120,@object
 .L.str.120:
-	.asciz	"disable bg control\n"
-	.size	.L.str.120, 20
+	.asciz	"enable bg control\n"
+	.size	.L.str.120, 19
 
 	.type	.L.str.121,@object
 .L.str.121:
-	.asciz	"enable ebc overlay, you can use osd buf to show something over the system display\n"
-	.size	.L.str.121, 83
+	.asciz	"disable bg control\n"
+	.size	.L.str.121, 20
 
 	.type	.L.str.122,@object
 .L.str.122:
-	.asciz	"disable ebc overlay\n"
-	.size	.L.str.122, 21
+	.asciz	"enable ebc overlay, you can use osd buf to show something over the system display\n"
+	.size	.L.str.122, 83
 
 	.type	.L.str.123,@object
 .L.str.123:
-	.asciz	"EBC_GET_BUFFER_INFO failed\n"
-	.size	.L.str.123, 28
+	.asciz	"disable ebc overlay\n"
+	.size	.L.str.123, 21
 
 	.type	.L.str.124,@object
 .L.str.124:
-	.asciz	"EBC_FB_BLANK\n"
-	.size	.L.str.124, 14
+	.asciz	"EBC_GET_BUFFER_INFO failed\n"
+	.size	.L.str.124, 28
 
 	.type	.L.str.125,@object
 .L.str.125:
-	.asciz	"EBC_FB_UNBLANK\n"
-	.size	.L.str.125, 16
+	.asciz	"EBC_FB_BLANK\n"
+	.size	.L.str.125, 14
 
 	.type	.L.str.126,@object
 .L.str.126:
-	.asciz	"EBC_ENABLE_REPAIR = %d\n"
-	.size	.L.str.126, 24
+	.asciz	"EBC_FB_UNBLANK\n"
+	.size	.L.str.126, 16
 
 	.type	.L.str.127,@object
 .L.str.127:
-	.asciz	"EBC_SET_FULL_REFRESH_WIDTH = %d\n"
-	.size	.L.str.127, 33
+	.asciz	"EBC_ENABLE_REPAIR = %d\n"
+	.size	.L.str.127, 24
 
 	.type	.L.str.128,@object
 .L.str.128:
-	.asciz	"EBC_SET_FULL_REFRESH_TYPE = %d\n"
-	.size	.L.str.128, 32
+	.asciz	"EBC_SET_FULL_REFRESH_WIDTH = %d\n"
+	.size	.L.str.128, 33
 
 	.type	.L.str.129,@object
 .L.str.129:
-	.asciz	"%s: unknown cmd\n"
-	.size	.L.str.129, 17
+	.asciz	"EBC_SET_FULL_REFRESH_TYPE = %d\n"
+	.size	.L.str.129, 32
 
 	.type	.L.str.130,@object
 .L.str.130:
+	.asciz	"%s: unknown cmd\n"
+	.size	.L.str.130, 17
+
+	.type	.L.str.131,@object
+.L.str.131:
 	.asciz	"waveform"
-	.size	.L.str.130, 9
+	.size	.L.str.131, 9
 
 	.type	waveform_ops,@object
 	.section	.rodata,"a",@progbits
@@ -13119,146 +13221,146 @@ waveform_ops:
 	.xword	0
 	.size	waveform_ops, 272
 
-	.type	.L.str.132,@object
-	.section	.rodata.str1.1,"aMS",@progbits,1
-.L.str.132:
-	.asciz	"waveform_version"
-	.size	.L.str.132, 17
-
 	.type	.L.str.133,@object
+	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str.133:
-	.asciz	"%s\n"
-	.size	.L.str.133, 4
+	.asciz	"waveform_version"
+	.size	.L.str.133, 17
 
 	.type	.L.str.134,@object
 .L.str.134:
-	.asciz	"pmic_name"
-	.size	.L.str.134, 10
+	.asciz	"%s\n"
+	.size	.L.str.134, 4
 
 	.type	.L.str.135,@object
 .L.str.135:
-	.asciz	"pmic_temp"
+	.asciz	"pmic_name"
 	.size	.L.str.135, 10
 
 	.type	.L.str.136,@object
 .L.str.136:
-	.asciz	"%d\n"
-	.size	.L.str.136, 4
+	.asciz	"pmic_temp"
+	.size	.L.str.136, 10
 
 	.type	.L.str.137,@object
 .L.str.137:
-	.asciz	"pmic_vcom"
-	.size	.L.str.137, 10
+	.asciz	"%d\n"
+	.size	.L.str.137, 4
 
 	.type	.L.str.138,@object
 .L.str.138:
-	.asciz	"invalid value = %s\n"
-	.size	.L.str.138, 20
+	.asciz	"pmic_vcom"
+	.size	.L.str.138, 10
 
 	.type	.L.str.139,@object
 .L.str.139:
-	.asciz	"set vcom value failed\n"
-	.size	.L.str.139, 23
+	.asciz	"invalid value = %s\n"
+	.size	.L.str.139, 20
 
 	.type	.L.str.140,@object
 .L.str.140:
-	.asciz	"ebc_version"
-	.size	.L.str.140, 12
+	.asciz	"set vcom value failed\n"
+	.size	.L.str.140, 23
 
 	.type	.L.str.141,@object
 .L.str.141:
-	.asciz	"ebc_state"
-	.size	.L.str.141, 10
+	.asciz	"ebc_version"
+	.size	.L.str.141, 12
 
 	.type	.L.str.142,@object
 .L.str.142:
-	.asciz	"ebc_buf_state"
-	.size	.L.str.142, 14
+	.asciz	"ebc_state"
+	.size	.L.str.142, 10
 
 	.type	.L.str.143,@object
 .L.str.143:
-	.asciz	"auto_frame_state"
-	.size	.L.str.143, 17
+	.asciz	"ebc_buf_state"
+	.size	.L.str.143, 14
 
 	.type	.L.str.144,@object
 .L.str.144:
-	.asciz	"0\n"
-	.size	.L.str.144, 3
+	.asciz	"auto_frame_state"
+	.size	.L.str.144, 17
 
 	.type	.L.str.145,@object
 .L.str.145:
-	.asciz	"ebc_debug_level"
-	.size	.L.str.145, 16
+	.asciz	"0\n"
+	.size	.L.str.145, 3
 
 	.type	.L.str.146,@object
 .L.str.146:
-	.asciz	"wf_data"
-	.size	.L.str.146, 8
+	.asciz	"ebc_debug_level"
+	.size	.L.str.146, 16
 
 	.type	.L.str.147,@object
 .L.str.147:
-	.asciz	"603893"
-	.size	.L.str.147, 7
+	.asciz	"wf_data"
+	.size	.L.str.147, 8
 
 	.type	.L.str.148,@object
 .L.str.148:
-	.asciz	"lutdata: %d frames\n"
-	.size	.L.str.148, 20
+	.asciz	"603893"
+	.size	.L.str.148, 7
 
 	.type	.L.str.149,@object
 .L.str.149:
-	.asciz	"[%d-->%d]: \n"
-	.size	.L.str.149, 13
+	.asciz	"lutdata: %d frames\n"
+	.size	.L.str.149, 20
 
 	.type	.L.str.150,@object
 .L.str.150:
-	.asciz	"\001c\0017%d, "
-	.size	.L.str.150, 9
+	.asciz	"[%d-->%d]: \n"
+	.size	.L.str.150, 13
 
 	.type	.L.str.151,@object
 .L.str.151:
-	.asciz	"ori_wf_data"
-	.size	.L.str.151, 12
+	.asciz	"\001c\0017%d, "
+	.size	.L.str.151, 9
 
 	.type	.L.str.152,@object
 .L.str.152:
-	.asciz	"malloc wf_table buffer failed\n"
-	.size	.L.str.152, 31
+	.asciz	"ori_wf_data"
+	.size	.L.str.152, 12
 
 	.type	.L.str.153,@object
 .L.str.153:
-	.asciz	"603893 %d %d"
-	.size	.L.str.153, 13
+	.asciz	"malloc wf_table buffer failed\n"
+	.size	.L.str.153, 31
 
 	.type	.L.str.154,@object
 .L.str.154:
+	.asciz	"603893 %d %d"
+	.size	.L.str.154, 13
+
+	.type	.L.str.155,@object
+.L.str.155:
 	.asciz	"%s: wf mode %d on temp %d\n"
-	.size	.L.str.154, 27
+	.size	.L.str.155, 27
 
 	.type	.L__func__.ori_wf_data_write,@object
 .L__func__.ori_wf_data_write:
 	.asciz	"ori_wf_data_write"
 	.size	.L__func__.ori_wf_data_write, 18
 
-	.type	.L.str.155,@object
-.L.str.155:
-	.asciz	"%s: err code\n"
-	.size	.L.str.155, 14
-
 	.type	.L.str.156,@object
 .L.str.156:
-	.asciz	"%s: err lut_type or temp\n"
-	.size	.L.str.156, 26
+	.asciz	"%s: err code\n"
+	.size	.L.str.156, 14
 
 	.type	.L.str.157,@object
 .L.str.157:
-	.asciz	"device suspend\n"
-	.size	.L.str.157, 16
+	.asciz	"%s: err lut_type or temp\n"
+	.size	.L.str.157, 26
 
 	.type	.L.str.158,@object
 .L.str.158:
+	.asciz	"device suspend\n"
+	.size	.L.str.158, 16
+
+	.type	.L.str.159,@object
+.L.str.159:
 	.asciz	"device resume\n"
-	.size	.L.str.158, 15
+	.size	.L.str.159, 15
 
 	.ident	"Android (8508608, based on r450784e) clang version 14.0.7 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0cca074e9238af8b4106c30add4418f6)"
 	.section	".note.GNU-stack","",@progbits

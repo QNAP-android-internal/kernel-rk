@@ -9,6 +9,7 @@
 #define EPD_LUT_H
 
 #define MAXFRAME    255
+#define LAST_REPAIR_NUM 13
 
 #define WF_4BIT	16
 #define WF_5BIT	32
