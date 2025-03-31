@@ -826,7 +826,7 @@
 
 		reboot_mode: reboot-mode {
 			compatible = "syscon-reboot-mode";
-			offset = <0x30200>;
+			offset = <0x30220>;
 			mode-bootloader = <BOOT_BL_DOWNLOAD>;
 			mode-charge = <BOOT_CHARGING>;
 			mode-fastboot = <BOOT_FASTBOOT>;
@@ -1484,6 +1484,7 @@
 					     <&shaping_rkvdec>,
 					     <&shaping_rkjpeg>,
 					     <&shaping_decom>;
+				clocks = <&cru ACLK_RKVDEC_ROOT>;
 				rockchip,always-on;
 			};
 			power-domain@RV1126B_PD_AISP {
@@ -2305,6 +2306,7 @@
 		clock-names = "spiclk", "apb_pclk";
 		dmas = <&dmac 40>, <&dmac 41>;
 		dma-names = "rx", "tx";
+		num-cs = <2>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&spi0m0_clk_pins &spi0m0_csn0_pins &spi0m0_csn1_pins>;
 		status = "disabled";
@@ -2320,6 +2322,7 @@
 		clock-names = "spiclk", "apb_pclk";
 		dmas = <&dmac 42>, <&dmac 43>;
 		dma-names = "rx", "tx";
+		num-cs = <2>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&spi1m0_clk_pins &spi1m0_csn0_pins &spi1m0_csn1_pins>;
 		status = "disabled";
@@ -2994,12 +2997,12 @@
 		interrupt-names = "irq_rkvenc";
 		clocks = <&cru ACLK_VEPU>, <&cru HCLK_VEPU>, <&cru CLK_CORE_VEPU>;
 		clock-names = "aclk_vcodec", "hclk_vcodec", "clk_core";
-		rockchip,normal-rates = <396000000>, <0>, <396000000>;
+		rockchip,normal-rates = <396000000>, <0>, <550000000>;
 		resets = <&cru SRST_ARESETN_VEPU>, <&cru SRST_HRESETN_VEPU>,
 			 <&cru SRST_RESETN_CORE_VEPU>;
 		reset-names = "video_a", "video_h", "video_core";
 		assigned-clocks = <&cru ACLK_VEPU>, <&cru CLK_CORE_VEPU>;
-		assigned-clock-rates = <396000000>, <396000000>;
+		assigned-clock-rates = <396000000>, <550000000>;
 		iommus = <&rkvenc_mmu>;
 		rockchip,srv = <&mpp_srv>;
 		rockchip,taskqueue-node = <0>;
@@ -3101,8 +3104,9 @@
 		reg = <0x21fa3f00 0x100>;
 		interrupts = <GIC_SPI 218 IRQ_TYPE_LEVEL_HIGH>;
 		interrupt-names = "aiisp_mmu";
-		clocks = <&cru ACLK_AISP>, <&cru HCLK_AISP>;
-		clock-names = "aclk", "iface";
+		clocks = <&cru ACLK_AISP>, <&cru HCLK_AISP>,
+			 <&cru CLK_CORE_AISP>;
+		clock-names = "aclk_aiisp", "hclk_aiisp", "clk_aiisp_core";
 		power-domains = <&power RV1126B_PD_AISP>;
 		rockchip,disable-mmu-reset;
 		#iommu-cells = <0>;
@@ -3336,6 +3340,14 @@
 		clock-names = "aclk", "iface";
 		#iommu-cells = <0>;
 		status = "disabled";
+	};
+
+	debug: debug@22410000 {
+		compatible = "rockchip,debug";
+		reg = <0x22410000 0x1000>,
+		      <0x22510000 0x1000>,
+		      <0x22610000 0x1000>,
+		      <0x22710000 0x1000>;
 	};
 
 	system_sram: sram@3ffb0000 {

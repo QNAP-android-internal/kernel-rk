@@ -78,6 +78,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		enable-active-low;
+		regulator-boot-on;	// The legacy U-Boot GPIO driver needs this to set correct SDMMC0_PWREN value
 		vin-supply = <&vcc12v_dcin>;
 	};
 
@@ -175,6 +176,18 @@
 	no-sdio;
 	no-sd;
 	status = "okay";
+};
+
+&fspi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "spi-nand";
+		reg = <0>;
+		spi-max-frequency = <75000000>;
+		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <1>;
+	};
 };
 
 &gmac {
@@ -318,7 +331,7 @@
 		compatible = "ethernet-phy-id0680.8101", "ethernet-phy-ieee802.3-c22";
 		reg = <2>;
 		clocks = <&cru CLK_MACPHY>;
-		clock-frequency = <24000000>;
+		clock-frequency = <50000000>;
 		resets = <&cru SRST_RESETN_MACPHY>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&fephym1_pins>;

@@ -22,7 +22,7 @@
 #define PVTPLL_SRC_SEL_PVTPLL		(BIT(0) | BIT(16))
 
 enum rv1126b_plls {
-	gpll, cpll, aupll
+	gpll, cpll, aupll, dpll
 };
 
 static struct rockchip_pll_rate_table rv1126b_pll_rates[] = {
@@ -142,6 +142,7 @@ PNAME(clk_timer2_parents_p)		= { "clk_timer_root", "mclk_sai2_from_io", "sclk_sa
 PNAME(clk_timer3_parents_p)		= { "clk_timer_root", "mclk_asrc0", "mclk_asrc1" };
 PNAME(clk_timer4_parents_p)		= { "clk_timer_root", "mclk_asrc2", "mclk_asrc3" };
 PNAME(clk_macphy_p)			= { "xin24m", "clk_cpll_div20" };
+PNAME(mux_ddrphy_p)			= { "dpll", "aclk_sysmem" };
 
 static struct rockchip_pll_clock rv1126b_pll_clks[] __initdata = {
 	[gpll] = PLL(pll_rk3328, PLL_GPLL, "gpll", mux_pll_p,
@@ -153,6 +154,9 @@ static struct rockchip_pll_clock rv1126b_pll_clks[] __initdata = {
 	[cpll] = PLL(pll_rk3328, PLL_CPLL, "cpll", mux_pll_p,
 		     CLK_IS_CRITICAL, RV1126B_PERIPLL_CON(0),
 		     RV1126B_MODE_CON, 4, 10, 0, rv1126b_pll_rates),
+	[dpll] = PLL(pll_rk3328, 0, "dpll", mux_pll_p,
+		     CLK_IS_CRITICAL, RV1126B_SUBDDRPLL_CON(0),
+		     RV1126B_MODE_CON, 2, 10, 0, rv1126b_pll_rates),
 };
 
 #define MFLAGS CLK_MUX_HIWORD_MASK
@@ -350,9 +354,9 @@ static struct rockchip_clk_branch rv1126b_clk_branches[] __initdata = {
 	COMPOSITE_NODIV(ACLK_VI_ROOT, "aclk_vi_root", mux_500m_400m_300m_p, CLK_IS_CRITICAL,
 			RV1126B_CLKSEL_CON(40), 7, 2, MFLAGS,
 			RV1126B_CLKGATE_CON(6), 2, GFLAGS),
-	GATE(HCLK_VI_ROOT, "hclk_vi_root", "clk_gpll_div8", 0,
+	GATE(HCLK_VI_ROOT, "hclk_vi_root", "clk_gpll_div8", CLK_IS_CRITICAL,
 			RV1126B_CLKGATE_CON(6), 3, GFLAGS),
-	GATE(PCLK_VI_ROOT, "pclk_vi_root", "clk_cpll_div10", 0,
+	GATE(PCLK_VI_ROOT, "pclk_vi_root", "clk_cpll_div10", CLK_IS_CRITICAL,
 			RV1126B_CLKGATE_CON(6), 4, GFLAGS),
 	COMPOSITE_NODIV(DCLK_VICAP_ROOT, "dclk_vicap_root", mux_333m_200m_p, 0,
 			RV1126B_CLKSEL_CON(42), 5, 1, MFLAGS,
@@ -692,6 +696,9 @@ static struct rockchip_clk_branch rv1126b_clk_branches[] __initdata = {
 			RV1126B_VDOCLKGATE_CON(1), 13, GFLAGS),
 
 	/* pd_subddr */
+	COMPOSITE_DDRCLK(SCLK_DDR, "sclk_ddr", mux_ddrphy_p, CLK_GET_RATE_NOCACHE,
+			 RV1126B_SUBDDRCLKSEL_CON(1), 1, 1, 0, 1,
+			 ROCKCHIP_DDRCLK_SIP_V2),
 
 	/* pd_ddr */
 	GATE(PCLK_DDRC, "pclk_ddrc", "pclk_ddr_root", CLK_IS_CRITICAL,
@@ -729,7 +736,7 @@ static struct rockchip_clk_branch rv1126b_clk_branches[] __initdata = {
 	COMPOSITE_NODIV(DBCLK_PMU_GPIO0, "dbclk_pmu_gpio0", mux_24m_32k_p, 0,
 			RV1126B_PMUCLKSEL_CON(2), 4, 1, MFLAGS,
 			RV1126B_PMUCLKGATE_CON(0), 8, GFLAGS),
-	GATE(PCLK_PMU_HP_TIMER, "pclk_pmu_hp_timer", "busclk_pmu_root", 0,
+	GATE(PCLK_PMU_HP_TIMER, "pclk_pmu_hp_timer", "busclk_pmu_root", CLK_IS_CRITICAL,
 			RV1126B_PMUCLKGATE_CON(0), 10, GFLAGS),
 	COMPOSITE(CLK_PMU_HP_TIMER, "clk_pmu_hp_timer", mux_cpll_24m_p, CLK_IS_CRITICAL,
 			RV1126B_PMUCLKSEL_CON(1), 13, 1, MFLAGS, 8, 5, DFLAGS,

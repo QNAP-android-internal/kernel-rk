@@ -159,6 +159,18 @@
 	cpu-supply = <&vdd_cpu>;
 };
 
+&fspi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <100000000>;
+		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <1>;
+	};
+};
+
 &rkaiisp {
 	status = "okay";
 };
@@ -184,14 +196,17 @@
 };
 
 &pwm1_4ch_0 {
+	pinctrl-0 = <&pwm1m2_ch0_pins>;
 	status = "okay";
 };
 
 &pwm1_4ch_1 {
+	pinctrl-0 = <&pwm1m2_ch1_pins>;
 	status = "okay";
 };
 
 &pwm1_4ch_2 {
+	pinctrl-0 = <&pwm1m2_ch2_pins>;
 	status = "okay";
 };
 
