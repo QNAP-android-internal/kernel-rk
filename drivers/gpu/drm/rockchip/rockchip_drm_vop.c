@@ -2626,7 +2626,8 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
 	}
 	if ((vop->version == VOP_VERSION_RK3036 ||
 	     vop->version == VOP_VERSION_RK3506 ||
-	     vop->version == VOP_VERSION_RK3576_LITE) &&
+	     vop->version == VOP_VERSION_RK3576_LITE ||
+	     vop->version == VOP_VERSION_RV1126B) &&
 	    (adjusted_mode->flags & DRM_MODE_FLAG_INTERLACE))
 		dsp_h = dsp_h / 2;
 
@@ -2643,7 +2644,8 @@ static void vop_plane_atomic_update(struct drm_plane *plane,
 	dsp_sty = dest->y1 + mode->crtc_vtotal - mode->crtc_vsync_start;
 	if ((vop->version == VOP_VERSION_RK3036 ||
 	     vop->version == VOP_VERSION_RK3506 ||
-	     vop->version == VOP_VERSION_RK3576_LITE) &&
+	     vop->version == VOP_VERSION_RK3576_LITE ||
+	     vop->version == VOP_VERSION_RV1126B) &&
 	    (adjusted_mode->flags & DRM_MODE_FLAG_INTERLACE))
 		dsp_sty = dest->y1 / 2 + mode->crtc_vtotal - mode->crtc_vsync_start;
 	dsp_st = dsp_sty << 16 | (dsp_stx & 0xffff);
@@ -3444,10 +3446,10 @@ vop_crtc_mode_valid(struct drm_crtc *crtc, const struct drm_display_mode *mode)
 
 	/*
 	 * Dclk need to be double if BT656 interface and vop version >= 2.12.
-	 * That is RV1126/RV1106/RK3576_LITE/RK3506
+	 * That is RV1126/RV1106/RK3576_LITE/RK3506/RV1126B
 	 */
 	if (mode->flags & DRM_MODE_FLAG_DBLCLK ||
-	    (VOP_MAJOR(vop->version) == 2 && VOP_MINOR(vop->version) >= 12 &&
+	    (vop->version >= VOP_VERSION_RV1106 && vop->version <= VOP_VERSION_RK3288 &&
 	     s->output_if & VOP_OUTPUT_IF_BT656))
 		request_clock *= 2;
 	clock = clk_round_rate(vop->dclk, request_clock * 1000) / 1000;
@@ -3719,21 +3721,26 @@ static void vop_crtc_send_mcu_cmd(struct drm_crtc *crtc, u32 type, u32 value)
 	if (vop && vop->is_enabled) {
 		switch (type) {
 		case MCU_WRCMD:
+			VOP_CTRL_SET(vop, mcu_force_rdn, 1);
 			VOP_CTRL_SET(vop, mcu_rs, 0);
 			VOP_CTRL_SET(vop, mcu_rw_bypass_port, value);
 			VOP_CTRL_SET(vop, mcu_rs, 1);
 			break;
 		case MCU_WRDATA:
+			VOP_CTRL_SET(vop, mcu_force_rdn, 1);
 			VOP_CTRL_SET(vop, mcu_rs, 1);
 			VOP_CTRL_SET(vop, mcu_rw_bypass_port, value);
 			break;
 		case MCU_RDDATA:
+			VOP_CTRL_SET(vop, mcu_force_rdn, 0);
 			VOP_CTRL_SET(vop, mcu_rs, 1);
 			val = VOP_CTRL_GET(vop, mcu_rw_bypass_port);
 			DRM_DEBUG_DRIVER("mcu read reg[0x%02x] = 0x%02x", value, val);
 			break;
 		case MCU_SETBYPASS:
 			VOP_CTRL_SET(vop, mcu_bypass, value ? 1 : 0);
+			if (!value)
+				VOP_CTRL_SET(vop, mcu_force_rdn, 1);
 			break;
 		default:
 			break;
@@ -3898,10 +3905,10 @@ static bool vop_crtc_mode_fixup(struct drm_crtc *crtc,
 
 	/*
 	 * Dclk need to be double if BT656 interface and vop version >= 2.12.
-	 * That is RV1126/RV1106/RK3576_LITE/RK3506
+	 * That is RV1126/RV1106/RK3576_LITE/RK3506/RV1126B
 	 */
 	if (mode->flags & DRM_MODE_FLAG_DBLCLK ||
-	    (VOP_MAJOR(vop->version) == 2 && VOP_MINOR(vop->version) >= 12 &&
+	    (vop->version >= VOP_VERSION_RV1106 && vop->version <= VOP_VERSION_RK3288 &&
 	     s->output_if & VOP_OUTPUT_IF_BT656))
 		adj_mode->crtc_clock *= 2;
 
@@ -4005,11 +4012,11 @@ static void vop_update_csc(struct drm_crtc *crtc)
 	u32 val;
 
 	/*
-	 * When using BT656, set RV1126/RV1106/RK3576_LITE/RK3506 to P8888 mode.
+	 * When using BT656, set RV1126/RV1106/RK3576_LITE/RK3506/RV1126B to P8888 mode.
 	 */
 	if ((s->output_mode == ROCKCHIP_OUT_MODE_AAAA &&
 	     !(vop->data->feature & VOP_FEATURE_OUTPUT_10BIT)) ||
-	    (VOP_MAJOR(vop->version) == 2 && VOP_MINOR(vop->version) >= 12 &&
+	    (vop->version >= VOP_VERSION_RV1106 && vop->version <= VOP_VERSION_RK3288 &&
 	     s->output_if & VOP_OUTPUT_IF_BT656))
 		s->output_mode = ROCKCHIP_OUT_MODE_P888;
 

@@ -139,6 +139,11 @@ static struct pvtpll_table rv1103b_npu_pvtpll_table[] = {
 	ROCKCHIP_PVTPLL_VOLT_SEL(700000000, 1, 32, 4),
 };
 
+static struct pvtpll_table rv1126b_aisp_pvtpll_table[] = {
+	/* rate_hz, ring_se, length */
+	ROCKCHIP_PVTPLL(775000000, 0, 28),
+};
+
 static struct pvtpll_table rv1126b_core_pvtpll_table[] = {
 	/* rate_hz, ring_sel, length */
 	ROCKCHIP_PVTPLL_VOLT_SEL(1608000000, 0, 30, 0),
@@ -590,6 +595,12 @@ static const struct rockchip_clock_pvtpll_info rv1103b_npu_pvtpll_data = {
 	.pvtpll_calibrate = rv1103b_pvtpll_calibrate,
 };
 
+static const struct rockchip_clock_pvtpll_info rv1126b_aisp_pvtpll_data = {
+	.config = rv1103b_pvtpll_configs,
+	.table_size = ARRAY_SIZE(rv1126b_aisp_pvtpll_table),
+	.table = rv1126b_aisp_pvtpll_table,
+};
+
 static const struct rockchip_clock_pvtpll_info rv1126b_core_pvtpll_data = {
 	.config = rv1103b_pvtpll_configs,
 	.table_size = ARRAY_SIZE(rv1126b_core_pvtpll_table),
@@ -634,6 +645,10 @@ static const struct of_device_id rockchip_clock_pvtpll_match[] = {
 	{
 		.compatible = "rockchip,rv1103b-npu-pvtpll",
 		.data = (void *)&rv1103b_npu_pvtpll_data,
+	},
+	{
+		.compatible = "rockchip,rv1126b-aisp-pvtpll",
+		.data = (void *)&rv1126b_aisp_pvtpll_data,
 	},
 	{
 		.compatible = "rockchip,rv1126b-core-pvtpll",
@@ -719,9 +734,27 @@ static int rockchip_clock_pvtpll_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static int rockchip_clock_pvtpll_resume(struct device *dev)
+{
+	struct rockchip_clock_pvtpll *pvtpll = dev_get_drvdata(dev);
+	struct pvtpll_table *table;
+
+	table = rockchip_get_pvtpll_settings(pvtpll, pvtpll->cur_rate);
+	if (!table)
+		return 0;
+
+	pvtpll->info->config(pvtpll, table);
+
+	return 0;
+}
+
+static DEFINE_SIMPLE_DEV_PM_OPS(rockchip_clock_pvtpll_pm_ops, NULL,
+				rockchip_clock_pvtpll_resume);
+
 static struct platform_driver rockchip_clock_pvtpll_driver = {
 	.driver = {
 		.name = "rockchip-clcok-pvtpll",
+		.pm = pm_sleep_ptr(&rockchip_clock_pvtpll_pm_ops),
 		.of_match_table = rockchip_clock_pvtpll_match,
 	},
 	.probe = rockchip_clock_pvtpll_probe,

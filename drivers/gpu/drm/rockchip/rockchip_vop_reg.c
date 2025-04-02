@@ -1639,6 +1639,7 @@ static const struct vop_win_phy px30_win23_data = {
 	.csc_mode = VOP_REG(RK3368_WIN2_CTRL0, 0x3, 2),
 	.format = VOP_REG(RK3368_WIN2_CTRL0, 0x3, 5),
 	.rb_swap = VOP_REG(RK3368_WIN2_CTRL0, 0x1, 20),
+	.interlace_read = VOP_REG_VER(RK3368_WIN2_CTRL0, 0x1, 1, 2, 0xf, -1),
 	.dsp_info = VOP_REG(RK3368_WIN2_DSP_INFO0, 0x0fff0fff, 0),
 	.dsp_st = VOP_REG(RK3368_WIN2_DSP_ST0, 0x1fff1fff, 0),
 	.yrgb_mst = VOP_REG(RK3368_WIN2_MST0, 0xffffffff, 0),
@@ -1942,6 +1943,9 @@ static const struct vop_ctrl rv1126b_ctrl_data = {
 	.mipi_pin_pol = VOP_REG(RK3366_LIT_DSP_CTRL0, 0x7, 26),
 	.bt1120_yc_swap = VOP_REG(RK3366_LIT_DSP_CTRL0, 0x1, 30),
 	.bt1120_en = VOP_REG(RK3366_LIT_DSP_CTRL0, 0x1, 31),
+	.bt656_en = VOP_REG(RK3366_LIT_DSP_CTRL0, 0x1, 6),
+
+	.mcu_force_rdn = VOP_REG(RV1126B_DSP_CTRL1, 0x1, 21),
 
 	.dsp_interlace = VOP_REG(RK3366_LIT_DSP_CTRL2, 0x1, 0),
 	.dither_up_en = VOP_REG(RK3366_LIT_DSP_CTRL2, 0x1, 2),

@@ -1311,7 +1311,7 @@ static const char *const loader_protect_clocks[] __initconst = {
 	"dclk_vp3",
 };
 
-static struct clk **loader_clocks __initdata;
+static struct clk **loader_clocks;
 static int __init rockchip_clocks_loader_protect(void)
 {
 	int nclocks = ARRAY_SIZE(loader_protect_clocks);
@@ -1335,7 +1335,7 @@ static int __init rockchip_clocks_loader_protect(void)
 }
 arch_initcall_sync(rockchip_clocks_loader_protect);
 
-static int __init rockchip_clocks_loader_unprotect(void)
+int rockchip_clocks_loader_unprotect(void)
 {
 	int i;
 
@@ -1349,8 +1349,8 @@ static int __init rockchip_clocks_loader_unprotect(void)
 			clk_disable_unprepare(clk);
 	}
 	kfree(loader_clocks);
+	loader_clocks = NULL;
 
 	return 0;
 }
-late_initcall_sync(rockchip_clocks_loader_unprotect);
 #endif

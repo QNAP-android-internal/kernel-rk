@@ -12,6 +12,7 @@
 #include <dt-bindings/power/rockchip,rv1126b-power.h>
 #include <dt-bindings/soc/rockchip,boot-mode.h>
 #include <dt-bindings/soc/rockchip-system-status.h>
+#include <dt-bindings/suspend/rockchip-rv1126b.h>
 
 / {
 	compatible = "rockchip,rv1126b";
@@ -214,6 +215,15 @@
 			assigned-clock-rates = <550000000>;
 		};
 
+		pvtpll_aisp: pvtpll-aisp@21fc0000 {
+			compatible = "rockchip,rv1126b-aisp-pvtpll";
+			reg = <0x21fc0000 0x100>;
+			#clock-cells = <0>;
+			clock-output-names = "clk_vcp_pvtpll";
+			assigned-clocks = <&pvtpll_aisp>;
+			assigned-clock-rates = <775000000>;
+		};
+
 		pvtpll_npu: pvtpll-npu@22080000 {
 			compatible = "rockchip,rv1126b-npu-pvtpll", "syscon";
 			reg = <0x22080000 0x100>;
@@ -393,7 +403,7 @@
 		compatible = "rockchip,fiq-debugger";
 		rockchip,serial-id = <0>;
 		rockchip,wake-irq = <0>;
-		rockchip,irq-mode-enable = <0>;
+		rockchip,irq-mode-enable = <1>;
 		rockchip,baudrate = <1500000>;  /* Only 115200 and 1500000 */
 		interrupts = <GIC_SPI 240 IRQ_TYPE_LEVEL_HIGH>;
 		status = "disabled";
@@ -747,6 +757,25 @@
 				remote-endpoint = <&isp_sditf3>;
 			};
 		};
+	};
+
+	rockchip_suspend: rockchip-suspend {
+		compatible = "rockchip,pm-config";
+		status = "disabled";
+
+		rockchip,sleep-mode-config = <
+			(0
+			| RKPM_SLP_ARMOFF_PMUOFF
+			| RKPM_SLP_PMU_PMUALIVE_32K
+			| RKPM_SLP_PMU_DIS_OSC
+			| RKPM_SLP_32K_EXT
+			)
+		>;
+		rockchip,wakeup-config = <
+			(0
+			| RKPM_GPIO0_WKUP_EN
+			)
+		>;
 	};
 
 	rockchip_system_monitor: rockchip-system-monitor {

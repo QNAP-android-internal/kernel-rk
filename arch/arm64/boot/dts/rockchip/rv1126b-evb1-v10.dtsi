@@ -1,17 +1,10 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
  * Copyright (c) 2025 Rockchip Electronics Co., Ltd.
+ *
  */
 
-/dts-v1/;
-#include "rv1126b.dtsi"
-#include "rv1126b-evb.dtsi"
-#include "rv1126b-evb-cam-csi0.dtsi"
-
 / {
-	model = "Rockchip RV1126B EVB4 V10 Board";
-	compatible = "rockchip,rv1126b-evb4-v10", "rockchip,rv1126b";
-
 	sdio_pwrseq: sdio-pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		pinctrl-names = "default";
@@ -24,14 +17,6 @@
 		 * - PDN (power down when low)
 		 */
 		reset-gpios = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
-	};
-
-	vcc_mipi: vcc-mipi {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc_mipi";
-		gpio = <&gpio0 RK_PC6 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		regulator-boot-on;
 	};
 
 	vcc5v0_sys: vcc5v0-sys {
@@ -65,10 +50,43 @@
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 		enable-active-high;
-		gpio = <&gpio6 RK_PA3 GPIO_ACTIVE_HIGH>;
+		gpio = <&gpio5 RK_PA7 GPIO_ACTIVE_HIGH>;
 		vin-supply = <&vcc5v0_sys>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&vcc5v0_host_en>;
+	};
+
+	vcc_mipi: vcc-mipi {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc_mipi";
+		gpio = <&gpio7 RK_PA2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+	};
+
+	vcc_sd: vcc-sd {
+		compatible = "regulator-fixed";
+		gpio = <&gpio0 RK_PB0 GPIO_ACTIVE_LOW>;
+		regulator-name = "vcc_sd";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-low;
+		regulator-boot-on;	// The legacy U-Boot GPIO driver needs this to set correct SDMMC0_PWREN value
+		vin-supply = <&vcc12v_dcin>;
+	};
+
+	vccio_sd: vccio-sd {
+		compatible = "regulator-gpio";
+		regulator-boot-on;
+		regulator-name = "vccio_sd";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&sdmmc_volt>;
+		gpios = <&gpio0 RK_PA6 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&vcc5v0_sys>;
+		states = <1800000 0x0
+			  3300000 0x1>;
 	};
 
 	vdd_npu: vdd-npu {
@@ -105,8 +123,21 @@
 	};
 };
 
+&acdcdig_dsm {
+	status = "okay";
+	pa-ctl-gpios = <&gpio0 RK_PA4 GPIO_ACTIVE_HIGH>;
+};
+
+&acodec_sound {
+	status = "okay";
+};
+
+&audio_codec {
+	status = "okay";
+};
+
 &backlight {
-	pwms = <&pwm0_8ch_3 0 25000 0>;
+	pwms = <&pwm2_8ch_4 0 25000 0>;
 };
 
 &cpu0 {
@@ -137,6 +168,25 @@
 	rockchip,default-sample-phase = <90>;
 	no-sdio;
 	no-sd;
+	status = "okay";
+};
+
+&fspi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "spi-nand";
+		reg = <0>;
+		spi-max-frequency = <75000000>;
+		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <1>;
+	};
+};
+
+&gmac {
+	phy-mode = "rmii";
+	clock_in_out = "input";
+	phy-handle = <&rmii_phy>;
 	status = "okay";
 };
 
@@ -253,16 +303,32 @@
 	};
 };
 
-&i2c2 {
+&i2c4 {
 	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c4m3_pins>;
 
 	gt1x: gt1x@14 {
 		compatible = "goodix,gt1x";
 		reg = <0x14>;
 		pinctrl-names = "default";
+		pinctrl-0 = <&touch_gpio>;
 		power-supply = <&vcc_mipi>;
-		goodix,rst-gpio = <&gpio0 RK_PC5 GPIO_ACTIVE_HIGH>;
-		goodix,irq-gpio = <&gpio0 RK_PA7 IRQ_TYPE_LEVEL_LOW>;
+		goodix,rst-gpio = <&gpio7 RK_PA7 GPIO_ACTIVE_HIGH>;
+		goodix,irq-gpio = <&gpio7 RK_PA6 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&mdio {
+	rmii_phy: ethernet-phy@2 {
+		compatible = "ethernet-phy-id0680.8101", "ethernet-phy-ieee802.3-c22";
+		reg = <2>;
+		clocks = <&cru CLK_MACPHY>;
+		clock-frequency = <50000000>;
+		resets = <&cru SRST_RESETN_MACPHY>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&fephym1_pins>;
+		phy-is-integrated;
 	};
 };
 
@@ -283,13 +349,28 @@
 		};
 	};
 
+	sdmmc {
+		/omit-if-no-ref/
+		sdmmc_volt: sdmmc-volt {
+			rockchip,pins = <0 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	touch {
+		touch_gpio: touch-gpio {
+			rockchip,pins =
+				<7 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>,
+				<7 RK_PA7 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
 	usb {
 		typec5v_pwren: typec5v-pwren {
 			rockchip,pins = <5 RK_PD6 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 
 		vcc5v0_host_en: vcc5v0-host-en {
-			rockchip,pins = <6 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
+			rockchip,pins = <5 RK_PA7 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
@@ -310,7 +391,36 @@
 	status = "okay";
 };
 
-&pwm0_8ch_3 {
+&pwm2_8ch_4 {
+	pinctrl-0 = <&pwm2m1_ch4_pins>;
+	status = "okay";
+};
+
+&rkaiisp {
+	status = "okay";
+};
+
+&rkaiisp_mmu {
+	status = "okay";
+};
+
+&rkaiisp_vir0 {
+	status = "okay";
+};
+
+&rkavsp {
+	status = "okay";
+};
+
+&rkavsp_mmu {
+	status = "okay";
+};
+
+&rkfec {
+	status = "okay";
+};
+
+&rkfec_mmu {
 	status = "okay";
 };
 
@@ -319,6 +429,30 @@
 };
 
 &route_dsi {
+	status = "okay";
+};
+
+&sai2 {
+	status = "okay";
+	/delete-property/ pinctrl-names;
+	/delete-property/ pinctrl-0;
+};
+
+&saradc0 {
+	vref-supply = <&vcc_1v8>;
+};
+
+&sdmmc0 {
+	max-frequency = <200000000>;
+	no-sdio;
+	no-mmc;
+	bus-width = <4>;
+	cap-mmc-highspeed;
+	cap-sd-highspeed;
+	disable-wp;
+	sd-uhs-sdr104;
+	vmmc-supply = <&vcc_sd>;
+	vqmmc-supply = <&vccio_sd>;
 	status = "okay";
 };
 
