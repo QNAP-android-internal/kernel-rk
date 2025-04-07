@@ -3221,7 +3221,10 @@ static int vehicle_cif_stream_start(struct vehicle_cif *cif)
 
 	/* just need init virtual channel 0 */
 	channel = &cif->channels[0];
-	channel->id = 0;
+	channel->id = cif->vc;
+
+	VEHICLE_INFO("@%s channel->id: %d.\n", __func__, channel->id);
+
 	vehicle_cif_csi_channel_init(cif, channel);
 	if (cif->chip_id < CHIP_RK3588_VEHICLE_CIF)
 		vehicle_cif_csi_channel_set(cif, channel, V4L2_MBUS_CSI2_DPHY);
@@ -3570,7 +3573,7 @@ static int vehicle_cif_csi2_s_stream_v1(struct vehicle_cif *cif,
 				val |= CSI_UVDS_EN;
 			rkcif_write_reg(cif, get_reg_index_of_id_ctrl0(channel->id), val);
 
-			val = channel->data_type << 2;
+			val = channel->id | channel->data_type << 2;
 			rkcif_write_reg(cif, get_reg_index_of_id_ctrl1(channel->id), val);
 
 		}
@@ -5118,11 +5121,19 @@ static int cif_parse_dt(struct vehicle_cif *cif)
 		VEHICLE_INFO("%s:Get cif, drop-frames failed!\n", __func__);
 		cif->drop_frames = 0; //default drop frames;
 	}
-
 	if (of_property_read_u32(dev->of_node, "cif,chip-id",
 				 &cif->chip_id)) {
 		VEHICLE_INFO("%s:Get cif, chip_id failed!\n", __func__);
 		cif->chip_id = CHIP_RK3588_VEHICLE_CIF; //default rk3588;
+	}
+	if (of_property_read_u32(dev->of_node, "cif,virtual-channel",
+				 &cif->vc)) {
+		VEHICLE_INFO("%s:Get cif, virtual-channel failed!\n", __func__);
+		cif->vc = 0; //default virtual channel;
+	}
+	if ((cif->vc < 0) || (cif->vc > 3)) {
+		VEHICLE_DGERR("virtual-channel over range, use default 0!\n");
+		cif->vc = 0;
 	}
 
 	cif_node = of_parse_phandle(dev->of_node, "rockchip,cif", 0);

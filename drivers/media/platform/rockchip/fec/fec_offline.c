@@ -21,6 +21,37 @@ MODULE_PARM_DESC(debug, "Debug level (0-6)");
 
 static void buf_del(struct file *file, int fd, bool is_all);
 
+static void rkfec_dvfs(struct rkfec_offline_dev *ofl, int width)
+{
+	int i, ret;
+	struct rkfec_hw_dev *hw = ofl->hw;
+	const struct fec_clk_info *rate_info = NULL;
+	unsigned long target_rate = 0;
+
+	for (i = 0; i < hw->clk_rate_tbl_num; i++) {
+		if (width <= hw->clk_rate_tbl[i].refer_data) {
+			rate_info = &hw->clk_rate_tbl[i];
+			break;
+		}
+	}
+
+	if (!rate_info)
+		rate_info = &hw->clk_rate_tbl[hw->clk_rate_tbl_num - 1];
+
+	target_rate = rate_info->clk_rate * 1000000;
+
+	ret = hw->set_clk(hw->clks[0], target_rate);
+	if (ret < 0)
+		v4l2_err(&ofl->v4l2_dev, "failed to set aclk rate: %d\n", ret);
+
+	ret = hw->set_clk(hw->clks[2], target_rate);
+	if (ret < 0)
+		v4l2_err(&ofl->v4l2_dev, "failed to set core clk rate: %d\n", ret);
+
+	v4l2_dbg(4, rkfec_debug, &ofl->v4l2_dev, "set clk rate: %ld\n",
+		 target_rate);
+}
+
 #if IS_LINUX_VERSION_AT_LEAST_6_1
 static void init_vb2(struct rkfec_offline_dev *ofl,
 		     struct rkfec_offline_buf *buf)
@@ -250,8 +281,15 @@ static int fec_running(struct file *file, struct rkfec_in_out *buf)
 		 buf->out_fourcc, buf->out_fourcc >> 8,
 		 buf->out_fourcc >> 16, buf->out_fourcc >> 24);
 
+	if (hw->fec_ver == RKFEC_V20) {
+		if (hw->soft_reset)
+			hw->soft_reset(hw);
+		else
+			dev_warn(hw->dev, "soft_reset not implemented\n");
+	}
 
-	//clk tosee
+	if (hw->set_clk)
+		rkfec_dvfs(ofl, in_w);
 
 	init_completion(&ofl->cmpl);
 
@@ -433,6 +471,20 @@ static int fec_running(struct file *file, struct rkfec_in_out *buf)
 	v4l2_dbg(3, rkfec_debug, &ofl->v4l2_dev,
 		 "%s exit ret:%d, time:%lldus\n", __func__, ret, us);
 
+	if (rkfec_debug >= 4) {
+		pr_cont("FEC_0x200:\n");
+		print_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET, 16, 4,
+			       base + RKFEC_STRT, 0xc0, false);
+
+		pr_cont("FEC_CACHE:\n");
+		print_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET, 16, 4,
+			       base + RKFEC_CACHE_STATUS, 0x28, false);
+
+		pr_cont("FEC_MMU:\n");
+		print_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET, 16, 4,
+			       base + RKFEC_MMU_DTE_ADDR, 0x2c, false);
+	}
+
 	ofl->debug.interval = us;
 
 	ofl->state = RKFEC_FRAME_END;
@@ -467,6 +519,12 @@ static long rkfec_ofl_ioctl(struct file *file, void *fh,
 
 	ofl->pm_need_wait = true;
 
+	v4l2_dbg(4, rkfec_debug, &ofl->v4l2_dev, "%s cmd:%d", __func__, cmd);
+
+	if (mutex_lock_interruptible(&ofl->ioctl_lock)) {
+		return -ERESTARTSYS;
+	}
+
 	if (!arg) {
 		ret =  -EINVAL;
 		goto out;
@@ -497,6 +555,7 @@ out:
 		complete(&ofl->pm_cmpl);
 
 	ofl->pm_need_wait = false;
+	mutex_unlock(&ofl->ioctl_lock);
 	return ret;
 }
 
@@ -583,7 +642,7 @@ int rkfec_register_offline(struct rkfec_hw_dev *hw)
 	if (ret)
 		return ret;
 
-	mutex_init(&ofl->apilock);
+	mutex_init(&ofl->ioctl_lock);
 	ofl->vfd = offline_videodev;
 	vfd = &ofl->vfd;
 	vfd->device_caps = V4L2_CAP_STREAMING;
@@ -607,7 +666,7 @@ int rkfec_register_offline(struct rkfec_hw_dev *hw)
 	v4l2_info(&ofl->v4l2_dev, "%s success\n", __func__);
 	return 0;
 unreg_v4l2:
-	mutex_destroy(&ofl->apilock);
+	mutex_destroy(&ofl->ioctl_lock);
 	v4l2_device_unregister(v4l2_dev);
 	return ret;
 }
@@ -617,7 +676,7 @@ void rkfec_unregister_offline(struct rkfec_hw_dev *hw)
 	struct rkfec_offline_dev *ofl = &hw->ofl_dev;
 
 	rkfec_offline_proc_cleanup(&hw->ofl_dev);
-	mutex_destroy(&ofl->apilock);
+	mutex_destroy(&ofl->ioctl_lock);
 	video_unregister_device(&ofl->vfd);
 	v4l2_device_unregister(&ofl->v4l2_dev);
 }

@@ -7,9 +7,9 @@
 #include "rv1126b.dtsi"
 #include "rv1126bp-evb.dtsi"
 #include "rv1126bp-evb-v14.dtsi"
-#include "rv1126bp-evb-cam-csi0.dtsi"
+#include "rv1126bp-evb-v14-dual-cam.dtsi"
 
 / {
-	model = "Rockchip RV1126B-P EVB V14 Board";
-	compatible = "rockchip,rv1126bp-evb-v14", "rockchip,rv1126b";
+	model = "Rockchip RV1126B-P EVB V14 Dual Camera Board";
+	compatible = "rockchip,rv1126bp-evb-v14-dual-cam", "rockchip,rv1126b";
 };

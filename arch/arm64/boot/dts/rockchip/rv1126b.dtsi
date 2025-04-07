@@ -227,6 +227,7 @@
 		pvtpll_npu: pvtpll-npu@22080000 {
 			compatible = "rockchip,rv1126b-npu-pvtpll", "syscon";
 			reg = <0x22080000 0x100>;
+			rockchip,cru = <&cru>;
 			clocks = <&cru ACLK_RKNN>;
 			#clock-cells = <0>;
 			clock-output-names = "clk_npu_pvtpll";
@@ -822,7 +823,7 @@
 	};
 
 	cru: clock-controller@20000000 {
-		compatible = "rockchip,rv1126b-cru";
+		compatible = "rockchip,rv1126b-cru", "syscon";
 		reg = <0x20000000 0xc0000>;
 		#clock-cells = <1>;
 		#reset-cells = <1>;
@@ -3123,6 +3124,8 @@
 		clocks = <&cru ACLK_AISP>, <&cru HCLK_AISP>,
 			 <&cru CLK_CORE_AISP>;
 		clock-names = "aclk_aiisp", "hclk_aiisp", "clk_aiisp_core";
+		assigned-clocks = <&cru CLK_CORE_AISP>, <&cru ACLK_AISP>;
+		assigned-clock-rates = <775000000>, <500000000>;
 		iommus = <&rkaiisp_mmu>;
 		power-domains = <&power RV1126B_PD_AISP>;
 		status = "disabled";
