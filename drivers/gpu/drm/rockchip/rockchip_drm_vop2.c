@@ -584,6 +584,8 @@ struct vop2_video_port {
 	struct clk *dclk;
 	struct clk *dclk_switch;
 	struct clk *dclk_parent;
+	struct dentry *debugfs;
+	struct drm_info_list *debugfs_files;
 	uint8_t id;
 	bool layer_sel_update;
 	bool xmirror_en;
@@ -897,8 +899,6 @@ struct vop2 {
 	struct vop2_dsc dscs[ROCKCHIP_MAX_CRTC];
 	struct vop2_video_port vps[ROCKCHIP_MAX_CRTC];
 	struct vop2_wb wb;
-	struct dentry *debugfs;
-	struct drm_info_list *debugfs_files;
 	struct drm_prop_enum_list *plane_name_list;
 	bool is_iommu_enabled;
 	bool is_iommu_needed;
@@ -8417,43 +8417,51 @@ static struct drm_info_list vop2_debugfs_files[] = {
 	{ "cubic_lut", vop2_cubic_lut_show, 0, NULL },
 };
 
-static int vop2_crtc_debugfs_init(struct drm_minor *minor, struct drm_crtc *crtc)
+static int vop2_crtc_late_register(struct drm_crtc *crtc)
 {
+	struct drm_minor *minor = crtc->dev->primary;
 	struct vop2_video_port *vp = to_vop2_video_port(crtc);
 	struct vop2 *vop2 = vp->vop2;
 	int ret, i;
 	char name[12];
 
 	snprintf(name, sizeof(name), "video_port%d", vp->id);
-	vop2->debugfs = debugfs_create_dir(name, minor->debugfs_root);
-	if (!vop2->debugfs)
+	vp->debugfs = debugfs_create_dir(name, minor->debugfs_root);
+	if (!vp->debugfs)
 		return -ENOMEM;
 
-	vop2->debugfs_files = kmemdup(vop2_debugfs_files, sizeof(vop2_debugfs_files),
+	vp->debugfs_files = kmemdup(vop2_debugfs_files, sizeof(vop2_debugfs_files),
 				      GFP_KERNEL);
-	if (!vop2->debugfs_files) {
+	if (!vp->debugfs_files) {
 		ret = -ENOMEM;
 		goto remove;
 	}
 #if defined(CONFIG_ROCKCHIP_DRM_DEBUG)
-	rockchip_drm_add_dump_buffer(crtc, vop2->debugfs);
-	rockchip_drm_debugfs_add_color_bar(crtc, vop2->debugfs);
-	rockchip_drm_debugfs_add_regs_write(crtc, vop2->debugfs);
-	rockchip_drm_debugfs_add_dclk_rate(crtc, vop2->debugfs);
-	rockchip_drm_debugfs_add_dovi_mode(crtc, vop2->debugfs);
+	rockchip_drm_add_dump_buffer(crtc, vp->debugfs);
+	rockchip_drm_debugfs_add_color_bar(crtc, vp->debugfs);
+	rockchip_drm_debugfs_add_regs_write(crtc, vp->debugfs);
+	rockchip_drm_debugfs_add_dclk_rate(crtc, vp->debugfs);
+	rockchip_drm_debugfs_add_dovi_mode(crtc, vp->debugfs);
 #endif
 	for (i = 0; i < ARRAY_SIZE(vop2_debugfs_files); i++)
-		vop2->debugfs_files[i].data = vop2;
+		vp->debugfs_files[i].data = vop2;
 
-	drm_debugfs_create_files(vop2->debugfs_files,
+	drm_debugfs_create_files(vp->debugfs_files,
 				 ARRAY_SIZE(vop2_debugfs_files),
-				 vop2->debugfs,
+				 vp->debugfs,
 				 minor);
 	return 0;
 remove:
-	debugfs_remove(vop2->debugfs);
-	vop2->debugfs = NULL;
+	debugfs_remove(vp->debugfs);
+	vp->debugfs = NULL;
 	return ret;
+}
+
+static void vop2_crtc_early_unregister(struct drm_crtc *crtc)
+{
+	struct vop2_video_port *vp = to_vop2_video_port(crtc);
+
+	debugfs_remove_recursive(vp->debugfs);
 }
 
 static enum drm_mode_status
@@ -8793,7 +8801,6 @@ static const struct rockchip_crtc_funcs private_crtc_funcs = {
 	.cancel_pending_vblank = vop2_crtc_cancel_pending_vblank,
 	.sysfs_init = vop2_crtc_sysfs_init,
 	.sysfs_fini = vop2_crtc_sysfs_fini,
-	.debugfs_init = vop2_crtc_debugfs_init,
 	.debugfs_dump = vop2_crtc_debugfs_dump,
 	.regs_dump = vop2_crtc_regs_dump,
 	.active_regs_dump = vop2_crtc_active_regs_dump,
@@ -13756,6 +13763,8 @@ static const struct drm_crtc_funcs vop2_crtc_funcs = {
 	.set_crc_source = vop2_crtc_set_crc_source,
 	.verify_crc_source = vop2_crtc_verify_crc_source,
 	.get_crc_sources = vop2_crtc_get_crc_sources,
+	.late_register = vop2_crtc_late_register,
+	.early_unregister = vop2_crtc_early_unregister,
 };
 
 static void vop2_fb_unref_worker(struct drm_flip_work *work, void *val)

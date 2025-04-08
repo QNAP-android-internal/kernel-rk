@@ -2148,6 +2148,8 @@ err_disable_hclk:
 static void vop_initial(struct drm_crtc *crtc)
 {
 	struct vop *vop = to_vop(crtc);
+	const struct vop_data *vop_data = vop->data;
+	struct vop_wb *wb = &vop->wb;
 	int i;
 
 	vop_power_enable(crtc);
@@ -2176,6 +2178,12 @@ static void vop_initial(struct drm_crtc *crtc)
 		VOP_GRF_SET(vop, grf, grf_vopl_sel, 1);
 		VOP_CTRL_SET(vop, enable, 1);
 	}
+
+	if (vop_data->wb) {
+		VOP_CTRL_SET2(vop, wb, axi_yrgb_id, vop_data->wb->axi_yrgb_id);
+		VOP_CTRL_SET2(vop, wb, axi_uv_id, vop_data->wb->axi_uv_id);
+		vop_wb_cfg_done(vop);
+	}
 }
 
 static void vop_crtc_atomic_disable_for_psr(struct drm_crtc *crtc,
@@ -2183,7 +2191,17 @@ static void vop_crtc_atomic_disable_for_psr(struct drm_crtc *crtc,
 {
 	struct vop *vop = to_vop(crtc);
 
-	vop_disable_all_planes(vop);
+	/*
+	 * For mcu interface, if mcu_hold_mode is enabled, the wins will stop
+	 * accessing DDR and the interface will also stop output.
+	 *
+	 * In addition, the regs operations in vop_disable_all_planes() will
+	 * not take effect when the mcu_hold_mode is enabled.
+	 */
+	if (vop->mcu_timing.mcu_pix_total)
+		VOP_CTRL_SET(vop, mcu_hold_mode, 1);
+	else
+		vop_disable_all_planes(vop);
 	drm_crtc_vblank_off(crtc);
 	vop->aclk_rate = clk_get_rate(vop->aclk);
 	clk_set_rate(vop->aclk, vop->aclk_rate / 3);
@@ -3390,8 +3408,9 @@ static struct drm_info_list vop_debugfs_files[] = {
 	{ "gamma_lut", vop_gamma_show, 0, NULL },
 };
 
-static int vop_crtc_debugfs_init(struct drm_minor *minor, struct drm_crtc *crtc)
+static int vop_crtc_late_register(struct drm_crtc *crtc)
 {
+	struct drm_minor *minor = crtc->dev->primary;
 	struct vop *vop = to_vop(crtc);
 	int ret, i;
 
@@ -3425,6 +3444,13 @@ remove:
 	debugfs_remove(vop->debugfs);
 	vop->debugfs = NULL;
 	return ret;
+}
+
+static void vop_crtc_early_unregister(struct drm_crtc *crtc)
+{
+	struct vop *vop = to_vop(crtc);
+
+	debugfs_remove_recursive(vop->debugfs);
 }
 
 static enum drm_mode_status
@@ -3871,7 +3897,6 @@ static unsigned long vop_crtc_get_dclk_rate(struct drm_crtc *crtc)
 static const struct rockchip_crtc_funcs private_crtc_funcs = {
 	.loader_protect = vop_crtc_loader_protect,
 	.cancel_pending_vblank = vop_crtc_cancel_pending_vblank,
-	.debugfs_init = vop_crtc_debugfs_init,
 	.debugfs_dump = vop_crtc_debugfs_dump,
 	.active_regs_dump = vop_crtc_regs_dump,
 	.regs_dump = vop_crtc_regs_dump,
@@ -4129,6 +4154,8 @@ static void vop_crtc_atomic_enable(struct drm_crtc *crtc,
 		if (vop->aclk_rate_reset)
 			clk_set_rate(vop->aclk, vop->aclk_rate);
 		vop->aclk_rate_reset = false;
+		if (vop->mcu_timing.mcu_pix_total)
+			VOP_CTRL_SET(vop, mcu_hold_mode, 0);
 
 		return;
 	}
@@ -5240,6 +5267,8 @@ static const struct drm_crtc_funcs vop_crtc_funcs = {
 	.disable_vblank = vop_crtc_disable_vblank,
 	.set_crc_source = vop_crtc_set_crc_source,
 	.verify_crc_source = vop_crtc_verify_crc_source,
+	.late_register = vop_crtc_late_register,
+	.early_unregister = vop_crtc_early_unregister,
 };
 
 static void vop_fb_unref_worker(struct drm_flip_work *work, void *val)
