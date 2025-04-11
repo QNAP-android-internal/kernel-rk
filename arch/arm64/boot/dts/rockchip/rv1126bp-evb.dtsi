@@ -392,7 +392,7 @@
 };
 
 &rknpu_mmu {
-	status = "disabled";
+	status = "okay";
 };
 
 &rkvdec {
@@ -441,10 +441,6 @@
 };
 
 &usb2phy_otg {
-	status = "okay";
-};
-
-&usb3phy {
 	status = "okay";
 };
 

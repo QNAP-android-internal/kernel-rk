@@ -4627,7 +4627,7 @@ static void vop2_initial(struct drm_crtc *crtc)
 		 * After vop initialization, keep sw_sharp_enable always on.
 		 * Only enable/disable sharp submodule to avoid black screen.
 		 */
-		if (vp_data->feature & VOP_FEATURE_POST_SHARP && vp->sharp_disabled)
+		if (vp_data->feature & VOP_FEATURE_POST_SHARP && !vp->sharp_disabled)
 			writel(0x1, vop2->sharp_res.regs);
 
 		/* disable immediately enable bit for dp */
@@ -5643,8 +5643,9 @@ static void vop2_crtc_atomic_disable(struct drm_crtc *crtc,
 				     struct drm_atomic_state *state)
 {
 	struct vop2_video_port *vp = to_vop2_video_port(crtc);
+	struct drm_crtc_state *new_cstate = drm_atomic_get_new_crtc_state(state, crtc);
 	struct drm_crtc_state *old_cstate = drm_atomic_get_old_crtc_state(state, crtc);
-	struct rockchip_crtc_state *vcstate = to_rockchip_crtc_state(crtc->state);
+	struct rockchip_crtc_state *vcstate = to_rockchip_crtc_state(new_cstate);
 	struct vop2 *vop2 = vp->vop2;
 	const struct vop2_video_port_data *vp_data = &vop2->data->vp[vp->id];
 	struct vop2_video_port *splice_vp = &vop2->vps[vp_data->splice_vp_id];
@@ -7765,7 +7766,7 @@ static int vop2_crtc_get_inital_acm_info(struct drm_crtc *crtc)
 static int vop2_crtc_loader_protect(struct drm_crtc *crtc, bool on, void *data)
 {
 	struct vop2_video_port *vp = to_vop2_video_port(crtc);
-	struct rockchip_crtc_state *vcstate = to_rockchip_crtc_state(crtc->state);
+	struct rockchip_crtc_state *vcstate;
 	struct vop2 *vop2 = vp->vop2;
 	struct rockchip_drm_private *private = crtc->dev->dev_private;
 	const struct vop2_video_port_data *vp_data = &vop2->data->vp[vp->id];
@@ -7796,6 +7797,8 @@ static int vop2_crtc_loader_protect(struct drm_crtc *crtc, bool on, void *data)
 
 				vp->enabled_win_mask |= BIT(win->phys_id);
 				crtc_state = drm_atomic_get_crtc_state(crtc->state->state, crtc);
+				vcstate = to_rockchip_crtc_state(crtc_state);
+				vp->output_if = vcstate->output_if;
 				mode = &crtc_state->adjusted_mode;
 				if (mode->hdisplay > VOP2_MAX_VP_OUTPUT_WIDTH)	{
 					vcstate->splice_mode = true;
@@ -7843,7 +7846,7 @@ static int vop2_crtc_loader_protect(struct drm_crtc *crtc, bool on, void *data)
 			VOP_MODULE_SET(vop2, vp, cubic_lut_mst, cubic_lut_mst);
 		}
 	} else {
-		vop2_crtc_atomic_disable(crtc, NULL);
+		vop2_crtc_atomic_disable(crtc, crtc->state->state);
 	}
 
 	return 0;
@@ -8481,8 +8484,10 @@ vop2_crtc_mode_valid(struct drm_crtc *crtc, const struct drm_display_mode *mode)
 	 * modes of the right VP should be set as invalid when vop2 is working in
 	 * splice mode.
 	 */
-	if (vp->splice_mode_right)
+	if (vp->splice_mode_right) {
+		DRM_DEV_DEBUG(vop2->dev, "vp%d is in splice mode right\n", vp->id);
 		return MODE_BAD;
+	}
 
 	if ((active_vp_mask & BIT(ROCKCHIP_VOP_VP1)) && !vcstate->splice_mode &&
 	    mode->hdisplay > VOP2_MAX_VP_OUTPUT_WIDTH) {
@@ -8491,15 +8496,21 @@ vop2_crtc_mode_valid(struct drm_crtc *crtc, const struct drm_display_mode *mode)
 		return MODE_BAD;
 	}
 
-	if (mode->hdisplay > vp_data->max_output.width)
+	if (mode->hdisplay > vp_data->max_output.width) {
+		DRM_DEV_DEBUG(vop2->dev, "hdisplay:%d is out of max_output width:%d\n",
+			      mode->hdisplay, vp_data->max_output.width);
 		return MODE_BAD_HVALUE;
+	}
 
 	if (mode->flags & DRM_MODE_FLAG_DBLCLK || vcstate->output_if & VOP_OUTPUT_IF_BT656)
 		request_clock *= 2;
 
 	/* Pixel rate verify */
-	if (request_clock > vp_data->dclk_max / 1000)
+	if (request_clock > vp_data->dclk_max / 1000) {
+		DRM_DEV_DEBUG(vop2->dev, "request_clock:%d is out of dclk_max:%ld\n",
+			      request_clock, vp_data->dclk_max / 1000);
 		return MODE_CLOCK_HIGH;
+	}
 
 	if ((request_clock <= VOP2_MAX_DCLK_RATE) &&
 	    (vop2_extend_clk_find_by_name(vop2, "hdmi0_phy_pll") ||
@@ -8521,9 +8532,14 @@ vop2_crtc_mode_valid(struct drm_crtc *crtc, const struct drm_display_mode *mode)
 	 * Hdmi or DisplayPort request a Accurate clock.
 	 */
 	if (vcstate->output_type == DRM_MODE_CONNECTOR_HDMIA ||
-	    vcstate->output_type == DRM_MODE_CONNECTOR_DisplayPort)
-		if (clock != request_clock)
+	    vcstate->output_type == DRM_MODE_CONNECTOR_DisplayPort) {
+		if (clock != request_clock) {
+			DRM_DEV_DEBUG(vop2->dev,
+				      "round rate:%d is not equal to request rate:%d\n",
+				      clock, request_clock);
 			return MODE_CLOCK_RANGE;
+		}
+	}
 
 	return MODE_OK;
 }
@@ -10777,21 +10793,20 @@ static int vop2_crtc_atomic_check(struct drm_crtc *crtc,
 	struct drm_crtc_state *new_crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
 	struct drm_crtc_state *old_crtc_state = drm_atomic_get_old_crtc_state(state, crtc);
 	const struct vop2_video_port_data *vp_data = &vop2_data->vp[vp->id];
-	struct rockchip_crtc_state *vcstate = to_rockchip_crtc_state(crtc->state);
 	struct rockchip_crtc_state *new_vcstate = to_rockchip_crtc_state(new_crtc_state);
 	struct rockchip_crtc_state *old_vcstate = to_rockchip_crtc_state(old_crtc_state);
-	struct drm_display_mode *adjusted_mode = &crtc->state->adjusted_mode;
+	struct drm_display_mode *adjusted_mode = &new_crtc_state->adjusted_mode;
 
 	if (vop2_has_feature(vop2, VOP_FEATURE_SPLICE)) {
 		if (adjusted_mode->hdisplay > VOP2_MAX_VP_OUTPUT_WIDTH) {
-			vcstate->splice_mode = true;
+			new_vcstate->splice_mode = true;
 			splice_vp = &vop2->vps[vp_data->splice_vp_id];
 			splice_vp->splice_mode_right = true;
 			splice_vp->left_vp = vp;
 		}
 	}
 
-	if ((vcstate->request_refresh_rate != new_vcstate->request_refresh_rate) ||
+	if ((old_vcstate->request_refresh_rate != new_vcstate->request_refresh_rate) ||
 	    new_crtc_state->active_changed || new_crtc_state->mode_changed)
 		vp->refresh_rate_change = true;
 	else
