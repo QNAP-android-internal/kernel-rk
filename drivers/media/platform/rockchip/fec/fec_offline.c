@@ -13,6 +13,10 @@ int rkfec_debug;
 module_param_named(debug, rkfec_debug, int, 0644);
 MODULE_PARM_DESC(debug, "Debug level (0-6)");
 
+int rkfec_stdfps = 30;
+module_param_named(standardfps, rkfec_stdfps, int, 0644);
+MODULE_PARM_DESC(standardfps, "standard fps");
+
 #if IS_LINUX_VERSION_AT_LEAST_6_1
 	#define GET_SG_TABLE(mem_ops, off_buf) mem_ops->cookie(&(off_buf)->vb, (off_buf)->mem)
 #else
@@ -384,6 +388,9 @@ static int fec_running(struct file *file, struct rkfec_in_out *buf)
 		writel(val, base + RKFEC_WR_C_BASE);
 		val += out_uv_offset;
 		writel(val, base + RKFEC_WR_Y_BASE);
+
+		val = SW_FEC_WR_FBCE_HEAD_OFFSET(out_uv_offset);
+		writel(val, base + RKFEC_WR_FBCE_HEAD_OFFSET);
 	} else {
 		val += buf->buf_cfg.out_offs;
 		writel(val, base + RKFEC_WR_Y_BASE);
@@ -488,6 +495,8 @@ static int fec_running(struct file *file, struct rkfec_in_out *buf)
 	}
 
 	ofl->debug.interval = us;
+	if (ofl->debug.interval * rkfec_stdfps > USEC_PER_SEC)
+		ofl->debug.frame_timeout_cnt++;
 
 	ofl->state = RKFEC_FRAME_END;
 	if (!ret) {
