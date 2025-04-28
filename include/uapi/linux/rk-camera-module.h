@@ -204,6 +204,15 @@
 #define RKMODULE_GET_EXP_INFO       \
 	_IOR('V', BASE_VIDIOC_PRIVATE + 46, struct rkmodule_exp_info)
 
+#define RKMODULE_SET_WB_GAIN  \
+	_IOW('V', BASE_VIDIOC_PRIVATE + 47, struct rkmodule_wb_gain_group)
+
+#define RKMODULE_SET_BLC  \
+	_IOW('V', BASE_VIDIOC_PRIVATE + 48, struct rkmodule_blc_group)
+
+#define RKMODULE_GET_SPD_RATIO	\
+	_IOR('V', BASE_VIDIOC_PRIVATE + 49, struct rkmodule_dcg_ratio)
+
 struct rkmodule_i2cdev_info {
 	__u8 slave_addr;
 } __attribute__ ((packed));
@@ -894,5 +903,42 @@ struct rkmodule_exp_info {
 	struct rkmodule_gain_mode gain_mode;
 	__u32 reserved[6];
 } __attribute__ ((packed));
+
+#define RKMODULE_MAX_WB_GAIN_GROUP (4)
+
+enum rkmodule_wb_type {
+	RKMODULE_HCG_WB_GAIN,
+	RKMODULE_LCG_WB_GAIN,
+	RKMODULE_SPD_WB_GAIN,
+	RKMODULE_VS_WB_GAIN,
+};
+
+struct rkmodule_wb_gain {
+	__u32 b_gain;
+	__u32 gb_gain;
+	__u32 gr_gain;
+	__u32 r_gain;
+};
+
+struct rkmodule_wb_gain_group {
+	__u32 group_num;
+	enum rkmodule_wb_type wb_gain_type[RKMODULE_MAX_WB_GAIN_GROUP];
+	struct rkmodule_wb_gain wb_gain[RKMODULE_MAX_WB_GAIN_GROUP];
+};
+
+#define RKMODULE_MAX_BLC_GROUP (4)
+
+enum rkmodule_blc_type {
+	RKMODULE_HCG_BLC,
+	RKMODULE_LCG_BLC,
+	RKMODULE_SPD_BLC,
+	RKMODULE_VS_BLC,
+};
+
+struct rkmodule_blc_group {
+	__u32 group_num;
+	enum rkmodule_blc_type blc_type[RKMODULE_MAX_BLC_GROUP];
+	__u32 blc[RKMODULE_MAX_BLC_GROUP];
+};
 
 #endif /* _UAPI_RKMODULE_CAMERA_H */

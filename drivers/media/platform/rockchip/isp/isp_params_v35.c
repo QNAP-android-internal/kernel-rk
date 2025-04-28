@@ -347,7 +347,7 @@ isp_bls_config(struct rkisp_isp_params_vdev *params_vdev,
 	}
 
 	new_control = isp3_param_read(params_vdev, ISP3X_BLS_CTRL, id);
-	new_control &= (ISP_BLS_ENA | ISP32_BLS_BLS2_EN);
+	new_control &= (ISP_BLS_ENA | ISP32_BLS_BLS2_EN | ISP35_BLS_BLS3_EN);
 	if (arg->bls1_en)
 		new_control |= ISP_BLS_BLS1_EN;
 
@@ -2205,7 +2205,7 @@ isp_aiawb_config(struct rkisp_isp_params_vdev *params_vdev,
 	value = ISP_PACK_2SHORT(arg->mr00, arg->mr01);
 	isp3_param_write(params_vdev, value, ISP35_AIAWB_MATRIX_ROT0, id);
 	value = ISP_PACK_2SHORT(arg->mr10, arg->mr11);
-	isp3_param_write(params_vdev, value, ISP35_AIAWB_MATRIX_ROT0, id);
+	isp3_param_write(params_vdev, value, ISP35_AIAWB_MATRIX_ROT1, id);
 }
 
 static void
