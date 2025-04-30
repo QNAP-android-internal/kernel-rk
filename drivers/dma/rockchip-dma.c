@@ -682,6 +682,19 @@ static int rk_dma_lch_get_bytes_xfered(struct rk_dma_lch *l)
 	else
 		bytes = ds->desc_hw[0].dar - ds->desc_hw[1].dar;
 
+	/*
+	 * The transferred bytes are calculated by subtracting first_lli.base from
+	 * current position (cur_pos). However, cur_pos remains 0 until the first
+	 * burst transfer completes, which could result in a negative value.
+	 * This leads to incorrect byte count reporting.
+	 *
+	 * Fix the overflow by clamping the calculated bytes to 0 when negative,
+	 * ensuring the reported transfer position matches hardware state before
+	 * the first burst completion.
+	 */
+	if (bytes < 0)
+		bytes = 0;
+
 	return bytes;
 }
 
@@ -1079,7 +1092,7 @@ static int rk_dma_terminate_all(struct dma_chan *chan)
 {
 	struct rk_dma_chan *c = to_rk_chan(chan);
 	struct rk_dma_dev *d = to_rk_dma(chan->device);
-	struct rk_dma_lch *l = c->lch;
+	struct rk_dma_lch *l;
 	unsigned long flags;
 	LIST_HEAD(head);
 
@@ -1090,6 +1103,7 @@ static int rk_dma_terminate_all(struct dma_chan *chan)
 	spin_unlock_irqrestore(&d->lock, flags);
 
 	spin_lock_irqsave(&c->vc.lock, flags);
+	l = c->lch;
 	if (l) {
 		rk_dma_terminate_chan(l, d);
 		if (l->ds_run)
@@ -1117,9 +1131,14 @@ static int rk_dma_transfer_pause(struct dma_chan *chan)
 static int rk_dma_transfer_resume(struct dma_chan *chan)
 {
 	struct rk_dma_chan *c = to_rk_chan(chan);
-	struct rk_dma_lch *l = c->lch;
+	struct rk_dma_lch *l;
+	unsigned long flags;
 
-	writel(LCH_TRF_CMD_DMA_RESUME, RK_DMA_LCH_TRF_CMD);
+	spin_lock_irqsave(&c->vc.lock, flags);
+	l = c->lch;
+	if (l)
+		writel(LCH_TRF_CMD_DMA_RESUME, RK_DMA_LCH_TRF_CMD);
+	spin_unlock_irqrestore(&c->vc.lock, flags);
 
 	return 0;
 }
