@@ -65,15 +65,16 @@ pvi_wf_get_lut:
 	str	x30, [x18], #8
 	stp	x29, x30, [sp, #-96]!
 	stp	x26, x25, [sp, #32]
-	adrp	x25, global_waveform
+	adrp	x26, global_waveform
 	stp	x28, x27, [sp, #16]
 	mov	x29, sp
 	stp	x24, x23, [sp, #48]
-	ldr	x8, [x25, :lo12:global_waveform]
+	ldr	x8, [x26, :lo12:global_waveform]
 	stp	x22, x21, [sp, #64]
 	stp	x20, x19, [sp, #80]
 	cbz	x8, .LBB1_12
-	mov	w21, w4
+	mov	w21, w5
+	mov	w24, w4
 	mov	w19, w2
 	mov	w22, w1
 	mov	x20, x0
@@ -82,37 +83,37 @@ pvi_wf_get_lut:
 	ldr	x9, [x9]
 	cbz	x9, .LBB1_13
 .LBB1_3:
-	adrp	x27, pvi_wf_get_lut.sftemp
+	adrp	x28, pvi_wf_get_lut.sftemp
 	mov	w9, #21846
 	movk	w9, #21845, lsl #16
-	adrp	x28, pvi_wf_get_lut.stype
-	ldrsw	x10, [x27, :lo12:pvi_wf_get_lut.sftemp]
+	ldrsw	x10, [x28, :lo12:pvi_wf_get_lut.sftemp]
 	smull	x11, w19, w9
 	mul	x9, x10, x9
 	lsr	x10, x11, #63
 	lsr	x11, x11, #32
 	lsr	x12, x9, #63
 	lsr	x9, x9, #32
-	add	w26, w11, w10
+	add	w27, w11, w10
 	add	w9, w9, w12
+	adrp	x10, pvi_wf_get_lut.stype
 	adrp	x11, pvi_wf_get_lut.fix
-	cmp	w26, w9
+	cmp	w27, w9
 	b.ne	.LBB1_6
-	ldr	w10, [x28, :lo12:pvi_wf_get_lut.stype]
+	ldr	w10, [x10, :lo12:pvi_wf_get_lut.stype]
 	cmp	w10, w22
 	b.ne	.LBB1_6
 	ldr	w10, [x11, :lo12:pvi_wf_get_lut.fix]
 	cmp	w10, w21
-	b.eq	.LBB1_25
+	b.eq	.LBB1_26
 .LBB1_6:
 	adrp	x10, need_pic
 	cmp	w22, #10
 	str	w3, [x10, :lo12:need_pic]
-	b.eq	.LBB1_24
+	b.eq	.LBB1_25
 	ldr	x10, [x20, #16]
-	adrp	x24, waveformdata
+	adrp	x25, waveformdata
 	ldrb	w9, [x8, #38]
-	str	x10, [x24, :lo12:waveformdata]
+	str	x10, [x25, :lo12:waveformdata]
 	cbz	w9, .LBB1_14
 	mov	x10, xzr
 	add	x8, x8, #48
@@ -128,10 +129,10 @@ pvi_wf_get_lut:
 	b	.LBB1_16
 .LBB1_12:
 	mov	w0, #-19
-	b	.LBB1_39
+	b	.LBB1_36
 .LBB1_13:
 	mov	w0, #-22
-	b	.LBB1_39
+	b	.LBB1_36
 .LBB1_14:
 	mov	w10, wzr
 	mov	w8, #-1
@@ -147,25 +148,26 @@ pvi_wf_get_lut:
 	and	w0, w0, #0xff
 	mov	w1, w23
 	bl	get_wf_frm_num
-	tbnz	w0, #31, .LBB1_44
+	tbnz	w0, #31, .LBB1_41
 	mov	w23, w0
+	cbz	w24, .LBB1_24
 	cmp	w22, #7
-	b.eq	.LBB1_19
+	b.eq	.LBB1_20
 	cmp	w22, #1
-	b.ne	.LBB1_32
-.LBB1_19:
-	ldr	x28, [x24, :lo12:waveformdata]
+	b.ne	.LBB1_37
+.LBB1_20:
+	ldr	x24, [x25, :lo12:waveformdata]
 	mov	w8, #8992
 	mov	w9, #4832
 	cmp	w23, #12
-	add	x27, x28, x8
-	add	x24, x28, x9
-	b.ls	.LBB1_61
-.LBB1_20:
+	add	x28, x24, x8
+	add	x25, x24, x9
+	b.ls	.LBB1_62
+.LBB1_21:
 	mov	w8, wzr
 	mov	w9, w23
-.LBB1_21:
-	add	x10, x28, w8, sxtw
+.LBB1_22:
+	add	x10, x24, w8, sxtw
 	subs	x9, x9, #1
 	add	w8, w8, #1024
 	ldrb	w11, [x10, #960]
@@ -180,103 +182,92 @@ pvi_wf_get_lut:
 	strb	wzr, [x10, #958]
 	strb	wzr, [x10, #992]
 	strb	wzr, [x10, #1022]
-	b.ne	.LBB1_21
-.LBB1_22:
+	b.ne	.LBB1_22
+.LBB1_23:
 	mov	w8, #1
 	mov	w9, #2
-	strb	w8, [x28, #672]
-	strb	w9, [x28, #702]
-	strb	w8, [x24]
-	strb	w9, [x24, #30]
-	strb	w8, [x27]
-	strb	w9, [x27, #30]
-	strb	w8, [x28, #1696]
-	strb	w9, [x28, #1726]
-	strb	w8, [x24, #1024]
-	strb	w9, [x24, #1054]
-	strb	w8, [x27, #1024]
-	strb	w9, [x27, #1054]
-	strb	w8, [x28, #2720]
-	strb	w9, [x28, #2750]
-	strb	w8, [x24, #2048]
-	strb	w9, [x24, #2078]
-	strb	w8, [x27, #2048]
-	strb	w9, [x27, #2078]
-	strb	w8, [x28, #3744]
-	strb	w9, [x28, #3774]
-	strb	w8, [x24, #3072]
-	strb	w9, [x24, #3102]
-	strb	w8, [x27, #3072]
-	strb	w9, [x27, #3102]
-	strb	w8, [x28, #1918]
-	strb	w9, [x28, #2942]
-	strb	w9, [x28, #3966]
-	adrp	x28, pvi_wf_get_lut.stype
-	strb	w8, [x24, #1246]
-	strb	w9, [x24, #2270]
-	strb	w9, [x24, #3294]
-	strb	w8, [x27, #1246]
-	strb	w9, [x27, #2270]
-	strb	w9, [x27, #3294]
-	adrp	x27, pvi_wf_get_lut.sftemp
-.LBB1_23:
+	strb	w8, [x24, #672]
+	strb	w9, [x24, #702]
+	strb	w8, [x25]
+	strb	w9, [x25, #30]
+	strb	w8, [x28]
+	strb	w9, [x28, #30]
+	strb	w8, [x24, #1696]
+	strb	w9, [x24, #1726]
+	strb	w8, [x25, #1024]
+	strb	w9, [x25, #1054]
+	strb	w8, [x28, #1024]
+	strb	w9, [x28, #1054]
+	strb	w8, [x24, #2720]
+	strb	w9, [x24, #2750]
+	strb	w8, [x25, #2048]
+	strb	w9, [x25, #2078]
+	strb	w8, [x28, #2048]
+	strb	w9, [x28, #2078]
+	strb	w8, [x24, #3744]
+	strb	w9, [x24, #3774]
+	strb	w8, [x25, #3072]
+	strb	w9, [x25, #3102]
+	strb	w8, [x28, #3072]
+	strb	w9, [x28, #3102]
+	strb	w8, [x24, #1918]
+	strb	w9, [x24, #2942]
+	strb	w9, [x24, #3966]
+	strb	w8, [x25, #1246]
+	strb	w9, [x25, #2270]
+	strb	w9, [x25, #3294]
+	strb	w8, [x28, #1246]
+	strb	w9, [x28, #2270]
+	strb	w9, [x28, #3294]
+	adrp	x28, pvi_wf_get_lut.sftemp
+.LBB1_24:
 	ldrb	w8, [x20, #1]
 	mov	w9, #21846
 	movk	w9, #21845, lsl #16
 	orr	w8, w23, w8, lsl #8
 	str	w8, [x20]
-	ldrsw	x8, [x27, :lo12:pvi_wf_get_lut.sftemp]
-	str	w22, [x28, :lo12:pvi_wf_get_lut.stype]
+	ldrsw	x8, [x28, :lo12:pvi_wf_get_lut.sftemp]
 	mul	x8, x8, x9
 	lsr	x9, x8, #63
 	lsr	x8, x8, #32
 	add	w9, w8, w9
+	adrp	x8, pvi_wf_get_lut.stype
+	str	w22, [x8, :lo12:pvi_wf_get_lut.stype]
 	adrp	x8, pvi_wf_get_lut.fix
 	str	w21, [x8, :lo12:pvi_wf_get_lut.fix]
-.LBB1_24:
-	cmp	w26, w9
-	b.ne	.LBB1_26
 .LBB1_25:
-	mov	w0, wzr
-	b	.LBB1_39
+	cmp	w27, w9
+	b.ne	.LBB1_27
 .LBB1_26:
+	mov	w0, wzr
+	b	.LBB1_36
+.LBB1_27:
 	ldr	x8, [x20, #24]
 	adrp	x9, waveformdata
 	str	x8, [x9, :lo12:waveformdata]
 	bl	epd_overlay_lut
-	ldr	x10, [x25, :lo12:global_waveform]
+	ldr	x10, [x26, :lo12:global_waveform]
 	ldrb	w8, [x10, #38]
-	cbz	w8, .LBB1_31
+	cbz	w8, .LBB1_32
 	mov	x9, xzr
 	add	x10, x10, #48
-.LBB1_28:
+.LBB1_29:
 	ldrb	w11, [x10, x9]
 	cmp	w11, w19
-	b.ge	.LBB1_36
+	b.ge	.LBB1_33
 	add	x9, x9, #1
 	cmp	x8, x9
-	b.ne	.LBB1_28
+	b.ne	.LBB1_29
 	mov	w10, #-1
 	mov	w9, w8
-	b	.LBB1_37
-.LBB1_31:
+	b	.LBB1_34
+.LBB1_32:
 	mov	w9, wzr
 	mov	w10, #-1
-	b	.LBB1_37
-.LBB1_32:
-	sub	w8, w22, #5
-	cmp	w8, #1
-	b.hi	.LBB1_40
-	cbz	w23, .LBB1_23
-	ldr	x8, [x24, :lo12:waveformdata]
-	mov	w9, w23
-	cmp	w23, #1
-	b.ne	.LBB1_47
-	mov	x10, xzr
-	b	.LBB1_59
-.LBB1_36:
+	b	.LBB1_34
+.LBB1_33:
 	mov	w10, w9
-.LBB1_37:
+.LBB1_34:
 	sub	w11, w9, #1
 	cmp	w9, w8
 	csel	w21, w11, w10, eq
@@ -284,13 +275,13 @@ pvi_wf_get_lut:
 	and	w0, w0, #0xff
 	mov	w1, w21
 	bl	get_wf_frm_num
-	tbnz	w0, #31, .LBB1_44
+	tbnz	w0, #31, .LBB1_41
 	ldrb	w8, [x20]
 	bfi	w8, w0, #8, #24
 	mov	w0, wzr
 	str	w8, [x20]
-	str	w19, [x27, :lo12:pvi_wf_get_lut.sftemp]
-.LBB1_39:
+	str	w19, [x28, :lo12:pvi_wf_get_lut.sftemp]
+.LBB1_36:
 	ldp	x20, x19, [sp, #80]
 	ldp	x22, x21, [sp, #64]
 	ldp	x24, x23, [sp, #48]
@@ -299,33 +290,44 @@ pvi_wf_get_lut:
 	ldp	x29, x30, [sp], #96
 	ldr	x30, [x18, #-8]!
 	ret
-.LBB1_40:
-	sub	w8, w22, #11
+.LBB1_37:
+	sub	w8, w22, #5
 	cmp	w8, #1
-	b.hi	.LBB1_45
-	cbz	w23, .LBB1_23
-	ldr	x8, [x24, :lo12:waveformdata]
+	b.hi	.LBB1_42
+	cbz	w23, .LBB1_24
+	ldr	x8, [x25, :lo12:waveformdata]
 	mov	w9, w23
 	cmp	w23, #1
-	b.ne	.LBB1_64
+	b.ne	.LBB1_48
 	mov	x10, xzr
-	b	.LBB1_84
-.LBB1_44:
+	b	.LBB1_60
+.LBB1_41:
 	adrp	x0, .L.str
 	add	x0, x0, :lo12:.L.str
 	bl	_printk
 	mov	w0, #-5
-	b	.LBB1_39
-.LBB1_45:
+	b	.LBB1_36
+.LBB1_42:
+	sub	w8, w22, #11
+	cmp	w8, #1
+	b.hi	.LBB1_46
+	cbz	w23, .LBB1_24
+	ldr	x8, [x25, :lo12:waveformdata]
+	mov	w9, w23
+	cmp	w23, #1
+	b.ne	.LBB1_65
+	mov	x10, xzr
+	b	.LBB1_85
+.LBB1_46:
 	sub	w8, w22, #13
 	cmp	w8, #1
-	b.hi	.LBB1_23
-	ldr	x0, [x24, :lo12:waveformdata]
+	b.hi	.LBB1_24
+	ldr	x0, [x25, :lo12:waveformdata]
 	mov	w1, w23
 	mov	w2, w21
 	bl	pvi_wf_normal_fix
-	b	.LBB1_23
-.LBB1_47:
+	b	.LBB1_24
+.LBB1_48:
 	sub	x12, x9, #1
 	mov	x10, xzr
 	and	x11, x12, #0xffffffff
@@ -334,30 +336,30 @@ pvi_wf_get_lut:
 	cset	w13, ne
 	cmp	xzr, x12, lsr #54
 	cset	w11, ne
-	tbnz	w14, #31, .LBB1_59
-	tbnz	w13, #0, .LBB1_59
+	tbnz	w14, #31, .LBB1_60
+	tbnz	w13, #0, .LBB1_60
 	lsr	x13, x12, #32
-	cbnz	x13, .LBB1_59
+	cbnz	x13, .LBB1_60
 	add	x13, x8, #30
 	lsl	x12, x12, #10
 	add	x14, x13, x12
 	cmp	x14, x13
-	b.lo	.LBB1_59
-	tbnz	w11, #0, .LBB1_59
+	b.lo	.LBB1_60
+	tbnz	w11, #0, .LBB1_60
 	add	x13, x8, #29
 	add	x14, x13, x12
 	cmp	x14, x13
-	b.lo	.LBB1_59
-	tbnz	w11, #0, .LBB1_59
+	b.lo	.LBB1_60
+	tbnz	w11, #0, .LBB1_60
 	add	x13, x8, #31
 	add	x12, x13, x12
 	cmp	x12, x13
-	b.lo	.LBB1_59
-	tbnz	w11, #0, .LBB1_59
+	b.lo	.LBB1_60
+	tbnz	w11, #0, .LBB1_60
 	and	x10, x9, #0xfffffffe
 	mov	w11, #1024
 	mov	x12, x10
-.LBB1_57:
+.LBB1_58:
 	sub	w13, w11, #1024
 	add	x14, x8, w11, sxtw
 	subs	x12, x12, #2
@@ -369,29 +371,29 @@ pvi_wf_get_lut:
 	strb	w15, [x14, #29]
 	strb	w16, [x13, #31]
 	strb	w16, [x13, #29]
-	b.ne	.LBB1_57
+	b.ne	.LBB1_58
 	cmp	x10, x9
-	b.eq	.LBB1_23
-.LBB1_59:
+	b.eq	.LBB1_24
+.LBB1_60:
 	sub	x9, x9, x10
 	lsl	w10, w10, #10
-.LBB1_60:
+.LBB1_61:
 	add	x11, x8, w10, sxtw
 	subs	x9, x9, #1
 	add	w10, w10, #1024
 	ldrb	w12, [x11, #30]
 	strb	w12, [x11, #31]
 	strb	w12, [x11, #29]
-	b.ne	.LBB1_60
-	b	.LBB1_23
-.LBB1_61:
+	b.ne	.LBB1_61
+	b	.LBB1_24
+.LBB1_62:
 	adrp	x0, .L.str.8
 	add	x0, x0, :lo12:.L.str.8
 	bl	_printk
 	lsl	w8, w23, #10
 	mov	w9, #13
-.LBB1_62:
-	add	x10, x28, w8, uxtw
+.LBB1_63:
+	add	x10, x24, w8, uxtw
 	sub	w9, w9, #1
 	add	w8, w8, #1024
 	cmp	w23, w9
@@ -405,11 +407,11 @@ pvi_wf_get_lut:
 	strb	wzr, [x10, #958]
 	strb	wzr, [x10, #992]
 	strb	wzr, [x10, #1022]
-	b.ne	.LBB1_62
+	b.ne	.LBB1_63
 	cmp	w23, #1
-	b.ge	.LBB1_20
-	b	.LBB1_22
-.LBB1_64:
+	b.ge	.LBB1_21
+	b	.LBB1_23
+.LBB1_65:
 	sub	x12, x9, #1
 	mov	x10, xzr
 	and	x11, x12, #0xffffffff
@@ -418,50 +420,50 @@ pvi_wf_get_lut:
 	cset	w13, ne
 	cmp	xzr, x12, lsr #54
 	cset	w11, ne
-	tbnz	w14, #31, .LBB1_84
-	tbnz	w13, #0, .LBB1_84
+	tbnz	w14, #31, .LBB1_85
+	tbnz	w13, #0, .LBB1_85
 	lsr	x13, x12, #32
-	cbnz	x13, .LBB1_84
+	cbnz	x13, .LBB1_85
 	add	x13, x8, #30
 	lsl	x12, x12, #10
 	add	x14, x13, x12
 	cmp	x14, x13
-	b.lo	.LBB1_84
-	tbnz	w11, #0, .LBB1_84
+	b.lo	.LBB1_85
+	tbnz	w11, #0, .LBB1_85
 	add	x13, x8, #1022
 	add	x14, x13, x12
 	cmp	x14, x13
-	b.lo	.LBB1_84
-	tbnz	w11, #0, .LBB1_84
+	b.lo	.LBB1_85
+	tbnz	w11, #0, .LBB1_85
 	add	x13, x8, #1021
 	add	x14, x13, x12
 	cmp	x14, x13
-	b.lo	.LBB1_84
-	tbnz	w11, #0, .LBB1_84
+	b.lo	.LBB1_85
+	tbnz	w11, #0, .LBB1_85
 	add	x13, x8, #29
 	add	x14, x13, x12
 	cmp	x14, x13
-	b.lo	.LBB1_84
-	tbnz	w11, #0, .LBB1_84
+	b.lo	.LBB1_85
+	tbnz	w11, #0, .LBB1_85
 	add	x13, x8, #31
 	add	x14, x13, x12
 	cmp	x14, x13
-	b.lo	.LBB1_84
-	tbnz	w11, #0, .LBB1_84
+	b.lo	.LBB1_85
+	tbnz	w11, #0, .LBB1_85
 	add	x13, x8, #989
 	add	x12, x13, x12
 	cmp	x12, x13
-	b.lo	.LBB1_84
-	tbnz	w11, #0, .LBB1_84
+	b.lo	.LBB1_85
+	tbnz	w11, #0, .LBB1_85
 	and	x10, x9, #0xfffffffe
 	mov	w11, #1024
 	mov	x12, x10
-	b	.LBB1_81
-.LBB1_80:
+	b	.LBB1_82
+.LBB1_81:
 	subs	x12, x12, #2
 	add	w11, w11, #2048
-	b.eq	.LBB1_83
-.LBB1_81:
+	b.eq	.LBB1_84
+.LBB1_82:
 	sub	w14, w11, #1024
 	add	x13, x8, w11, sxtw
 	add	x14, x8, w14, sxtw
@@ -473,33 +475,33 @@ pvi_wf_get_lut:
 	strb	w15, [x13, #29]
 	strb	w16, [x14, #31]
 	strb	w16, [x14, #29]
-	cbz	w21, .LBB1_80
+	cbz	w21, .LBB1_81
 	add	x14, x14, #1021
 	add	x13, x13, #1021
 	strh	wzr, [x14]
 	strh	wzr, [x13]
-	b	.LBB1_80
-.LBB1_83:
-	cmp	x10, x9
-	b.eq	.LBB1_23
+	b	.LBB1_81
 .LBB1_84:
+	cmp	x10, x9
+	b.eq	.LBB1_24
+.LBB1_85:
 	sub	x9, x9, x10
 	lsl	w10, w10, #10
-	b	.LBB1_86
-.LBB1_85:
+	b	.LBB1_87
+.LBB1_86:
 	subs	x9, x9, #1
 	add	w10, w10, #1024
-	b.eq	.LBB1_23
-.LBB1_86:
+	b.eq	.LBB1_24
+.LBB1_87:
 	add	x11, x8, w10, sxtw
 	ldrb	w12, [x11, #30]
 	strb	wzr, [x11, #989]
 	strb	w12, [x11, #31]
 	strb	w12, [x11, #29]
-	cbz	w21, .LBB1_85
+	cbz	w21, .LBB1_86
 	add	x11, x11, #1021
 	strh	wzr, [x11]
-	b	.LBB1_85
+	b	.LBB1_86
 .Lfunc_end1:
 	.size	pvi_wf_get_lut, .Lfunc_end1-pvi_wf_get_lut
 
