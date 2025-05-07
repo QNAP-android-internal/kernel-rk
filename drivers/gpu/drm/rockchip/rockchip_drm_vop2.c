@@ -1084,6 +1084,12 @@ static inline void rk3588_vop2_dsc_cfg_done(struct drm_crtc *crtc);
 static inline void vop2_cfg_done(struct drm_crtc *crtc);
 static void vop2_wait_for_fs_by_done_bit_status(struct vop2_video_port *vp);
 static int vop2_clk_reset(struct reset_control *rstc);
+static void vop2_wait_for_scan_timing_max_to_assigned_line(struct vop2_video_port *vp,
+							   u32 current_line,
+							   u32 wait_line);
+static void vop2_wait_for_scan_timing_from_the_assigned_line(struct vop2_video_port *vp,
+							     u32 current_line,
+							     u32 wait_line);
 
 static inline struct vop2_video_port *to_vop2_video_port(struct drm_crtc *crtc)
 {
@@ -2067,11 +2073,14 @@ static void vop2_power_domain_put(struct vop2_power_domain *pd)
 	 *
 	 * So we have a check here
 	 */
-	if (--pd->ref_count == 0 && vop2_power_domain_can_off_by_vsync(pd)) {
-		if (pd->vop2->data->delayed_pd)
-			schedule_delayed_work(&pd->power_off_work, msecs_to_jiffies(2500));
-		else
-			vop2_power_domain_off(pd);
+	if (pd->ref_count) {
+		pd->ref_count--;
+		if (pd->ref_count == 0 && vop2_power_domain_can_off_by_vsync(pd)) {
+			if (pd->vop2->data->delayed_pd)
+				schedule_delayed_work(&pd->power_off_work, msecs_to_jiffies(2500));
+			else
+				vop2_power_domain_off(pd);
+		}
 	}
 
 	spin_unlock(&pd->lock);
@@ -2178,7 +2187,7 @@ static void vop2_win_disable(struct vop2_win *win, bool skip_splice_win)
 		win->splice_win = NULL;
 	}
 
-	if (VOP_WIN_GET(vop2, win, enable) || VOP_WIN_GET_REG_BAK(vop2, win, enable)) {
+	if (VOP_WIN_GET_REG_BAK(vop2, win, enable)) {
 		VOP_WIN_SET(vop2, win, enable, 0);
 		/*
 		 * at rk3576 platform, the esmart1/3 can merge from vp1, but the enable bit: port0_extra_alpha_en
@@ -7801,6 +7810,7 @@ static int vop2_crtc_loader_protect(struct drm_crtc *crtc, bool on, void *data)
 	struct vop2_extend_pll *ext_pll;
 	struct clk *parent_clk;
 	const char *clk_name;
+	struct vop2_power_domain *pd;
 
 	if (on == vp->loader_protect)
 		return 0;
@@ -7814,9 +7824,13 @@ static int vop2_crtc_loader_protect(struct drm_crtc *crtc, bool on, void *data)
 		if (crtc->primary) {
 			win = to_vop2_win(crtc->primary);
 			if (VOP_WIN_GET(vop2, win, enable)) {
-				if (win->pd) {
-					win->pd->ref_count++;
-					win->pd->vp_mask |= BIT(vp->id);
+				/* set enable in regbaks */
+				VOP_WIN_SET(vop2, win, enable, 1);
+				pd = win->pd;
+				while (pd) {
+					pd->ref_count++;
+					pd->vp_mask |= BIT(vp->id);
+					pd = pd->parent;
 				}
 
 				vp->enabled_win_mask |= BIT(win->phys_id);
@@ -7838,8 +7852,14 @@ static int vop2_crtc_loader_protect(struct drm_crtc *crtc, bool on, void *data)
 
 					if (splice_win->pd &&
 					    VOP_WIN_GET(vop2, splice_win, enable)) {
-						splice_win->pd->ref_count++;
-						splice_win->pd->vp_mask |= BIT(splice_vp->id);
+						/* set enable in regbaks */
+						VOP_WIN_SET(vop2, splice_win, enable, 1);
+						pd = splice_win->pd;
+						while (pd) {
+							pd->ref_count++;
+							pd->vp_mask |= BIT(splice_vp->id);
+							pd = pd->parent;
+						}
 					}
 				}
 			}
@@ -12539,6 +12559,25 @@ static void vop2_crtc_atomic_begin(struct drm_crtc *crtc, struct drm_atomic_stat
 						 GFP_KERNEL);
 		if (!vop2_zpos_splice)
 			goto out;
+	}
+
+	/*
+	 * Avoid commit new plane time close to vsync at async mode, the
+	 * following case maybe lead to error:
+	 * vsync[1] -> update plane[2] -> config done[3] -> update plane[4] -> vsync[5]
+	 * If new vsync[5] insert step 4, only part of plane register complete,
+	 * this will lead to part of plane register take effect and lead to error.
+	 *
+	 * So we introduce this safeguard, when commit time exceeds 15/16 of a frame,
+	 * this commit will be postponed to the next frame.
+	 */
+	if (state->legacy_cursor_update) {
+		u16 vtotal = VOP_MODULE_GET(vop2, vp, dsp_vtotal);
+		u32 assigned_line = vtotal * 15 >> 4;
+		u32 current_line = vop2_read_vcnt(vp);
+
+		if (current_line > assigned_line)
+			vop2_wait_for_scan_timing_max_to_assigned_line(vp, current_line, assigned_line);
 	}
 
 	if (vop2->version == VOP_VERSION_RK3588)
