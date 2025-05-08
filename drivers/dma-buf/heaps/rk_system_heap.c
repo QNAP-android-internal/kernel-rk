@@ -416,33 +416,12 @@ static void system_heap_vunmap(struct dma_buf *dmabuf, struct iosys_map *map)
 	iosys_map_clear(map);
 }
 
-static int system_heap_zero_buffer(struct system_heap_buffer *buffer)
-{
-	struct sg_table *sgt = &buffer->sg_table;
-	struct sg_page_iter piter;
-	struct page *p;
-	void *vaddr;
-	int ret = 0;
-
-	for_each_sgtable_page(sgt, &piter, 0) {
-		p = sg_page_iter_page(&piter);
-		vaddr = kmap_local_page(p);
-		memset(vaddr, 0, PAGE_SIZE);
-		kunmap_local(vaddr);
-	}
-
-	return ret;
-}
-
 static void system_heap_dma_buf_release(struct dma_buf *dmabuf)
 {
 	struct system_heap_buffer *buffer = dmabuf->priv;
 	struct sg_table *table;
 	struct scatterlist *sg;
 	int i, j;
-
-	/* Zero the buffer pages before adding back to the pool */
-	system_heap_zero_buffer(buffer);
 
 	table = &buffer->sg_table;
 	for_each_sgtable_sg(table, sg, i) {
