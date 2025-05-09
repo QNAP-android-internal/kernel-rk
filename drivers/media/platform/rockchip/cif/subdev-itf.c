@@ -591,7 +591,8 @@ static long sditf_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
 		if (*on) {
 			sditf_enable_immediately(priv);
 		} else {
-			if (priv->mode.rdbk_mode != RKISP_VICAP_ONLINE_MULTI)
+			if (priv->mode.rdbk_mode != RKISP_VICAP_ONLINE_MULTI &&
+			    priv->mode.rdbk_mode != RKISP_VICAP_ONLINE_UNITE)
 				sditf_disable_immediately(priv);
 		}
 		return 0;
@@ -1347,7 +1348,7 @@ static int sditf_s_rx_buffer(struct v4l2_subdev *sd,
 	}
 
 	if (dbufs->is_switch && dbufs->type == BUF_SHORT) {
-		if (stream->is_in_vblank) {
+		if (stream->is_in_vblank || !stream->dma_en) {
 			sditf_change_to_online(priv);
 			rkcif_modify_line_int(stream, false);
 			stream->is_line_inten = false;

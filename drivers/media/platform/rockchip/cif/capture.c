@@ -1013,6 +1013,8 @@ cif_input_fmt *rkcif_get_input_fmt(struct rkcif_device *dev, struct v4l2_rect *r
 			csi_info->vc = pad_id;
 		if (ch_info.data_type > 0)
 			csi_info->data_type = ch_info.data_type;
+		else
+			csi_info->data_type = 0;
 		if (ch_info.data_bit > 0)
 			csi_info->data_bit = ch_info.data_bit;
 		if (ch_info.field == 0)
@@ -5282,6 +5284,7 @@ static int rkcif_csi_stream_start(struct rkcif_stream *stream, unsigned int mode
 		stream->is_finish_single_cap = true;
 		stream->is_wait_single_cap = false;
 		stream->last_frame_idx = 0;
+		stream->frame_phase_cache = CIF_CSI_FRAME1_READY;
 	}
 	stream->interlaced_bad_frame = false;
 	stream->last_fs_interlaced_phase = 0;
@@ -5576,8 +5579,6 @@ static void rkcif_check_buffer_update_pingpong(struct rkcif_stream *stream,
 	    stream->curr_buf == NULL ||
 	    stream->next_buf == NULL) {
 		frame_phase = stream->frame_phase_cache;
-		if (dev->irq_stats.frm_end_cnt[stream->id] == 0)
-			frame_phase = CIF_CSI_FRAME1_READY;
 		if (!stream->is_line_wake_up ||
 		    (stream->is_line_wake_up && stream->frame_idx < 2)) {
 			if (mbus_cfg->type == V4L2_MBUS_CSI2_DPHY ||
@@ -5709,7 +5710,8 @@ static void rkcif_check_buffer_update_pingpong(struct rkcif_stream *stream,
 				stream->to_stop_dma = 0;
 				wake_up(&stream->wq_stopped);
 			} else {
-				if (stream->cifdev->resume_mode != RKISP_RTT_MODE_ONE_FRAME)
+				if (stream->cifdev->resume_mode != RKISP_RTT_MODE_ONE_FRAME ||
+				    stream->is_single_cap)
 					stream->to_en_dma = RKCIF_DMAEN_BY_VICAP;
 				v4l2_dbg(3, rkcif_debug, &stream->cifdev->v4l2_dev,
 					 "%s stream[%d] start dma capture, frame cnt %d\n",
@@ -7683,6 +7685,7 @@ static int rkcif_stream_start(struct rkcif_stream *stream, unsigned int mode)
 		stream->is_in_vblank = false;
 		stream->is_change_toisp = false;
 		stream->last_frame_idx = 0;
+		stream->frame_phase_cache = CIF_CSI_FRAME1_READY;
 	}
 
 	sensor_info = dev->active_sensor;
@@ -13679,6 +13682,7 @@ static void rkcif_toisp_check_stop_status(struct sditf_priv *priv,
 				} else {
 					stream->is_single_cap = false;
 					stream->is_wait_single_cap = false;
+					stream->cifdev->resume_mode = RKISP_RTT_MODE_MULTI_FRAME;
 					complete(&stream->start_complete);
 					spin_unlock_irqrestore(&stream->cifdev->stream_spinlock, flags);
 				}
@@ -13776,7 +13780,8 @@ static void rkcif_toisp_check_stop_status(struct sditf_priv *priv,
 					rkcif_scale_start(stream->scale_vdev);
 				}
 			}
-			if (priv->mode.rdbk_mode == RKISP_VICAP_ONLINE_MULTI &&
+			if ((priv->mode_src.rdbk_mode == RKISP_VICAP_ONLINE_MULTI ||
+			     priv->mode_src.rdbk_mode == RKISP_VICAP_ONLINE_UNITE) &&
 			    ((priv->hdr_cfg.hdr_mode == NO_HDR && stream->id == 0) ||
 			      (priv->hdr_cfg.hdr_mode == HDR_X2 && stream->id == 1) ||
 			      (priv->hdr_cfg.hdr_mode == HDR_X3 && stream->id == 2)))
@@ -15095,6 +15100,7 @@ void rkcif_irq_pingpong_v1(struct rkcif_device *cif_dev)
 					}
 				} else {
 					last_stream->is_wait_single_cap = false;
+					cif_dev->resume_mode = RKISP_RTT_MODE_MULTI_FRAME;
 					complete(&stream->start_complete);
 					spin_unlock_irqrestore(&stream->cifdev->stream_spinlock, flags);
 				}
