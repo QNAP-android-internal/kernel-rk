@@ -1221,6 +1221,14 @@
 	connect = <&vp2_out_dsi1>;
 };
 
+&route_hdmi0 {
+	status = "okay";
+};
+
+&route_hdmi1 {
+	status = "okay";
+};
+
 &spdif_tx2 {
 	status = "okay";
 };
