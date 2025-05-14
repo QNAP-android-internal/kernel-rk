@@ -850,6 +850,19 @@ config VIDEO_IMX586
 	  To compile this driver as a module, choose M here: the
 	  module will be called imx586.
 
+config VIDEO_IMX678
+	tristate "Sony IMX678 sensor support"
+	depends on I2C && VIDEO_DEV
+	depends on MEDIA_CAMERA_SUPPORT
+	select MEDIA_CONTROLLER
+	select VIDEO_V4L2_SUBDEV_API
+	help
+	  This is a Video4Linux2 sensor driver for the Sony
+	  IMX678 camera.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called imx678.
+
 config VIDEO_IMX766
 	tristate "Sony IMX766 sensor support"
 	depends on I2C && VIDEO_DEV
@@ -1150,6 +1163,17 @@ config VIDEO_OS08A20
 	help
 	  This is a Video4Linux2 sensor driver for the OmniVision
 	  OS08A20 camera.
+
+config VIDEO_OS12D40
+	tristate "OmniVision OS12D40 sensor support"
+	depends on I2C && VIDEO_DEV
+	depends on MEDIA_CAMERA_SUPPORT
+	select MEDIA_CONTROLLER
+	select VIDEO_V4L2_SUBDEV_API
+	select V4L2_FWNODE
+	help
+	  This is a Video4Linux2 sensor driver for the OmniVision
+	  OS12D40 camera.
 
 config VIDEO_OV02A10
 	tristate "OmniVision OV02A10 sensor support"
@@ -1675,6 +1699,19 @@ config VIDEO_OV9734
 
 	  To compile this driver as a module, choose M here: the
 	  module's name is ov9734.
+
+config VIDEO_OX03C10
+	tristate "OmniVision OX03C10 sensor support"
+	depends on VIDEO_DEV && I2C
+	select MEDIA_CONTROLLER
+	select VIDEO_V4L2_SUBDEV_API
+	select V4L2_FWNODE
+	help
+	  This is a Video4Linux2 sensor driver for the OmniVision
+	  OX03C10 camera.
+
+	  To compile this driver as a module, choose M here: the
+	  module's name is OX03C10.
 
 config VIDEO_PREISP_DUMMY_SENSOR
 	tristate "Preisp dummy sensor support"
