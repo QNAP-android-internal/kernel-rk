@@ -201,6 +201,11 @@ static int sditf_get_set_fmt(struct v4l2_subdev *sd,
 		if (!ret) {
 			fmt->format.width = input_sel.r.width;
 			fmt->format.height = input_sel.r.height;
+			priv->cap_info.offset_x = input_sel.r.left;
+			priv->cap_info.offset_y = input_sel.r.top;
+		} else {
+			priv->cap_info.offset_x = 0;
+			priv->cap_info .offset_y = 0;
 		}
 		priv->cap_info.width = fmt->format.width;
 		priv->cap_info.height = fmt->format.height;
@@ -732,8 +737,8 @@ static int sditf_channel_enable_rv1103b(struct sditf_priv *priv, int user)
 	unsigned int ctrl_ch1 = 0;
 	unsigned int ctrl_ch2 = 0;
 	unsigned int int_en = 0;
-	unsigned int offset_x = 0;
-	unsigned int offset_y = 0;
+	unsigned int offset_x = priv->cap_info.offset_x;
+	unsigned int offset_y = priv->cap_info.offset_y;
 	unsigned int width = priv->cap_info.width;
 	unsigned int height = priv->cap_info.height;
 	int csi_idx = cif_dev->csi_host_idx;
@@ -1016,10 +1021,36 @@ static void sditf_channel_disable_rv1103b(struct sditf_priv *priv, int user)
 		rkcif_write_register_and(cif_dev, CIF_REG_TOISP0_CH2_CTRL, ~ctrl_val);
 }
 
+static void rkcif_release_unnecessary_buf_for_online(struct rkcif_stream *stream,
+						     struct rkcif_rx_buffer *buf)
+{
+	struct rkcif_device *dev = stream->cifdev;
+	struct sditf_priv *priv = dev->sditf[0];
+	struct rkcif_rx_buffer *rx_buf = NULL;
+	unsigned long flags;
+	int i = 0;
+
+	if (!buf)
+		buf = stream->last_buf_toisp;
+	spin_lock_irqsave(&priv->cif_dev->buffree_lock, flags);
+	for (i = 0; i < stream->rx_buf_num; i++) {
+		rx_buf = &stream->rx_buf[i];
+		if (rx_buf && (!rx_buf->dummy.is_free) && rx_buf != buf) {
+			list_add_tail(&rx_buf->list_free, &priv->buf_free_list);
+			stream->total_buf_num--;
+			atomic_dec(&stream->buf_cnt);
+		}
+	}
+	spin_unlock_irqrestore(&priv->cif_dev->buffree_lock, flags);
+	schedule_work(&priv->buffree_work.work);
+}
+
 void sditf_change_to_online(struct sditf_priv *priv)
 {
 	struct rkcif_device *cif_dev = priv->cif_dev;
 	struct rkcif_stream *cur_stream = NULL;
+	int i = 0;
+	int stream_cnt = 0;
 
 	priv->mode = priv->mode_src;
 	if (priv->mode.rdbk_mode != RKISP_VICAP_ONLINE_UNITE &&
@@ -1027,18 +1058,21 @@ void sditf_change_to_online(struct sditf_priv *priv)
 		sditf_enable_immediately(priv);
 
 	if (cif_dev->is_thunderboot) {
-		if (priv->hdr_cfg.hdr_mode == NO_HDR) {
-			cur_stream = &cif_dev->stream[0];
-			cif_dev->stream[0].is_line_wake_up = false;
-		} else if (priv->hdr_cfg.hdr_mode == HDR_X2) {
+		if (priv->hdr_cfg.hdr_mode == HDR_X2) {
 			cur_stream = &cif_dev->stream[1];
 			cif_dev->stream[0].is_line_wake_up = false;
 			cif_dev->stream[1].is_line_wake_up = false;
+			stream_cnt = 1;
 		} else if (priv->hdr_cfg.hdr_mode == HDR_X3) {
 			cur_stream = &cif_dev->stream[2];
 			cif_dev->stream[0].is_line_wake_up = false;
 			cif_dev->stream[1].is_line_wake_up = false;
 			cif_dev->stream[2].is_line_wake_up = false;
+			stream_cnt = 2;
+		} else {
+			cur_stream = &cif_dev->stream[0];
+			cif_dev->stream[0].is_line_wake_up = false;
+			stream_cnt = 0;
 		}
 
 		if (priv->mode.rdbk_mode == RKISP_VICAP_ONLINE_UNITE)
@@ -1052,6 +1086,9 @@ void sditf_change_to_online(struct sditf_priv *priv)
 
 		if (priv->mode.rdbk_mode == RKISP_VICAP_ONLINE_UNITE)
 			rkcif_reinit_right_half_config(cur_stream);
+		for (i = 0; i < stream_cnt; i++)
+			rkcif_release_unnecessary_buf_for_online(&cif_dev->stream[i],
+								 cif_dev->stream[i].curr_buf_toisp);
 	}
 }
 
@@ -1316,7 +1353,8 @@ static int sditf_s_rx_buffer(struct v4l2_subdev *sd,
 	if (!is_free && (!dbufs->is_switch) && stream->state == RKCIF_STATE_STREAMING) {
 		list_add_tail(&rx_buf->list, &stream->rx_buf_head);
 		rkcif_assign_check_buffer_update_toisp(stream);
-		if (cif_dev->resume_mode != RKISP_RTT_MODE_ONE_FRAME) {
+		if (cif_dev->resume_mode != RKISP_RTT_MODE_ONE_FRAME &&
+		    (!stream->is_pause_stream)) {
 			if (!stream->dma_en) {
 				stream->to_en_dma = RKCIF_DMAEN_BY_ISP;
 				rkcif_enable_dma_capture(stream, true);
@@ -1501,8 +1539,8 @@ static int sditf_fwnode_parse(struct device *dev,
 	struct v4l2_mbus_config *config = &s_asd->mbus;
 
 	if (vep->base.port != 0) {
-		dev_err(dev, "sditf has only port 0\n");
-		return -EINVAL;
+		dev_info(dev, "sditf has only parse port 0\n");
+		return 0;
 	}
 
 	if (vep->bus_type == V4L2_MBUS_CSI2_DPHY ||
