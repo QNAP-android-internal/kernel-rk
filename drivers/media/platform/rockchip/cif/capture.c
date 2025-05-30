@@ -5411,6 +5411,7 @@ static void rkcif_stream_stop(struct rkcif_stream *stream)
 	int i = 0;
 	int ret = 0;
 
+	atomic_dec_if_positive(&stream->cifdev->id_use_cnt);
 	if (cif_dev->switch_info.is_use_switch) {
 		ret = atomic_dec_if_positive(&cif_dev->hw_dev->switch_stream_cnt[cif_dev->switch_info.host_idx]);
 		if (ret) {
@@ -5419,8 +5420,6 @@ static void rkcif_stream_stop(struct rkcif_stream *stream)
 			return;
 		}
 	}
-
-	atomic_dec_if_positive(&stream->cifdev->id_use_cnt);
 
 	if (mbus_cfg->type == V4L2_MBUS_CSI2_DPHY ||
 	    mbus_cfg->type == V4L2_MBUS_CSI2_CPHY ||
@@ -14257,7 +14256,8 @@ static int rkcif_terminal_sensor_set_stream(struct rkcif_device *cif_dev, int on
 			rkcif_set_sof(cif_dev, cif_dev->stream[0].frame_idx);
 		if (p->subdevs[i] == terminal_sensor->sd &&
 		    (cif_dev->chip_id == CHIP_RV1106_CIF ||
-		     cif_dev->chip_id == CHIP_RV1103B_CIF)) {
+		     cif_dev->chip_id == CHIP_RV1103B_CIF ||
+		     cif_dev->chip_id == CHIP_RV1126B_CIF)) {
 			if (!rk_tb_mcu_is_done() && on) {
 				cif_dev->tb_client.data = p->subdevs[i];
 				cif_dev->tb_client.cb = rkcif_sensor_quick_streaming_cb;
