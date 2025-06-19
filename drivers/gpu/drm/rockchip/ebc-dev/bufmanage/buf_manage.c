@@ -167,6 +167,22 @@ struct ebc_buf_s *ebc_dsp_buf_get(void)
 	return buf;
 }
 
+int ebc_dsp_buf_next_mode(void)
+{
+	struct ebc_buf_s *buf = NULL;
+	int mode = -1;
+
+	mutex_lock(&ebc_buf_info.dsp_buf_lock);
+	if (ebc_buf_info.dsp_buf_list && (ebc_buf_info.dsp_buf_list->nb_elt > 0)) {
+		buf = (struct ebc_buf_s *)buf_list_get(ebc_buf_info.dsp_buf_list, 0);
+		mode = buf->buf_mode;
+		buf->dropable = 1;
+	}
+	mutex_unlock(&ebc_buf_info.dsp_buf_lock);
+
+	return mode;
+}
+
 struct ebc_buf_s *ebc_empty_osd_buf_get(void)
 {
 	if (ebc_buf_info.osd_buf)
