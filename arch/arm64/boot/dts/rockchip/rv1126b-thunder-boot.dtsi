@@ -93,16 +93,16 @@
 
 	meta: meta@41240000 {
 		/* reg's offset MUST match with RTOS */
-		reg = <0x41240000 0x000c0000>;
+		reg = <0x41240000 0x000e0000>;
 	};
 
-	rkisp_thunderboot: rkisp@41300000 {
+	rkisp_thunderboot: rkisp@41320000 {
 		/* reg's offset MUST match with RTOS */
 		/*
 		 * vicap, capture raw10, ceil(w*10/8/256)*256*h *4(buf num)
 		 * e.g. 1920x1080: 0xa8c000
 		 */
-		reg = <0x41300000 0xa8c000>;
+		reg = <0x41320000 0xa8c000>;
 	};
 
 	rkisp1_thunderboot: rkisp1_thunderboot {
