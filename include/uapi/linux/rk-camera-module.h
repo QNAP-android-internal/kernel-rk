@@ -222,6 +222,15 @@
 #define RKMODULE_GET_BAYER_MODE       \
 	_IOR('V', BASE_VIDIOC_PRIVATE + 52, __u32)
 
+#define RKMODULE_GET_WB_GAIN_INFO  \
+	_IOR('V', BASE_VIDIOC_PRIVATE + 53, struct rkmodule_wb_gain_info)
+
+#define RKMODULE_GET_BLC_INFO  \
+	_IOR('V', BASE_VIDIOC_PRIVATE + 54, struct rkmodule_blc_info)
+
+#define RKMODULE_SET_CMPS_MODE       \
+	_IOW('V', BASE_VIDIOC_PRIVATE + 55, __u32)
+
 struct rkmodule_i2cdev_info {
 	__u8 slave_addr;
 } __attribute__ ((packed));
@@ -962,6 +971,22 @@ struct rkmodule_blc_group {
 enum rkmodule_bayer_mode {
 	RKMODULE_NORMAL_BAYER,
 	RKMODULE_QUARD_BAYER,
+};
+
+struct rkmodule_wb_gain_info {
+	__u32 coarse_bit;
+	__u32 fine_bit;
+	__u32 reserved[8];
+};
+
+struct rkmodule_blc_info {
+	__u32 bit_width;
+	__u32 reserved[8];
+};
+
+enum rkmodule_cmps_mode {
+	CMPS_LOW_BIT_WIDTH_MODE,
+	CMPS_HIGH_BIT_WIDTH_MODE,
 };
 
 #endif /* _UAPI_RKMODULE_CAMERA_H */
