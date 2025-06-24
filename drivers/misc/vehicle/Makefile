@@ -24,4 +24,10 @@ obj-$(CONFIG_VEHICLE_GPIO) += \
 	vehicle-gpio.o
 
 obj-$(CONFIG_VEHICLE_SPI) += \
-	vehicle-spi.o
+	vehicle-spi.o \
+
+obj-$(CONFIG_VEHICLE_SPI_PROTOCOL) += \
+	vehicle_spi_protocol.o
+
+obj-$(CONFIG_VEHICLE_GPIO_MCU_EXPANDER) += \
+	vehicle-gpio-mcu.o
