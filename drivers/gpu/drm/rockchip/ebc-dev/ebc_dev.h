@@ -132,9 +132,17 @@ struct ebc_buf_info {
 	int win_y2;
 	int width_mm;
 	int height_mm;
-	int undroppable;	//0: canbe drop by userspace, 1: can't be drop by userspace
+	int undroppable;	//0: can be drop by userspace, 1: can't be drop by userspace
 	char tid_name[16];
 	int dma_buf_fd;
 };
 
+enum ebc_debug_level {
+	DEBUG_LEVEL_0,/*no debug info*/
+	DEBUG_LEVEL_1,/*only print dev_dbg info*/
+	DEBUG_LEVEL_2,/*print dev_dbg and dev_vdbg info*/
+	DEBUG_LEVEL_NUM
+};
+
+#define EBC_INITIAL_DEBUG_LEVEL DEBUG_LEVEL_0
 #endif
