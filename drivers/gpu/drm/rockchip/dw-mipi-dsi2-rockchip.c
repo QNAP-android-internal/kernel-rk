@@ -1191,13 +1191,12 @@ static void dw_mipi_dsi2_loader_protect(struct dw_mipi_dsi2 *dsi2, bool on)
 		dw_mipi_dsi2_loader_protect(dsi2->slave, on);
 }
 
-static int dw_mipi_dsi2_encoder_loader_protect(struct drm_encoder *encoder,
-					      bool on)
+static int dw_mipi_dsi2_encoder_loader_protect(struct rockchip_drm_sub_dev *sub_dev, bool on)
 {
-	struct dw_mipi_dsi2 *dsi2 = encoder_to_dsi2(encoder);
+	struct dw_mipi_dsi2 *dsi2 = container_of(sub_dev, struct dw_mipi_dsi2, sub_dev);
 
 	if (dsi2->panel)
-		panel_simple_loader_protect(dsi2->panel);
+		rockchip_drm_panel_loader_protect(dsi2->panel, on);
 
 	dw_mipi_dsi2_loader_protect(dsi2, on);
 
