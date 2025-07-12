@@ -2622,6 +2622,7 @@ dw_hdmi_connector_detect(struct drm_connector *connector, bool force)
 	struct dw_hdmi_qp *hdmi =
 		container_of(connector, struct dw_hdmi_qp, connector);
 	struct dw_hdmi_qp *secondary = NULL;
+	struct drm_display_mode *mode;
 	enum drm_connector_status result, result_secondary;
 
 	mutex_lock(&hdmi->mutex);
@@ -2659,8 +2660,12 @@ out:
 		extcon_set_state_sync(hdmi->extcon, EXTCON_DISP_HDMI, true);
 		handle_plugged_change(hdmi, true);
 	} else {
-		if (!hdmi->next_bridge)
+		if (!hdmi->next_bridge) {
 			drm_connector_update_edid_property(&hdmi->connector, NULL);
+			list_for_each_entry(mode, &hdmi->connector.modes, head)
+				mode->status = MODE_STALE;
+			drm_mode_prune_invalid(hdmi->connector.dev, &hdmi->connector.modes, false);
+		}
 		extcon_set_state_sync(hdmi->extcon, EXTCON_DISP_HDMI, false);
 		handle_plugged_change(hdmi, false);
 	}
@@ -3403,7 +3408,8 @@ static int dw_hdmi_connector_atomic_check(struct drm_connector *connector,
 			drm_scdc_readb(hdmi->ddc, SCDC_TMDS_CONFIG, &val);
 		/* if plug out before hdmi bind, reset hdmi */
 		if (vmode->mtmdsclock >= 340000000 && vmode->mpixelclock <= 600000000 &&
-		    !(val & SCDC_TMDS_BIT_CLOCK_RATIO_BY_40) && !hdmi->force_kernel_output)
+		    !(val & SCDC_TMDS_BIT_CLOCK_RATIO_BY_40) && !hdmi->force_kernel_output &&
+		    hdmi->initialized)
 			hdmi->logo_plug_out = true;
 	}
 
