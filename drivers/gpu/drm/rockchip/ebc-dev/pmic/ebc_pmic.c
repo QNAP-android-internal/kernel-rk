@@ -120,4 +120,15 @@ void ebc_regulator_verity_vcom(struct regulator *r)
 	}
 }
 
+//temp fix for customer
+int overlay_temp_fix(int temp)
+{
+	return temp;
+}
+
+int normal_temp_fix(int temp)
+{
+	return temp;
+}
+
 module_param(vcom, int, 0644);
