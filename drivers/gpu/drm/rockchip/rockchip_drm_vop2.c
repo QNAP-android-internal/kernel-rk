@@ -2434,8 +2434,6 @@ static enum vop2_afbc_format vop2_convert_afbc_format(uint32_t format)
 		DRM_WARN_ONCE("unsupported AFBC format %p4cc\n", &format);
 		return VOP2_AFBC_FMT_INVALID;
 	}
-
-	return VOP2_AFBC_FMT_INVALID;
 }
 
 static enum vop2_tiled_format vop2_convert_tiled_format(uint32_t format)
@@ -2460,8 +2458,6 @@ static enum vop2_tiled_format vop2_convert_tiled_format(uint32_t format)
 		DRM_WARN_ONCE("unsupported tiled format %p4cc\n", &format);
 		return VOP2_TILED_FMT_INVALID;
 	}
-
-	return VOP2_TILED_FMT_INVALID;
 }
 
 static enum vop3_tiled_format vop3_convert_tiled_format(uint32_t format, uint32_t tile_mode)
@@ -2492,8 +2488,6 @@ static enum vop3_tiled_format vop3_convert_tiled_format(uint32_t format, uint32_
 		DRM_WARN_ONCE("unsupported tiled format %p4cc\n", &format);
 		return VOP3_TILED_FMT_INVALID;
 	}
-
-	return VOP3_TILED_FMT_INVALID;
 }
 
 static enum vop2_wb_format vop2_convert_wb_format(uint32_t format)
@@ -5356,12 +5350,6 @@ static void vop2_disable(struct drm_crtc *crtc)
 	/* Disable axi irq when all vp is disabled */
 	vop2_axi_disable_irqs(vop2);
 
-	/*
-	 * Reset AXI to get a clean state, which is conducive to recovering
-	 * from exceptions when enable at next time(such as iommu page fault)
-	 */
-	vop2_clk_reset(vop2->axi_rst);
-
 	if (vop2->is_iommu_enabled) {
 		/*
 		 * vop2 standby complete, so iommu detach is safe.
@@ -5383,6 +5371,12 @@ static void vop2_disable(struct drm_crtc *crtc)
 	}
 	if (vop2->version == VOP_VERSION_RK3588 || vop2->version == VOP_VERSION_RK3576)
 		vop2_power_off_all_pd(vop2);
+
+	/*
+	 * Reset AXI to get a clean state, which is conducive to recovering
+	 * from exceptions when enable at next time(such as iommu page fault)
+	 */
+	vop2_clk_reset(vop2->axi_rst);
 
 	vop2->is_enabled = false;
 	pm_runtime_put_sync(vop2->dev);
