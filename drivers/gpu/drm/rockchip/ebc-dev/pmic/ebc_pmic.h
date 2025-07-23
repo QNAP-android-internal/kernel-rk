@@ -57,8 +57,9 @@ static inline int ebc_pmic_get_vcom(struct ebc_pmic *pmic)
 }
 
 //temp fix for customer
-int overlay_temp_fix(int temp);
-int normal_temp_fix(int temp);
+int ebc_overlay_temp_fix(int temp);
+int ebc_normal_temp_fix(int temp);
+int ebc_get_power_off_delay(void);
 
 int ebc_pmic_set_vcom(struct ebc_pmic *pmic, int value);
 void ebc_pmic_verity_vcom(struct ebc_pmic *pmic);

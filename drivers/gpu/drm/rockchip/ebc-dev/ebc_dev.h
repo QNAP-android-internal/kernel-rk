@@ -144,5 +144,5 @@ enum ebc_debug_level {
 	DEBUG_LEVEL_NUM
 };
 
-#define EBC_INITIAL_DEBUG_LEVEL DEBUG_LEVEL_0
+int ebc_get_init_log_level(void);
 #endif
