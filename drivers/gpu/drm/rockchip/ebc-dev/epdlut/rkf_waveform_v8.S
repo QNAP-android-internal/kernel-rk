@@ -351,88 +351,49 @@ rkf_wf_get_lut:
 	cmp	w21, #1
 	b.ne	.LBB3_28
 .LBB3_20:
-	ldr	x8, [x20, #16]
-	mov	w10, #52128
-	mov	w12, #41888
-	mov	w9, #62368
-	mov	w14, #31648
-	mov	w15, #11168
-	add	x11, x8, #17, lsl #12
-	add	x13, x8, x10
-	add	x10, x8, x12
-	mov	w12, #21408
-	mov	x16, xzr
-	add	x9, x8, x9
-	add	x11, x11, #2976
-	add	x14, x8, x14
-	add	x12, x8, x12
-	add	x15, x8, x15
-	sxtw	x17, w25
-	mov	x0, x8
+	ldr	x0, [x20, #16]
+	mov	x8, xzr
+	sxtw	x9, w25
+	mov	x10, x0
 	b	.LBB3_22
 .LBB3_21:
-	add	x16, x16, #1
-	add	x0, x0, #1024
-	cmp	x16, #72
+	add	x8, x8, #1
+	add	x10, x10, #1024
+	cmp	x8, #72
 	b.eq	.LBB3_24
 .LBB3_22:
-	cmp	x16, x17
-	strb	wzr, [x0, #32]
-	strb	wzr, [x0, #62]
-	strb	wzr, [x0, #96]
-	strb	wzr, [x0, #126]
-	strb	wzr, [x0, #928]
-	strb	wzr, [x0, #958]
-	strb	wzr, [x0, #992]
-	strb	wzr, [x0, #1022]
-	strb	wzr, [x0]
-	strb	wzr, [x0, #990]
+	cmp	x8, x9
+	strb	wzr, [x10, #32]
+	strb	wzr, [x10, #62]
+	strb	wzr, [x10, #96]
+	strb	wzr, [x10, #126]
+	strb	wzr, [x10, #928]
+	strb	wzr, [x10, #958]
+	strb	wzr, [x10, #992]
+	strb	wzr, [x10, #1022]
+	strb	wzr, [x10]
+	strb	wzr, [x10, #990]
 	b.lt	.LBB3_21
-	strb	wzr, [x0, #30]
-	strb	wzr, [x0, #960]
+	strb	wzr, [x10, #30]
+	strb	wzr, [x10, #960]
 	b	.LBB3_21
 .LBB3_24:
 	cmp	w25, #1
 	b.lt	.LBB3_27
-	mov	w17, w25
-	mov	x16, xzr
-	lsl	x17, x17, #10
+	mov	w9, w25
+	mov	x8, xzr
+	lsl	x9, x9, #10
 .LBB3_26:
-	add	x0, x8, w16, sxtw
-	add	x16, x16, #1024
-	cmp	x17, x16
-	ldrb	w1, [x0, #960]
-	ldrb	w2, [x0, #30]
-	strb	w1, [x0]
-	strb	w2, [x0, #990]
+	add	x10, x0, w8, sxtw
+	add	x8, x8, #1024
+	cmp	x9, x8
+	ldrb	w11, [x10, #960]
+	ldrb	w12, [x10, #30]
+	strb	w11, [x10]
+	strb	w12, [x10, #990]
 	b.ne	.LBB3_26
 .LBB3_27:
-	mov	w16, #1
-	mov	w17, #2
-	strb	w16, [x8, #928]
-	strb	w17, [x8, #958]
-	strb	w16, [x15]
-	strb	w17, [x15, #30]
-	strb	w16, [x12]
-	strb	w17, [x12, #30]
-	strb	w16, [x14]
-	strb	w17, [x14, #30]
-	strb	w16, [x10]
-	strb	w17, [x10, #30]
-	strb	w16, [x13]
-	strb	w17, [x13, #30]
-	strb	w16, [x9]
-	strb	w17, [x9, #30]
-	strb	w16, [x11]
-	strb	w17, [x11, #30]
-	strb	w17, [x8, #1022]
-	strb	w16, [x8, #992]
-	strb	w17, [x12, #94]
-	strb	w16, [x12, #64]
-	strb	w17, [x10, #94]
-	strb	w16, [x10, #64]
-	strb	w17, [x9, #94]
-	strb	w16, [x9, #64]
+	bl	epd_gray2_last_repair
 	b	.LBB3_56
 .LBB3_28:
 	sub	w8, w21, #13
