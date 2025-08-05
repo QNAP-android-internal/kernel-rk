@@ -6005,19 +6005,30 @@ static int rkcif_create_dummy_buf(struct rkcif_stream *stream)
 		}
 	}
 
-	if (max_size == 0 && dev->terminal_sensor.sd) {
-		fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-		ret = v4l2_subdev_call(dev->terminal_sensor.sd,
-				       pad, get_fmt, NULL, &fmt);
-		if (!ret) {
-			if (fmt.format.code == MEDIA_BUS_FMT_RGB888_1X24 ||
-			    fmt.format.code == MEDIA_BUS_FMT_BGR888_1X24 ||
-			    fmt.format.code == MEDIA_BUS_FMT_GBR888_1X24)
-				size = fmt.format.width  * fmt.format.height * 3;
-			else
-				size = fmt.format.width * fmt.format.height * 2;
-			if (size > max_size)
-				max_size = size;
+	if (max_size == 0) {
+		for (i = 0; i < hw->dev_num; i++) {
+			tmp_dev = hw->cif_dev[i];
+			if (tmp_dev->terminal_sensor.sd) {
+				fmt.pad = 0;
+				fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+				ret = v4l2_subdev_call(tmp_dev->terminal_sensor.sd,
+						       pad, get_fmt, NULL, &fmt);
+				if (!ret) {
+					if (fmt.format.code ==
+					    MEDIA_BUS_FMT_RGB888_1X24 ||
+					    fmt.format.code ==
+					    MEDIA_BUS_FMT_BGR888_1X24 ||
+					    fmt.format.code ==
+					    MEDIA_BUS_FMT_GBR888_1X24)
+						size = fmt.format.width *
+						       fmt.format.height * 3;
+					else
+						size = fmt.format.width *
+						       fmt.format.height * 2;
+					if (size > max_size)
+						max_size = size;
+				}
+			}
 		}
 	}
 
