@@ -256,6 +256,12 @@
 #define RKMODULE_SET_CHANNEL_STREAM	\
 	_IOW('x', 0, struct rkmodule_channel_stream)
 
+#define RKMODULE_SET_DES_LINK	\
+	_IOW('x', 1, __u32)
+
+#define RKMODULE_GET_MATCH_ID	\
+	_IOR('x', 2, __u32)
+
 #define RKMODULE_REG_LIST_MAX (16)
 struct rkmodule_reg_struct {
 	__u32 reg_addr;
