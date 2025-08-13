@@ -9,7 +9,7 @@
 	.file	"ebc_dev_y8.c"
 
 	.section	.initcall6s.init,"a",@progbits
-__initcall__kmod_rkebc__466_4741_ebc_init6s:
+__initcall__kmod_rkebc__466_4742_ebc_init6s:
 .Ltmp0:
 	.word	ebc_init-.Ltmp0
 	.text
@@ -2071,7 +2071,7 @@ ebc_lut_table_init:
 	ldr	x0, [x19, #96]
 	add	x1, x1, :lo12:.L.str.67
 	add	x2, x2, :lo12:.L__func__.ebc_lut_table_init
-	mov	w3, #4172
+	mov	w3, #4173
 	bl	_dev_err
 	mov	w0, #-12
 	b	.LBB9_9
@@ -7565,7 +7565,9 @@ get_overlay_image_area:
 .LBB21_6:
 	str	x16, [x19]
 .LBB21_7:
-	strb	w28, [x27, #1]
+	ldrb	w15, [x27, #1]
+	orr	w15, w15, w28
+	strb	w15, [x27, #1]
 .LBB21_8:
 	add	x19, x19, #8
 	add	x20, x20, #8
@@ -7691,7 +7693,9 @@ get_overlay_image_area:
 .LBB21_22:
 	add	x27, x14, w22, sxtw
 	tst	x25, #0xff00000000
-	strb	w28, [x27]
+	ldrb	w23, [x27]
+	orr	w23, w23, w28
+	strb	w23, [x27]
 	b.eq	.LBB21_24
 	ldrb	w23, [x7, #1]
 	cbz	w23, .LBB21_25
@@ -14191,7 +14195,7 @@ ebc_pm:
 
 	.type	.L.str.2,@object
 .L.str.2:
-	.asciz	"8.08_y8"
+	.asciz	"8.09_y8"
 	.size	.L.str.2, 8
 
 	.type	.L.str.3,@object
