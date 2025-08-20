@@ -8431,6 +8431,16 @@ static void rkcif_attach_sync_mode(struct rkcif_device *cifdev)
 		sync_config->mode = RKCIF_SOFT_SYNC;
 		sync_config->is_attach = true;
 		dev_info(hw->dev, "group used soft sync mode\n");
+	} else if (sync_config->ext_master.count > 1 &&
+		   sync_config->slave.count == 0 &&
+		   sync_config->soft_sync.count == 0) {
+		sync_config->mode = RKCIF_EXT_MASTER;
+		sync_config->is_attach = true;
+	} else if (sync_config->slave.count > 1 &&
+		   sync_config->ext_master.count == 0 &&
+		   sync_config->soft_sync.count == 0) {
+		sync_config->mode = RKCIF_EXT_SLAVE;
+		sync_config->is_attach = true;
 	}
 	mutex_unlock(&hw->dev_lock);
 }
@@ -8914,7 +8924,8 @@ int rkcif_set_fmt(struct rkcif_stream *stream,
 				bpl = ALIGN(width * fmt->raw_bpp / 8, 256);
 			} else {
 				bpp = rkcif_align_bits_per_pixel(stream, fmt, i);
-				bpl = width * bpp / CIF_YUV_STORED_BIT_WIDTH;
+				bpl = ALIGN(width * bpp / CIF_YUV_STORED_BIT_WIDTH, 8);
+
 			}
 		}
 		if (dev->chip_id > CHIP_RK3562_CIF && stream->sw_dbg_en)
@@ -13978,10 +13989,19 @@ static int rkcif_check_group_sync_state(struct rkcif_device *cif_dev)
 				next_stream = &sync_config->int_master.cif_dev[0]->stream[0];
 		} else if (sync_config->mode == RKCIF_SOFT_SYNC) {
 			next_stream = &sync_config->soft_sync.cif_dev[i]->stream[0];
+		} else if (sync_config->mode == RKCIF_EXT_MASTER) {
+			next_stream = &sync_config->ext_master.cif_dev[i]->stream[0];
+		} else if (sync_config->mode == RKCIF_EXT_SLAVE) {
+			next_stream = &sync_config->slave.cif_dev[i]->stream[0];
 		} else {
 			v4l2_err(&cif_dev->v4l2_dev,
 				 "ERROR: invalid group sync mode\n");
 			ret = -EINVAL;
+			break;
+		}
+		if (next_stream == NULL) {
+			v4l2_err(&cif_dev->v4l2_dev,
+				 "ERROR: invalid stream in  group sync mode\n");
 			break;
 		}
 		if (detect_stream == next_stream)
@@ -14053,6 +14073,10 @@ static void rkcif_deal_sof(struct rkcif_device *cif_dev)
 						tmp_dev = sync_config->slave.cif_dev[i];
 					else
 						tmp_dev = sync_config->int_master.cif_dev[0];
+				} else if (sync_config->mode == RKCIF_EXT_MASTER) {
+					tmp_dev = sync_config->ext_master.cif_dev[i];
+				} else if (sync_config->mode == RKCIF_EXT_SLAVE) {
+					tmp_dev = sync_config->slave.cif_dev[i];
 				} else {
 					v4l2_err(&cif_dev->v4l2_dev,
 						 "ERROR: invalid group sync mode\n");
