@@ -82,6 +82,11 @@ struct platform_device;
 #define SUPPORT_HDMI_ALLM	BIT(1)
 #define DOVI_VSIF_LEN		8
 
+#define HDMI_HDR_STATUS_CHANGED		BIT(0)
+#define HDMI_COLOR_FMT_CHANGED		BIT(1)
+#define HDMI_OUTPUT_MODE_CHANGED	BIT(2)
+#define HDMI_VSIF_CHANGED		BIT(3)
+
 enum {
 	DW_HDMI_RES_8,
 	DW_HDMI_RES_10,
@@ -279,7 +284,6 @@ struct dw_hdmi_plat_data {
 	int (*link_clk_set)(void *data, bool enable);
 	int (*get_vp_id)(struct drm_crtc_state *crtc_state);
 	void (*update_color_format)(struct drm_connector_state *conn_state, void *data);
-	bool (*check_hdr_color_change)(struct drm_connector_state *conn_state, void *data);
 	void (*set_prev_bus_format)(void *data, unsigned long bus_format);
 	int (*get_colorimetry)(void *data, const struct edid *edid);
 	void (*set_ddc_io)(void *data, bool enable);
