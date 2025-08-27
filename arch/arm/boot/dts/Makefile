@@ -1201,12 +1201,14 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
 	rv1126b-evb2-v10-tb-400w-spi-nor.dtb \
 	rv1126b-evb2-v12.dtb \
 	rv1126b-evb2-v12-aov-dual-cam.dtb \
+	rv1126b-evb2-v12-fastboot-emmc.dtb \
 	rv1126b-evb3-v10.dtb \
 	rv1126b-evb4-v10.dtb \
 	rv1126b-iotest-v10.dtb \
 	rv1126bp-evb-v14.dtb \
 	rv1126bp-evb-v14-dual-cam.dtb \
 	rv1126bp-evb1-v12.dtb \
+	rv1126bp-evb1-v12-fastboot-emmc.dtb \
 	rk3036-evb.dtb \
 	rk3036-evb1-ddr3-v10.dtb \
 	rk3036-kylin.dtb \
