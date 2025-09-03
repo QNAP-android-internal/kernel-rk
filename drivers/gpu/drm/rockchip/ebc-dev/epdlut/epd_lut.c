@@ -97,20 +97,16 @@ int epd_overlay_lut(void)
 	return WF_TYPE_GRAY2;
 }
 
-void epd_gray2_last_repair(u8 *wf_table)
+//return value
+//0 : no modify  1: modify by customer
+int epd_gray2_last_repair(u8 *wf_table)
 {
-	int f;
-	u8 *table;
+	return 0;
+}
 
-	for (f = 0; f < REPAIR_NUM_MAX; f += FRAME_STEP) {
-		table = wf_table + (f << 10);
-		table[(0xe8 << 2) + (0x00 >> 3)] = 1;
-		table[(0xe8 << 2) + (0xf0 >> 3)] = 2;
-	}
-
-	for (f = 0; f < REPAIR_NUM_MAX; f += 2 * FRAME_STEP) {
-		table = wf_table + (f << 10);
-		table[(0xf8 << 2) + (0xf0 >> 3)] = 2;
-		table[(0xf8 << 2) + (0x00 >> 3)] = 1;
-	}
+//return value
+//0 : no modify  1: modify by customer
+int epd_overlay_gray2_repair(u8 *wf_table)
+{
+	return 0;
 }

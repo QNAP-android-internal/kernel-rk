@@ -9884,8 +9884,7 @@ ebc_lut_update:
 	ldr	w8, [x19, #852]
 	tbz	w8, #31, .LBB34_43
 .LBB34_13:
-	mov	w8, #25
-	str	w8, [sp, #4]
+	str	wzr, [sp, #4]
 	b	.LBB34_16
 .LBB34_14:
 	mov	w0, w21
@@ -14195,7 +14194,7 @@ ebc_pm:
 
 	.type	.L.str.2,@object
 .L.str.2:
-	.asciz	"8.09_y8"
+	.asciz	"8.10_y8"
 	.size	.L.str.2, 8
 
 	.type	.L.str.3,@object
@@ -14762,8 +14761,8 @@ ebc_auto_assist_thread_sem:
 
 	.type	.L.str.104,@object
 .L.str.104:
-	.asciz	"temperature = %d, out of range0~50 ,use 25 \n"
-	.size	.L.str.104, 45
+	.asciz	"temperature = %d, out of range0~50 ,use 0 \n"
+	.size	.L.str.104, 44
 
 	.type	.L.str.105,@object
 .L.str.105:
