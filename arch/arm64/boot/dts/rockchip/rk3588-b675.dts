@@ -758,7 +758,7 @@
 	/* Use rgmii-rxid mode to disable rx delay inside Soc */
 	phy-mode = "rgmii-rxid";
 	clock_in_out = "output";
-	wolirq-gpio = <&gpio4 RK_PC6 GPIO_ACTIVE_LOW>;
+	wolirq-gpios = <&gpio4 RK_PC6 GPIO_ACTIVE_LOW>;
 	snps,reset-gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
 	snps,reset-active-low;
 	/* Reset time is 20ms, 100ms for rtl8211f */
