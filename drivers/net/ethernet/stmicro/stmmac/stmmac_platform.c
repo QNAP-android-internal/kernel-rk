@@ -430,7 +430,7 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 
 	/* PHYLINK automatically parses the phy-handle property */
 	plat->phylink_node = np;
-	plat->wolirq_io = devm_gpiod_get_from_of_node(&pdev->dev, np, "wolirq-gpio", 0, GPIOD_ASIS, "WOL GPIO");
+	plat->wolirq_io = devm_gpiod_get_index(&pdev->dev, "wolirq", 0, GPIOD_ASIS);
 
 	/* Get max speed of operation from device tree */
 	of_property_read_u32(np, "max-speed", &plat->max_speed);
