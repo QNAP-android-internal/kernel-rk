@@ -777,6 +777,7 @@ rkf_wf_get_lut:
 	b.ne	.LBB3_75
 .LBB3_78:
 	mov	x0, x22
+	mov	w1, w21
 	bl	epd_overlay_gray2_repair
 	cbnz	w0, .LBB3_80
 	lsl	w8, w21, #10
@@ -1477,62 +1478,70 @@ rkf_wf_normal_fix:
 	.p2align	2
 	.type	rkf_wf_regal_fix,@function
 rkf_wf_regal_fix:
-	cmp	w1, #1
-	b.lt	.LBB7_3
-	mov	w9, w1
+	str	x30, [x18], #8
+	stp	x29, x30, [sp, #-32]!
+	stp	x20, x19, [sp, #16]
+	mov	x29, sp
+	mov	w20, w1
+	mov	x19, x0
+	bl	epd_regal_repair
+	cbnz	w0, .LBB7_4
+	cmp	w20, #1
+	b.lt	.LBB7_4
+	mov	w9, w20
 	mov	x8, xzr
 	lsl	x9, x9, #10
-.LBB7_2:
-	add	x10, x0, w8, sxtw
+.LBB7_3:
+	add	x10, x19, w8, sxtw
 	add	x8, x8, #1024
 	cmp	x9, x8
-	ldrb	w11, [x10, #30]
-	ldrb	w12, [x10, #94]
-	strb	w11, [x10, #31]
-	strb	w11, [x10, #29]
-	ldrb	w11, [x10, #158]
-	strb	w12, [x10, #95]
-	strb	w12, [x10, #93]
-	ldrb	w12, [x10, #222]
-	strb	w11, [x10, #159]
-	strb	w11, [x10, #157]
-	ldrb	w11, [x10, #286]
-	strb	w12, [x10, #223]
-	strb	w12, [x10, #221]
-	ldrb	w12, [x10, #350]
-	strb	w11, [x10, #287]
-	strb	w11, [x10, #285]
-	ldrb	w11, [x10, #414]
-	strb	w12, [x10, #351]
-	strb	w12, [x10, #349]
-	ldrb	w12, [x10, #478]
-	strb	w11, [x10, #415]
-	strb	w11, [x10, #413]
-	ldrb	w11, [x10, #542]
-	strb	w12, [x10, #479]
-	strb	w12, [x10, #477]
-	ldrb	w12, [x10, #606]
-	strb	w11, [x10, #543]
-	strb	w11, [x10, #541]
-	ldrb	w11, [x10, #670]
-	strb	w12, [x10, #607]
-	strb	w12, [x10, #605]
-	ldrb	w12, [x10, #734]
-	strb	w11, [x10, #671]
-	strb	w11, [x10, #669]
-	ldrb	w11, [x10, #798]
-	strb	w12, [x10, #735]
-	strb	w12, [x10, #733]
-	ldrb	w12, [x10, #862]
-	strb	w11, [x10, #799]
-	strb	w11, [x10, #797]
-	ldrb	w11, [x10, #926]
-	strb	w12, [x10, #863]
-	strb	w12, [x10, #861]
-	strb	w11, [x10, #927]
-	strb	w11, [x10, #925]
-	b.ne	.LBB7_2
-.LBB7_3:
+	ldrb	w11, [x10, #94]
+	ldrb	w12, [x10, #158]
+	strb	w11, [x10, #95]
+	strb	w11, [x10, #93]
+	ldrb	w11, [x10, #222]
+	strb	w12, [x10, #159]
+	strb	w12, [x10, #157]
+	ldrb	w12, [x10, #286]
+	strb	w11, [x10, #223]
+	strb	w11, [x10, #221]
+	ldrb	w11, [x10, #350]
+	strb	w12, [x10, #287]
+	strb	w12, [x10, #285]
+	ldrb	w12, [x10, #414]
+	strb	w11, [x10, #351]
+	strb	w11, [x10, #349]
+	ldrb	w11, [x10, #478]
+	strb	w12, [x10, #415]
+	strb	w12, [x10, #413]
+	ldrb	w12, [x10, #542]
+	strb	w11, [x10, #479]
+	strb	w11, [x10, #477]
+	ldrb	w11, [x10, #606]
+	strb	w12, [x10, #543]
+	strb	w12, [x10, #541]
+	ldrb	w12, [x10, #670]
+	strb	w11, [x10, #607]
+	strb	w11, [x10, #605]
+	ldrb	w11, [x10, #734]
+	strb	w12, [x10, #671]
+	strb	w12, [x10, #669]
+	ldrb	w12, [x10, #798]
+	strb	w11, [x10, #735]
+	strb	w11, [x10, #733]
+	ldrb	w11, [x10, #862]
+	strb	w12, [x10, #799]
+	strb	w12, [x10, #797]
+	ldrb	w12, [x10, #926]
+	strb	w11, [x10, #863]
+	strb	w11, [x10, #861]
+	strb	w12, [x10, #927]
+	strb	w12, [x10, #925]
+	b.ne	.LBB7_3
+.LBB7_4:
+	ldp	x20, x19, [sp, #16]
+	ldp	x29, x30, [sp], #32
+	ldr	x30, [x18, #-8]!
 	ret
 .Lfunc_end7:
 	.size	rkf_wf_regal_fix, .Lfunc_end7-rkf_wf_regal_fix

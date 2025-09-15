@@ -14194,7 +14194,7 @@ ebc_pm:
 
 	.type	.L.str.2,@object
 .L.str.2:
-	.asciz	"8.10_y8"
+	.asciz	"8.11_y8"
 	.size	.L.str.2, 8
 
 	.type	.L.str.3,@object
