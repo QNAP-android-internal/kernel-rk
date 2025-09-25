@@ -274,44 +274,12 @@ static const struct cif_output_fmt out_fmts[] = {
 		.csi_fmt_val = CSI_WRDDR_TYPE_RAW12,
 		.fmt_type = CIF_FMT_TYPE_RAW,
 	}, {
-		.fourcc = V4L2_PIX_FMT_SBGGR16,
-		.cplanes = 1,
-		.mplanes = 1,
-		.bpp = { 16 },
-		.raw_bpp = 16,
-		.csi_fmt_val = CSI_WRDDR_TYPE_RAW8,
-		.fmt_type = CIF_FMT_TYPE_RAW,
-	}, {
-		.fourcc = V4L2_PIX_FMT_SGBRG16,
-		.cplanes = 1,
-		.mplanes = 1,
-		.bpp = { 16 },
-		.raw_bpp = 16,
-		.csi_fmt_val = CSI_WRDDR_TYPE_RAW8,
-		.fmt_type = CIF_FMT_TYPE_RAW,
-	}, {
-		.fourcc = V4L2_PIX_FMT_SGRBG16,
-		.cplanes = 1,
-		.mplanes = 1,
-		.bpp = { 16 },
-		.raw_bpp = 16,
-		.csi_fmt_val = CSI_WRDDR_TYPE_RAW8,
-		.fmt_type = CIF_FMT_TYPE_RAW,
-	}, {
-		.fourcc = V4L2_PIX_FMT_SRGGB16,
-		.cplanes = 1,
-		.mplanes = 1,
-		.bpp = { 16 },
-		.raw_bpp = 16,
-		.csi_fmt_val = CSI_WRDDR_TYPE_RAW8,
-		.fmt_type = CIF_FMT_TYPE_RAW,
-	}, {
 		.fourcc = V4L2_PIX_FMT_Y16,
 		.cplanes = 1,
 		.mplanes = 1,
 		.bpp = { 16 },
 		.raw_bpp = 16,
-		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW8,
+		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW16,
 		.fmt_type = CIF_FMT_TYPE_RAW,
 	}, {
 		.fourcc = V4L2_PIX_FMT_GREY,
@@ -345,6 +313,13 @@ static const struct cif_output_fmt out_fmts[] = {
 		.raw_bpp = 12,
 		.csi_fmt_val = CSI_WRDDR_TYPE_RAW12,
 		.fmt_type = CIF_FMT_TYPE_RAW,
+	}, {
+		.fourcc = V4L2_PIX_FMT_Y14,
+		.cplanes = 1,
+		.mplanes = 1,
+		.bpp = { 16 },
+		.raw_bpp = 14,
+		.csi_fmt_val = CSI_WRDDR_TYPE_RAW14_RK3588,
 	}, {
 		.fourcc = V4L2_PIX_FMT_Y10,
 		.cplanes = 1,
@@ -385,7 +360,39 @@ static const struct cif_output_fmt out_fmts[] = {
 		.raw_bpp = 16,
 		.csi_fmt_val = CSI_WRDDR_TYPE_RAW16,
 		.fmt_type = CIF_FMT_TYPE_RAW,
-	}
+	}, {
+		.fourcc = V4L2_PIX_FMT_SBGGR14,
+		.cplanes = 1,
+		.mplanes = 1,
+		.bpp = { 16 },
+		.raw_bpp = 14,
+		.csi_fmt_val = CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type = CIF_FMT_TYPE_RAW,
+	}, {
+		.fourcc = V4L2_PIX_FMT_SGBRG14,
+		.cplanes = 1,
+		.mplanes = 1,
+		.bpp = { 16 },
+		.raw_bpp = 14,
+		.csi_fmt_val = CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type = CIF_FMT_TYPE_RAW,
+	}, {
+		.fourcc = V4L2_PIX_FMT_SGRBG14,
+		.cplanes = 1,
+		.mplanes = 1,
+		.bpp = { 16 },
+		.raw_bpp = 14,
+		.csi_fmt_val = CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type = CIF_FMT_TYPE_RAW,
+	}, {
+		.fourcc = V4L2_PIX_FMT_SRGGB14,
+		.cplanes = 1,
+		.mplanes = 1,
+		.bpp = { 16 },
+		.raw_bpp = 14,
+		.csi_fmt_val = CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type = CIF_FMT_TYPE_RAW,
+	},
 	/* TODO: We can support NV12M/NV21M/NV16M/NV61M too */
 };
 
@@ -573,6 +580,12 @@ static const struct cif_input_fmt in_fmts[] = {
 		.fmt_type	= CIF_FMT_TYPE_RAW,
 		.field		= V4L2_FIELD_NONE,
 	}, {
+		.mbus_code	= MEDIA_BUS_FMT_Y14_1X14,
+		.dvp_fmt_val	= INPUT_MODE_RAW | RAW_DATA_WIDTH_14,
+		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type	= CIF_FMT_TYPE_RAW,
+		.field		= V4L2_FIELD_NONE,
+	}, {
 		.mbus_code	= MEDIA_BUS_FMT_EBD_1X8,
 		.dvp_fmt_val	= INPUT_MODE_RAW | RAW_DATA_WIDTH_8,
 		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW8,
@@ -612,6 +625,26 @@ static const struct cif_input_fmt in_fmts[] = {
 	}, {
 		.mbus_code	= MEDIA_BUS_FMT_SRGGB16_1X16,
 		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW16,
+		.fmt_type	= CIF_FMT_TYPE_RAW,
+		.field		= V4L2_FIELD_NONE,
+	}, {
+		.mbus_code	= MEDIA_BUS_FMT_SBGGR14_1X14,
+		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type	= CIF_FMT_TYPE_RAW,
+		.field		= V4L2_FIELD_NONE,
+	}, {
+		.mbus_code	= MEDIA_BUS_FMT_SGBRG14_1X14,
+		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type	= CIF_FMT_TYPE_RAW,
+		.field		= V4L2_FIELD_NONE,
+	}, {
+		.mbus_code	= MEDIA_BUS_FMT_SGRBG14_1X14,
+		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW14_RK3588,
+		.fmt_type	= CIF_FMT_TYPE_RAW,
+		.field		= V4L2_FIELD_NONE,
+	}, {
+		.mbus_code	= MEDIA_BUS_FMT_SRGGB14_1X14,
+		.csi_fmt_val	= CSI_WRDDR_TYPE_RAW14_RK3588,
 		.fmt_type	= CIF_FMT_TYPE_RAW,
 		.field		= V4L2_FIELD_NONE,
 	},
@@ -789,6 +822,18 @@ static int rkcif_output_fmt_check(struct rkcif_stream *stream,
 		if (output_fmt->fourcc == V4L2_PIX_FMT_NV12)
 			ret = 0;
 		break;
+	case MEDIA_BUS_FMT_SBGGR14_1X14:
+	case MEDIA_BUS_FMT_SGBRG14_1X14:
+	case MEDIA_BUS_FMT_SGRBG14_1X14:
+	case MEDIA_BUS_FMT_SRGGB14_1X14:
+	case MEDIA_BUS_FMT_Y14_1X14:
+		if (output_fmt->fourcc == V4L2_PIX_FMT_SRGGB14 ||
+		    output_fmt->fourcc == V4L2_PIX_FMT_SGRBG14 ||
+		    output_fmt->fourcc == V4L2_PIX_FMT_SGBRG14 ||
+		    output_fmt->fourcc == V4L2_PIX_FMT_SBGGR14 ||
+		    output_fmt->fourcc == V4L2_PIX_FMT_Y14)
+			ret = 0;
+		break;
 	default:
 		break;
 	}
@@ -915,6 +960,13 @@ static unsigned char get_data_type(u32 pixelformat, u8 cmd_mode_en, u8 dsi_input
 	case MEDIA_BUS_FMT_SRGGB12_1X12:
 	case MEDIA_BUS_FMT_Y12_1X12:
 		return 0x2c;
+	/* csi raw14 */
+	case MEDIA_BUS_FMT_SBGGR14_1X14:
+	case MEDIA_BUS_FMT_SGBRG14_1X14:
+	case MEDIA_BUS_FMT_SGRBG14_1X14:
+	case MEDIA_BUS_FMT_SRGGB14_1X14:
+	case MEDIA_BUS_FMT_Y14_1X14:
+		return 0x2d;
 	/* csi raw16 */
 	case MEDIA_BUS_FMT_SBGGR16_1X16:
 	case MEDIA_BUS_FMT_SGBRG16_1X16:
@@ -2568,6 +2620,23 @@ out_get_buf:
 			rkcif_write_register(dev, frm_addr_y, buff_addr_y);
 		}
 	}
+	if (buf_stream->is_force_update) {
+		if (mbus_cfg->type == V4L2_MBUS_CSI2_DPHY ||
+		    mbus_cfg->type == V4L2_MBUS_CSI2_CPHY) {
+			if (dev->chip_id < CHIP_RK3562_CIF)
+				rkcif_write_register_or(dev, CIF_REG_MIPI_LVDS_CTRL, 0x00010000);
+			else
+				rkcif_write_register_or(dev, get_reg_index_of_frm0_y_vlw(stream->id), BIT(31));
+		} else {
+			if (dev->chip_id < CHIP_RK3562_CIF)
+				rkcif_write_register_or(dev, CIF_REG_DVP_CTRL, 0x00010000);
+			else if (dev->chip_id < CHIP_RK3576_CIF)
+				rkcif_write_register_or(dev, CIF_REG_DVP_VIR_LINE_WIDTH, BIT(28) << stream->id);
+			else
+				rkcif_write_register_or(dev, CIF_REG_DVP_VIR_LINE_WIDTH, BIT(31));
+		}
+		buf_stream->is_force_update = false;
+	}
 	spin_unlock_irqrestore(&buf_stream->vbq_lock, flags);
 	return 0;
 }
@@ -2582,6 +2651,19 @@ static int rkcif_assign_new_buffer_pingpong_toisp(struct rkcif_stream *stream,
 	else
 		ret = rkcif_assign_new_buffer_update_toisp(stream, channel_id);
 	return ret;
+}
+
+static void rkcif_check_force_update_buf(struct rkcif_stream *stream)
+{
+	u64 cur_time = 0;
+	u64 offset = 0;
+
+	offset = stream->cifdev->readout_ns - 2000000;
+	cur_time = rkcif_time_get_ns(stream->cifdev);
+	if (stream->dma_en &&
+	    (cur_time - stream->readout.fs_timestamp) > offset &&
+	    !stream->is_in_vblank)
+		stream->is_force_update = true;
 }
 
 void rkcif_assign_check_buffer_update_toisp(struct rkcif_stream *stream)
@@ -2633,6 +2715,11 @@ void rkcif_assign_check_buffer_update_toisp(struct rkcif_stream *stream)
 	if (buf_stream->toisp_buf_state.state == RKCIF_TOISP_BUF_LOSS &&
 	    buf_stream->toisp_buf_state.check_cnt == 0)
 		is_dual_update = true;
+
+	if ((buf_stream->toisp_buf_state.state == RKCIF_TOISP_BUF_LOSS ||
+	     buf_stream->toisp_buf_state.state == RKCIF_TOISP_BUF_THESAME) &&
+	    buf_stream->toisp_buf_state.check_cnt == 0)
+		rkcif_check_force_update_buf(buf_stream);
 
 	if ((dev->rdbk_debug > 2 &&
 	     stream->frame_idx < 15) ||
@@ -3996,6 +4083,7 @@ static int rkcif_csi_channel_init(struct rkcif_stream *stream,
 	const struct cif_output_fmt *fmt;
 	u32 fourcc;
 	int vc = dev->channels[stream->id].vc;
+	u32 raw_bpp = 0;
 
 	channel->enable = 1;
 	channel->width = stream->pixm.width;
@@ -4061,11 +4149,20 @@ static int rkcif_csi_channel_init(struct rkcif_stream *stream,
 	if (fmt->fmt_type == CIF_FMT_TYPE_RAW && stream->is_compact &&
 	    fmt->csi_fmt_val != CSI_WRDDR_TYPE_RGB888 &&
 	    fmt->csi_fmt_val != CSI_WRDDR_TYPE_RGB565) {
+		if (dev->chip_id < CHIP_RV1126B_CIF &&
+		    (fmt->fourcc == V4L2_PIX_FMT_Y14 ||
+		     fmt->fourcc == V4L2_PIX_FMT_SBGGR14 ||
+		     fmt->fourcc == V4L2_PIX_FMT_SGBRG14 ||
+		     fmt->fourcc == V4L2_PIX_FMT_SGRBG14 ||
+		     fmt->fourcc == V4L2_PIX_FMT_SRGGB14))
+			raw_bpp = 12;
+		else
+			raw_bpp = fmt->raw_bpp;
 		if (channel->capture_info.mode == RKMODULE_MULTI_DEV_COMBINE_ONE) {
-			channel->virtual_width = ALIGN(channel->width * 2 * fmt->raw_bpp / 8, 256);
-			channel->left_virtual_width = channel->width * fmt->raw_bpp / 8;
+			channel->virtual_width = ALIGN(channel->width * 2 * raw_bpp / 8, 256);
+			channel->left_virtual_width = channel->width * raw_bpp / 8;
 		} else {
-			channel->virtual_width = ALIGN(channel->width * fmt->raw_bpp / 8, 256);
+			channel->virtual_width = ALIGN(channel->width * raw_bpp / 8, 256);
 		}
 	} else {
 		if (channel->capture_info.mode == RKMODULE_MULTI_DEV_COMBINE_ONE) {
@@ -4418,9 +4515,14 @@ static int rkcif_csi_get_output_type_mask(struct rkcif_stream *stream)
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SRGGB14:
+	case V4L2_PIX_FMT_SGRBG14:
+	case V4L2_PIX_FMT_SGBRG14:
+	case V4L2_PIX_FMT_SBGGR14:
 	case V4L2_PIX_FMT_GREY:
 	case V4L2_PIX_FMT_Y10:
 	case V4L2_PIX_FMT_Y12:
+	case V4L2_PIX_FMT_Y14:
 		if (stream->is_compact)
 			mask = CSI_WRDDR_TYPE_RAW_COMPACT;
 		else
@@ -4488,9 +4590,14 @@ static int rkcif_csi_get_output_type_mask_rk3576(struct rkcif_stream *stream)
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SRGGB14:
+	case V4L2_PIX_FMT_SGRBG14:
+	case V4L2_PIX_FMT_SGBRG14:
+	case V4L2_PIX_FMT_SBGGR14:
 	case V4L2_PIX_FMT_GREY:
 	case V4L2_PIX_FMT_Y10:
 	case V4L2_PIX_FMT_Y12:
+	case V4L2_PIX_FMT_Y14:
 		if (stream->is_compact)
 			mask = CSI_WRDDR_TYPE_RAW_COMPACT << 3;
 		else
@@ -5394,19 +5501,24 @@ static int rkcif_csi_stream_start(struct rkcif_stream *stream, unsigned int mode
 		}
 		if (stream->cifdev->chip_id < CHIP_RK3588_CIF) {
 			rkcif_csi_channel_set(stream, channel, mbus_type);
-		} else if (stream->cifdev->chip_id < CHIP_RV1126B_CIF) {
+		} else {
 			if (channel->capture_info.mode == RKMODULE_MULTI_DEV_COMBINE_ONE) {
 				for (i = 0; i < channel->capture_info.multi_dev.dev_num; i++) {
 					dev->csi_host_idx = channel->capture_info.multi_dev.dev_idx[i];
-					rkcif_csi_channel_set_v1(stream, channel, mbus_type, mode, i);
+					if (stream->cifdev->chip_id < CHIP_RV1126B_CIF)
+						rkcif_csi_channel_set_v1(stream, channel, mbus_type, mode, i);
+					else
+						rkcif_csi_channel_set_rv1126b(stream, channel, mbus_type, mode, i);
 				}
 			} else {
 				if (!dev->switch_info.is_use_switch ||
-				    atomic_inc_return(&dev->hw_dev->switch_stream_cnt[dev->switch_info.host_idx]) == 1)
-					rkcif_csi_channel_set_v1(stream, channel, mbus_type, mode, 0);
+				    atomic_inc_return(&dev->hw_dev->switch_stream_cnt[dev->switch_info.host_idx]) == 1) {
+					if (stream->cifdev->chip_id < CHIP_RV1126B_CIF)
+						rkcif_csi_channel_set_v1(stream, channel, mbus_type, mode, 0);
+					else
+						rkcif_csi_channel_set_rv1126b(stream, channel, mbus_type, mode, 0);
+				}
 			}
-		} else {
-			rkcif_csi_channel_set_rv1126b(stream, channel, mbus_type, mode, 0);
 		}
 	} else {
 		if (stream->cifdev->chip_id >= CHIP_RK3588_CIF) {
@@ -6982,6 +7094,7 @@ void rkcif_do_stop_stream(struct rkcif_stream *stream,
 		stream->crop_mask = 0;
 		stream->frame_loss = 0;
 		stream->is_fb_first_frame = true;
+		stream->is_force_update = false;
 	}
 	if (mode == RKCIF_STREAM_MODE_CAPTURE) {
 		tasklet_disable(&stream->vb_done_tasklet);
@@ -7316,6 +7429,11 @@ static u32 rkcif_align_bits_per_pixel(struct rkcif_stream *stream,
 		case V4l2_PIX_FMT_EBD8:
 		case V4L2_PIX_FMT_Y10:
 		case V4L2_PIX_FMT_Y12:
+		case V4L2_PIX_FMT_Y14:
+		case V4L2_PIX_FMT_SRGGB14:
+		case V4L2_PIX_FMT_SGRBG14:
+		case V4L2_PIX_FMT_SGBRG14:
+		case V4L2_PIX_FMT_SBGGR14:
 			if (stream->cifdev->chip_id < CHIP_RV1126_CIF) {
 				bpp = max(fmt->bpp[plane_index], (u8)CIF_RAW_STORED_BIT_WIDTH);
 				cal = CIF_RAW_STORED_BIT_WIDTH;
@@ -7620,9 +7738,14 @@ static int rkcif_dvp_get_output_type_mask(struct rkcif_stream *stream)
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SRGGB14:
+	case V4L2_PIX_FMT_SGRBG14:
+	case V4L2_PIX_FMT_SGBRG14:
+	case V4L2_PIX_FMT_SBGGR14:
 	case V4L2_PIX_FMT_GREY:
 	case V4L2_PIX_FMT_Y10:
 	case V4L2_PIX_FMT_Y12:
+	case V4L2_PIX_FMT_Y14:
 		if (stream->is_compact)
 			mask = CSI_WRDDR_TYPE_RAW_COMPACT << 11;
 		else
@@ -7701,6 +7824,11 @@ static int rkcif_dvp_get_output_type_mask_rk3576(struct rkcif_stream *stream)
 	case V4L2_PIX_FMT_GREY:
 	case V4L2_PIX_FMT_Y10:
 	case V4L2_PIX_FMT_Y12:
+	case V4L2_PIX_FMT_Y14:
+	case V4L2_PIX_FMT_SRGGB14:
+	case V4L2_PIX_FMT_SGRBG14:
+	case V4L2_PIX_FMT_SGBRG14:
+	case V4L2_PIX_FMT_SBGGR14:
 		if (stream->is_compact)
 			mask = CSI_WRDDR_TYPE_RAW_COMPACT << 15;
 		else
@@ -8601,6 +8729,8 @@ int rkcif_do_start_stream(struct rkcif_stream *stream, enum rkcif_stream_mode mo
 		tasklet_enable(&stream->vb_done_tasklet);
 
 	if (stream->cur_stream_mode == RKCIF_STREAM_MODE_NONE) {
+		dev->sensor_linetime = rkcif_get_linetime(stream);
+		dev->readout_ns = dev->terminal_sensor.raw_rect.height * dev->sensor_linetime;
 		ret = dev->pipe.open(&dev->pipe, &node->vdev.entity, true);
 		if (ret < 0) {
 			v4l2_err(v4l2_dev, "open cif pipeline failed %d\n",
@@ -8823,6 +8953,7 @@ int rkcif_set_fmt(struct rkcif_stream *stream,
 	struct rkcif_extend_info *extend_line = &stream->extend_line;
 	struct csi_channel_info *channel_info = &dev->channels[stream->id];
 	int ret;
+	u32 raw_bpp = 0;
 
 	for (i = 0; i < RKCIF_MAX_PLANE; i++)
 		memset(&pixm->plane_fmt[i], 0, sizeof(struct v4l2_plane_pix_format));
@@ -8938,13 +9069,31 @@ int rkcif_set_fmt(struct rkcif_stream *stream,
 		     dev->active_sensor->mbus.type == V4L2_MBUS_CCP2) &&
 		     fmt->csi_fmt_val != CSI_WRDDR_TYPE_RGB888 &&
 		     fmt->csi_fmt_val != CSI_WRDDR_TYPE_RGB565) {
-			bpl = ALIGN(width * fmt->raw_bpp / 8, 256);
+			if (dev->chip_id < CHIP_RV1126B_CIF &&
+			    (fmt->fourcc == V4L2_PIX_FMT_Y14 ||
+			     fmt->fourcc == V4L2_PIX_FMT_SBGGR14 ||
+			     fmt->fourcc == V4L2_PIX_FMT_SGBRG14 ||
+			     fmt->fourcc == V4L2_PIX_FMT_SGRBG14 ||
+			     fmt->fourcc == V4L2_PIX_FMT_SRGGB14))
+				raw_bpp = 12;
+			else
+				raw_bpp = fmt->raw_bpp;
+			bpl = ALIGN(width * raw_bpp / 8, 256);
 		} else {
 			if (fmt->fmt_type == CIF_FMT_TYPE_RAW && stream->is_compact &&
 			    fmt->csi_fmt_val != CSI_WRDDR_TYPE_RGB888 &&
 			    fmt->csi_fmt_val != CSI_WRDDR_TYPE_RGB565 &&
 			    dev->chip_id >= CHIP_RK3588_CIF) {
-				bpl = ALIGN(width * fmt->raw_bpp / 8, 256);
+				if (dev->chip_id < CHIP_RV1126B_CIF &&
+				    (fmt->fourcc == V4L2_PIX_FMT_Y14 ||
+				     fmt->fourcc == V4L2_PIX_FMT_SBGGR14 ||
+				     fmt->fourcc == V4L2_PIX_FMT_SGBRG14 ||
+				     fmt->fourcc == V4L2_PIX_FMT_SGRBG14 ||
+				     fmt->fourcc == V4L2_PIX_FMT_SRGGB14))
+					raw_bpp = 12;
+				else
+					raw_bpp = fmt->raw_bpp;
+				bpl = ALIGN(width * raw_bpp / 8, 256);
 			} else {
 				bpp = rkcif_align_bits_per_pixel(stream, fmt, i);
 				bpl = ALIGN(width * bpp / CIF_YUV_STORED_BIT_WIDTH, 8);
@@ -9095,6 +9244,7 @@ void rkcif_stream_init(struct rkcif_device *dev, u32 id)
 	memset(&stream->sensor_exp_info, 0, sizeof(stream->sensor_exp_info));
 	stream->frame_loss = 0;
 	stream->is_pause_stream = false;
+	stream->is_force_update = false;
 }
 
 int rkcif_sensor_set_power(struct rkcif_stream *stream, int on)
@@ -13088,6 +13238,21 @@ u32 rkcif_mbus_pixelcode_to_v4l2(u32 pixelcode)
 	case MEDIA_BUS_FMT_SRGGB16_1X16:
 		pixelformat = V4L2_PIX_FMT_SRGGB16;
 		break;
+	case MEDIA_BUS_FMT_Y14_1X14:
+		pixelformat = V4L2_PIX_FMT_Y14;
+		break;
+	case MEDIA_BUS_FMT_SBGGR14_1X14:
+		pixelformat = V4L2_PIX_FMT_SBGGR14;
+		break;
+	case MEDIA_BUS_FMT_SGBRG14_1X14:
+		pixelformat = V4L2_PIX_FMT_SGBRG14;
+		break;
+	case MEDIA_BUS_FMT_SGRBG14_1X14:
+		pixelformat = V4L2_PIX_FMT_SGRBG14;
+		break;
+	case MEDIA_BUS_FMT_SRGGB14_1X14:
+		pixelformat = V4L2_PIX_FMT_SRGGB14;
+		break;
 	default:
 		pixelformat = V4L2_PIX_FMT_SRGGB10;
 	}
@@ -13179,8 +13344,10 @@ void rkcif_enable_dma_capture(struct rkcif_stream *stream, bool is_only_enable)
 	} else {
 		if (cif_dev->chip_id < CHIP_RK3562_CIF)
 			rkcif_write_register_or(cif_dev, CIF_REG_DVP_CTRL, 0x00010000);
-		else
+		else if (cif_dev->chip_id < CHIP_RK3576_CIF)
 			rkcif_write_register_or(cif_dev, CIF_REG_DVP_VIR_LINE_WIDTH, BIT(28) << stream->id);
+		else
+			rkcif_write_register_or(cif_dev, CIF_REG_DVP_VIR_LINE_WIDTH, BIT(31));
 	}
 	if (mbus_cfg->type == V4L2_MBUS_CSI2_DPHY ||
 	    mbus_cfg->type == V4L2_MBUS_CSI2_CPHY) {
