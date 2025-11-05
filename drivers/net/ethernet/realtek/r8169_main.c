@@ -31,6 +31,8 @@
 #include <asm/unaligned.h>
 #include <net/ip6_checksum.h>
 
+#include <linux/of.h>
+
 #include "r8169.h"
 #include "r8169_firmware.h"
 
@@ -85,6 +87,8 @@
 #define JUMBO_6K	(6 * SZ_1K - VLAN_ETH_HLEN - ETH_FCS_LEN)
 #define JUMBO_7K	(7 * SZ_1K - VLAN_ETH_HLEN - ETH_FCS_LEN)
 #define JUMBO_9K	(9 * SZ_1K - VLAN_ETH_HLEN - ETH_FCS_LEN)
+
+#define BOOTARGS_MAC_KEY "eth2addr="
 
 static const struct {
 	const char *name;
@@ -4978,6 +4982,51 @@ static int rtl_alloc_irq(struct rtl8169_private *tp)
 	return pci_alloc_irq_vectors(tp->pci_dev, 1, 1, flags);
 }
 
+#define BOOTARGS_MAC_KEY "eth2addr="
+
+static void rtl_get_mac_from_bootarg_eth2addr(struct rtl8169_private *tp,
+					u8 mac_addr[ETH_ALEN])
+{
+	struct device_node *chosen;
+	const char *bootargs;
+	const char *mac_ptr;
+	int sscanf_ret;
+
+	chosen = of_find_node_by_path("/chosen");
+	if (!chosen)
+		return;
+
+	if (of_property_read_string(chosen, "bootargs", &bootargs))
+		return;
+
+	mac_ptr = strstr(bootargs, BOOTARGS_MAC_KEY);
+	if (!mac_ptr)
+		return;
+
+	mac_ptr += strlen(BOOTARGS_MAC_KEY );
+	sscanf_ret = sscanf(mac_ptr, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+			    &mac_addr[0], &mac_addr[1], &mac_addr[2],
+			    &mac_addr[3], &mac_addr[4], &mac_addr[5]);
+
+	if (sscanf_ret != ETH_ALEN) {
+		dev_warn(tp_to_dev(tp),
+			 "Failed to parse MAC from bootargs, sscanf returned %d\n",
+			 sscanf_ret);
+		memset(mac_addr, 0, ETH_ALEN);
+		return;
+	}
+
+	if (!is_valid_ether_addr(mac_addr)) {
+		dev_warn(tp_to_dev(tp),
+			 "Bootargs MAC (%pM) is invalid, skipping\n",
+			 mac_addr);
+		memset(mac_addr, 0, ETH_ALEN);
+		return;
+	}
+
+	dev_info(tp_to_dev(tp), "Using MAC from bootargs: %pM\n", mac_addr);
+}
+
 static void rtl_read_mac_address(struct rtl8169_private *tp,
 				 u8 mac_addr[ETH_ALEN])
 {
@@ -5149,6 +5198,10 @@ static void rtl_init_mac_address(struct rtl8169_private *tp)
 	u8 mac_addr[ETH_ALEN] __aligned(2) = {};
 	struct net_device *dev = tp->dev;
 	int rc;
+
+	rtl_get_mac_from_bootarg_eth2addr(tp, mac_addr);
+	if (is_valid_ether_addr(mac_addr))
+		goto done;
 
 	rc = eth_platform_get_mac_address(tp_to_dev(tp), mac_addr);
 	if (!rc)
