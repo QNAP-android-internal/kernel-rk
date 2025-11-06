@@ -4982,8 +4982,6 @@ static int rtl_alloc_irq(struct rtl8169_private *tp)
 	return pci_alloc_irq_vectors(tp->pci_dev, 1, 1, flags);
 }
 
-#define BOOTARGS_MAC_KEY "eth2addr="
-
 static void rtl_get_mac_from_bootarg_eth2addr(struct rtl8169_private *tp,
 					u8 mac_addr[ETH_ALEN])
 {
