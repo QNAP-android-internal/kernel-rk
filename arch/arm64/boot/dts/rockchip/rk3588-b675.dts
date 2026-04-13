@@ -239,6 +239,17 @@
 		pinctrl-names = "default";
 	};
 
+	vcc5v_mipi_backlight: vcc5v-mipi-backlight {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc5v_mipi_backlight";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpios = <&gpio3 RK_PB2 GPIO_ACTIVE_HIGH>;
+		regulator-always-on;
+		regulator-boot-on;
+		enable-active-high;
+	};
+
 	wireless_bluetooth: wireless-bluetooth {
 		compatible = "bluetooth-platdata";
 		uart_rts_gpios = <&gpio4 RK_PC4 GPIO_ACTIVE_LOW>;
@@ -331,6 +342,10 @@
 };
 
 &dsi0_panel {
+	reg = <0>;
+	compatible = "raspberrypi,dsi-7inch";
+	reset-gpios = <&rpi_display_v2_mcu 0 GPIO_ACTIVE_LOW>;
+	backlight = <&rpi_display_v2_mcu>;
 };
 
 &pwm13 {
@@ -1010,6 +1025,29 @@
 	pinctrl-0 = <&i2c8m2_xfer>;
 	status = "okay";
 
+	gt911: gt911@5d {
+		compatible = "goodix,gt911";
+		reg = <0x5d>;
+		interrupt-gpios = <&gpio3 RK_PC0 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
+		touchscreen-size-x = <720>;
+		touchscreen-size-y = <1280>;
+		touchscreen-x-mm = <90>;
+		touchscreen-y-mm = <151>;
+	};
+
+	rpi_display_v2_mcu: rpi_display_v2_mcu@45 {
+		compatible = "raspberrypi,v2-touchscreen-panel-regulator";
+		reg = <0x45>;
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		touch-reg-hog {
+			gpio-hog;
+			gpios = <1 GPIO_ACTIVE_HIGH>;
+			output-high;
+		};
+	};
 };
 
 &vdd_log_s0 {
