@@ -53,6 +53,7 @@
 #define DRIVER_VERSION			KERNEL_VERSION(0, 0x01, 0x0)
 #define DRIVER_NAME "ov5640"
 #define OV5640_PIXEL_RATE		(120 * 1000 * 1000)
+#define OV5640_1080P_VBLANK		400
 
 /*
  * OV5640 register definitions
@@ -1222,6 +1223,8 @@ static int ov5640_g_frame_interval(struct v4l2_subdev *sd,
 	struct ov5640 *ov5640 = to_ov5640(sd);
 
 	mutex_lock(&ov5640->lock);
+	fi->interval.numerator = 1;
+	fi->interval.denominator = ov5640->frame_size->fps;
 	mutex_unlock(&ov5640->lock);
 
 	return 0;
@@ -1649,7 +1652,7 @@ static int ov5640_probe(struct i2c_client *client,
 	    ov5640->xvclk_frequency > 27000000)
 		return -EINVAL;
 
-	v4l2_ctrl_handler_init(&ov5640->ctrls, 3);
+	v4l2_ctrl_handler_init(&ov5640->ctrls, 4);
 
 	ov5640->link_frequency =
 			v4l2_ctrl_new_std(&ov5640->ctrls, &ov5640_ctrl_ops,
@@ -1659,6 +1662,9 @@ static int ov5640_probe(struct i2c_client *client,
 
 	v4l2_ctrl_new_int_menu(&ov5640->ctrls, NULL, V4L2_CID_LINK_FREQ,
 			       0, 0, link_freq_menu_items);
+	v4l2_ctrl_new_std(&ov5640->ctrls, &ov5640_ctrl_ops,
+			  V4L2_CID_VBLANK, 1, 0xffff, 1,
+			  OV5640_1080P_VBLANK);
 	v4l2_ctrl_new_std_menu_items(&ov5640->ctrls, &ov5640_ctrl_ops,
 				     V4L2_CID_TEST_PATTERN,
 				     ARRAY_SIZE(ov5640_test_pattern_menu) - 1,
