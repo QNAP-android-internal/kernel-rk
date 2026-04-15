@@ -6049,6 +6049,8 @@ void rkcif_do_stop_stream(struct rkcif_stream *stream,
 			dev->reset_work_cancel = true;
 			dev->early_line = 0;
 			dev->sensor_linetime = 0;
+			dev->wait_line = 0;
+			stream->is_line_wake_up = false;
 		}
 		if (atomic_read(&dev->pipe.stream_cnt) == 0)
 			atomic_set(&stream->sub_stream_buf_cnt, 0);

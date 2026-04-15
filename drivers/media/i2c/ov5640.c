@@ -126,6 +126,7 @@ struct ov5640 {
 	const struct ov5640_framesize *framesize_cfg;
 	unsigned int cfg_num;
 	int streaming;
+	int power_count;
 	u32 module_index;
 	const char *module_facing;
 	const char *module_name;
@@ -1285,7 +1286,10 @@ static long ov5640_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
 
 		stream = *((u32 *)arg);
 
+		mutex_lock(&ov5640->lock);
 		ov5640_set_streaming(ov5640, !!stream);
+		ov5640->streaming = !!stream;
+		mutex_unlock(&ov5640->lock);
 		break;
 	default:
 		ret = -ENOIOCTLCMD;
@@ -1365,6 +1369,8 @@ static int ov5640_power(struct v4l2_subdev *sd, int on)
 
 	dev_info(&client->dev, "%s(%d) on(%d)\n", __func__, __LINE__, on);
 	if (on) {
+		if (ov5640->power_count++ > 0)
+			return 0;
 		if (!IS_ERR(ov5640->pwdn_gpio)) {
 			gpiod_set_value_cansleep(ov5640->pwdn_gpio, 0);
 			usleep_range(2000, 5000);
@@ -1374,10 +1380,16 @@ static int ov5640_power(struct v4l2_subdev *sd, int on)
 		if (ret)
 			dev_err(&client->dev, "init error\n");
 	} else {
+		if (ov5640->power_count <= 0)
+			return 0;
+		if (--ov5640->power_count > 0)
+			return 0;
+
 		if (!IS_ERR(ov5640->pwdn_gpio)) {
 			gpiod_set_value_cansleep(ov5640->pwdn_gpio, 1);
 			usleep_range(2000, 5000);
 		}
+		ov5640->streaming = 0;
 	}
 	return 0;
 }
