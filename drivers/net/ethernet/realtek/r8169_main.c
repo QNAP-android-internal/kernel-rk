@@ -332,9 +332,13 @@ enum rtl8168_registers {
 };
 
 enum rtl8125_registers {
+	LEDSEL0			= 0x18,
 	IntrMask_8125		= 0x38,
 	IntrStatus_8125		= 0x3c,
+	LEDSEL2			= 0x84,
+	LEDSEL1			= 0x86,
 	TxPoll_8125		= 0x90,
+	LEDSEL3			= 0x96,
 	MAC0_BKP		= 0x19e0,
 	EEE_TXIDLE_TIMER_8125	= 0x6048,
 };
@@ -342,6 +346,14 @@ enum rtl8125_registers {
 #define RX_VLAN_INNER_8125	BIT(22)
 #define RX_VLAN_OUTER_8125	BIT(23)
 #define RX_VLAN_8125		(RX_VLAN_INNER_8125 | RX_VLAN_OUTER_8125)
+
+#define RTL8125_LED_LINK_10	BIT(0)
+#define RTL8125_LED_LINK_100	BIT(1)
+#define RTL8125_LED_LINK_1000	BIT(3)
+#define RTL8125_LED_LINK_2500	BIT(5)
+#define RTL8125_LED_ACT		BIT(9)
+
+#define CONFIG2_LED_ENABLE	BIT(2)
 
 #define RX_FETCH_DFLT_8125	(8 << 27)
 
@@ -3531,6 +3543,36 @@ DECLARE_RTL_COND(rtl_mac_ocp_e00e_cond)
 	return r8168_mac_ocp_read(tp, 0xe00e) & BIT(13);
 }
 
+static void rtl8125_configure_secure_leds(struct rtl8169_private *tp)
+{
+	u16 led0_config, led1_config, led2_config, led3_config;
+	u8 config2_val;
+
+	netdev_info(tp->dev, "Applying secure LED configuration for RTL8125\n");
+
+	config2_val = RTL_R8(tp, Config2);
+	config2_val &= ~CONFIG2_LED_ENABLE;
+	RTL_W8(tp, Config2, config2_val);
+
+	led0_config = RTL8125_LED_LINK_10 | RTL8125_LED_LINK_100 |
+		      RTL8125_LED_LINK_1000 | RTL8125_LED_LINK_2500 |
+		      RTL8125_LED_ACT;
+
+	led1_config = RTL8125_LED_LINK_1000;
+
+	led2_config = RTL8125_LED_LINK_100;
+
+	led3_config = 0x0000;
+
+	RTL_W16(tp, LEDSEL0, led0_config);
+	RTL_W16(tp, LEDSEL1, led1_config);
+	RTL_W16(tp, LEDSEL2, led2_config);
+	RTL_W16(tp, LEDSEL3, led3_config);
+
+	netdev_info(tp->dev, "LED config: LED0=0x%04x LED1=0x%04x LED2=0x%04x LED3=0x%04x\n",
+		    led0_config, led1_config, led2_config, led3_config);
+}
+
 static void rtl_hw_start_8125_common(struct rtl8169_private *tp)
 {
 	rtl_pcie_state_l2l3_disable(tp);
@@ -3541,6 +3583,8 @@ static void rtl_hw_start_8125_common(struct rtl8169_private *tp)
 
 	/* disable UPS */
 	r8168_mac_ocp_modify(tp, 0xd40a, 0x0010, 0x0000);
+
+	rtl8125_configure_secure_leds(tp);
 
 	RTL_W8(tp, Config1, RTL_R8(tp, Config1) & ~0x10);
 
