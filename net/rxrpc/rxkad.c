@@ -620,6 +620,7 @@ static int rxkad_verify_packet(struct rxrpc_call *call, struct sk_buff *skb,
 	struct rxrpc_crypt iv;
 	struct scatterlist sg;
 	bool aborted;
+	int ret;
 	u16 cksum;
 	u32 x, y;
 
@@ -664,8 +665,14 @@ static int rxkad_verify_packet(struct rxrpc_call *call, struct sk_buff *skb,
 	case RXRPC_SECURITY_PLAIN:
 		return 0;
 	case RXRPC_SECURITY_AUTH:
+		ret = skb_linearize_cow(skb);
+		if (ret < 0)
+			return ret;
 		return rxkad_verify_packet_1(call, skb, offset, len, seq, req);
 	case RXRPC_SECURITY_ENCRYPT:
+		ret = skb_linearize_cow(skb);
+		if (ret < 0)
+			return ret;
 		return rxkad_verify_packet_2(call, skb, offset, len, seq, req);
 	default:
 		return -ENOANO;
