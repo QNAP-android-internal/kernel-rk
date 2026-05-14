@@ -908,9 +908,10 @@ static int esp_input(struct xfrm_state *x, struct sk_buff *skb)
 	if (!skb_cloned(skb)) {
 		if (!skb_is_nonlinear(skb)) {
 			nfrags = 1;
-
 			goto skip_cow;
-		} else if (!skb_has_frag_list(skb)) {
+		} else if (!skb_has_frag_list(skb) &&
+			   !skb_has_shared_frag(skb)) {
+			/* Only skip cow when no externally-pinned page-cache pages are present. */
 			nfrags = skb_shinfo(skb)->nr_frags;
 			nfrags++;
 

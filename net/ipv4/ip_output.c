@@ -1239,6 +1239,8 @@ alloc_new_skb:
 			err = skb_zerocopy_iter_dgram(skb, from, copy);
 			if (err < 0)
 				goto error;
+			if (!(flags & MSG_NO_SHARED_FRAGS))
+				skb_shinfo(skb)->flags |= SKBFL_SHARED_FRAG;
 		}
 		offset += copy;
 		length -= copy;
