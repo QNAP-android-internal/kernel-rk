@@ -150,8 +150,8 @@ static int rpi_panel_v2_i2c_probe(struct i2c_client *i2c,
 
 	ret = rpi_panel_v2_i2c_read(i2c, REG_ID, &data);
 	if (ret < 0) {
-		dev_err(&i2c->dev, "Failed to read REG_ID reg: %d\n", ret);
-		goto error;
+		dev_warn(&i2c->dev, "Failed to read REG_ID reg: %d\n", ret);
+		goto skip_hw_init;
 	}
 
 	switch (data & 0x0f) {
@@ -169,6 +169,7 @@ static int rpi_panel_v2_i2c_probe(struct i2c_client *i2c,
 
 	regmap_write(regmap, REG_POWERON, 0);
 
+skip_hw_init:
 	state->regmap = regmap;
 	state->gc.parent = &i2c->dev;
 	state->gc.label = i2c->name;
