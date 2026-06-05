@@ -736,6 +736,11 @@ properties:
           - const: hugsun,x99
           - const: rockchip,rk3399
 
+      - description: IEI WAFER-RK3588 SBC
+        items:
+          - const: iei,wafer-rk3588
+          - const: rockchip,rk3588
+
       - description: Indiedroid Nova SBC
         items:
           - const: indiedroid,nova
