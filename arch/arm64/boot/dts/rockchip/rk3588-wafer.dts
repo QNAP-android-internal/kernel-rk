@@ -1132,3 +1132,31 @@
 &wdt {
 	status = "okay";
 };
+
+&rknn_core_0 {
+	status = "okay";
+};
+
+&rknn_mmu_0 {
+	status = "okay";
+};
+
+&rknn_core_1 {
+	status = "okay";
+};
+
+&rknn_mmu_1 {
+	status = "okay";
+};
+
+&rknn_core_2 {
+	status = "okay";
+};
+
+&rknn_mmu_2 {
+	status = "okay";
+};
+
+&vdd_npu_s0 {
+	regulator-always-on;
+};
