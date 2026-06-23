@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2026 IEI Integration Corp.
+ *
+ * RKNPU personality of the WAFER-RK3588 board.
+ *
+ * The mainline "rocket" rknn-core driver and the out-of-tree vendor "rknpu"
+ * driver (RKNN / rkllm) drive the *same* NPU hardware and are mutually
+ * exclusive -- the active personality is selected by which .dtb is booted:
+ *
+ *   rk3588-wafer.dtb        -> rocket (CNN via Mesa Teflon, all 3 rknn-cores)
+ *   rk3588-wafer-rknpu.dtb  -> rknpu  (RKNN/LLM via librknnrt / librkllmrt)
+ *
+ * This variant pulls in the full board description from rk3588-wafer.dts and
+ * then flips the NPU personality: it disables the rocket rknn-core_1/2 and all
+ * three per-core MMUs, and repurposes npu@fdab0000 (rknn_core_0) into the
+ * vendor single-node "rockchip,rk3588-rknpu" layout. See the rknpu DT notes
+ * for why reg is 0x9000/core and why it runs non-iommu at 200 MHz.
+ */
+
+#include "rk3588-wafer.dts"
+
+&rknn_core_1 {
+	status = "disabled";
+};
+
+&rknn_core_2 {
+	status = "disabled";
+};
+
+&rknn_mmu_0 {
+	status = "disabled";
+};
+
+&rknn_mmu_1 {
+	status = "disabled";
+};
+
+&rknn_mmu_2 {
+	status = "disabled";
+};
+
+&rknn_core_0 {
+	compatible = "rockchip,rk3588-rknpu";
+	reg = <0x0 0xfdab0000 0x0 0x9000>,
+	      <0x0 0xfdac0000 0x0 0x9000>,
+	      <0x0 0xfdad0000 0x0 0x9000>;
+	reg-names = "rknpu0", "rknpu1", "rknpu2";
+	interrupts = <GIC_SPI 110 IRQ_TYPE_LEVEL_HIGH 0>,
+		     <GIC_SPI 111 IRQ_TYPE_LEVEL_HIGH 0>,
+		     <GIC_SPI 112 IRQ_TYPE_LEVEL_HIGH 0>;
+	interrupt-names = "npu0_irq", "npu1_irq", "npu2_irq";
+	clocks = <&scmi_clk SCMI_CLK_NPU>, <&cru ACLK_NPU0>,
+		 <&cru ACLK_NPU1>, <&cru ACLK_NPU2>,
+		 <&cru HCLK_NPU0>, <&cru HCLK_NPU1>,
+		 <&cru HCLK_NPU2>, <&cru PCLK_NPU_ROOT>;
+	clock-names = "clk_npu", "aclk0", "aclk1", "aclk2",
+		      "hclk0", "hclk1", "hclk2", "pclk";
+	assigned-clocks = <&scmi_clk SCMI_CLK_NPU>;
+	assigned-clock-rates = <200000000>;
+	resets = <&cru SRST_A_RKNN0>, <&cru SRST_A_RKNN1>, <&cru SRST_A_RKNN2>,
+		 <&cru SRST_H_RKNN0>, <&cru SRST_H_RKNN1>, <&cru SRST_H_RKNN2>;
+	reset-names = "srst_a0", "srst_a1", "srst_a2",
+		      "srst_h0", "srst_h1", "srst_h2";
+	power-domains = <&power RK3588_PD_NPUTOP>,
+			<&power RK3588_PD_NPU1>,
+			<&power RK3588_PD_NPU2>;
+	power-domain-names = "npu0", "npu1", "npu2";
+	rknpu-supply = <&vdd_npu_s0>;
+	/* base dtsi inherits iommus = <&rknn_mmu_0>; drop it for non-iommu mode. */
+	/delete-property/ iommus;
+	/delete-property/ operating-points-v2;
+	status = "okay";
+};
