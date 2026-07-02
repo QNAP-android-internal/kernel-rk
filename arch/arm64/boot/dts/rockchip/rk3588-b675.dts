@@ -1032,6 +1032,8 @@
 		touchscreen-size-y = <1280>;
 		touchscreen-x-mm = <90>;
 		touchscreen-y-mm = <151>;
+		touchscreen-swapped-x-y;
+		touchscreen-inverted-x;
 	};
 
 	rpi_display_v2_mcu: rpi_display_v2_mcu@45 {
