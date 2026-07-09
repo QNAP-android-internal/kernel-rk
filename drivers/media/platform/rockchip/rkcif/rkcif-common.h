@@ -103,6 +103,12 @@ enum rkcif_plane_index {
 	RKCIF_PLANE_MAX
 };
 
+static inline bool rkcif_fmt_is_packed_yuv422(u32 fourcc)
+{
+	return fourcc == V4L2_PIX_FMT_UYVY || fourcc == V4L2_PIX_FMT_YUYV ||
+	       fourcc == V4L2_PIX_FMT_YVYU || fourcc == V4L2_PIX_FMT_VYUY;
+}
+
 struct rkcif_input_fmt {
 	u32 mbus_code;
 

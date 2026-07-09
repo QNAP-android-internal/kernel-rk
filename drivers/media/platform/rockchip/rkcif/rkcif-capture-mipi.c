@@ -35,6 +35,8 @@
 #define RK3588_MIPI_CTRL0_WRDDR(type) ((type) << 5)
 #define RK3588_MIPI_CTRL0_CROP_EN     BIT(4)
 #define RK3588_MIPI_CTRL0_PARSE(type) ((type) << 1)
+#define RK3588_MIPI_CTRL0_YUYV_IN_ORDER(o)  ((o) << 16)
+#define RK3588_MIPI_CTRL0_YUYV_OUT_ORDER(o) ((o) << 18)
 
 #define RK3588_MIPI_CTRL_CAP_EN       BIT(0)
 
@@ -486,6 +488,27 @@ const struct rkcif_mipi_match_data rkcif_rk3568_vicap_mipi_match_data = {
 	},
 };
 
+/*
+ * yuyv order field encoding per RK3588 TRM Part1 V1.0, section 37.4.
+ * The memory format always matches the media bus format in this driver,
+ * so the same value programs both the input (wire) and the output
+ * (memory) sample order.
+ */
+static u8 rkcif_rk3588_yuv422_order(const struct rkcif_output_fmt *fmt)
+{
+	switch (fmt->fourcc) {
+	case V4L2_PIX_FMT_VYUY:
+		return 1;
+	case V4L2_PIX_FMT_YUYV:
+		return 2;
+	case V4L2_PIX_FMT_YVYU:
+		return 3;
+	case V4L2_PIX_FMT_UYVY:
+	default:
+		return 0;
+	}
+}
+
 static u32
 rkcif_rk3588_mipi_ctrl0(struct rkcif_stream *stream,
 			const struct rkcif_output_fmt *active_out_fmt)
@@ -499,6 +522,15 @@ rkcif_rk3588_mipi_ctrl0(struct rkcif_stream *stream,
 
 	switch (active_out_fmt->mipi.type) {
 	case RKCIF_MIPI_TYPE_RAW8:
+		/* Packed YUV422 rides the raw8 path as 16-bit YUV packets. */
+		if (rkcif_fmt_is_packed_yuv422(active_out_fmt->fourcc)) {
+			u8 order = rkcif_rk3588_yuv422_order(active_out_fmt);
+
+			ctrl0 |= RK3588_MIPI_CTRL0_PARSE(0x4);
+			ctrl0 |= RK3588_MIPI_CTRL0_WRDDR(0x2);
+			ctrl0 |= RK3588_MIPI_CTRL0_YUYV_IN_ORDER(order);
+			ctrl0 |= RK3588_MIPI_CTRL0_YUYV_OUT_ORDER(order);
+		}
 		break;
 	case RKCIF_MIPI_TYPE_RAW10:
 		ctrl0 |= RK3588_MIPI_CTRL0_PARSE(0x1);

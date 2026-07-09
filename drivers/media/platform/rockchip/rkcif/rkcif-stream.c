@@ -219,6 +219,13 @@ static int rkcif_stream_prepare_buffer(struct vb2_buffer *vb)
 				buffer->buff_addr[i - 1] +
 				pix->plane_fmt[i - 1].bytesperline *
 					pix->height;
+
+		/* Packed YUV422 needs a UV DMA base at the frame midpoint. */
+		if (rkcif_fmt_is_packed_yuv422(pix->pixelformat))
+			buffer->buff_addr[RKCIF_PLANE_UV] =
+				buffer->buff_addr[RKCIF_PLANE_Y] +
+				(pix->plane_fmt[0].bytesperline / 2) *
+					pix->height;
 	}
 
 	for (i = 0; i < pix->num_planes; i++) {
