@@ -6,6 +6,18 @@
 #ifndef __PHY_MIPI_DPHY_H_
 #define __PHY_MIPI_DPHY_H_
 
+/*
+ * Direction submode constants for phy_set_mode_ext() when @mode is
+ * %PHY_MODE_MIPI_DPHY. Used by combo D-PHY drivers that can operate
+ * the same hardware block as either a transmitter (DSI output) or a
+ * receiver (CSI input).
+ *
+ * PHY_MIPI_DPHY_SUBMODE_TX is 0 so that phy_set_mode(), which passes
+ * submode 0, keeps selecting the transmitter direction.
+ */
+#define PHY_MIPI_DPHY_SUBMODE_TX	0
+#define PHY_MIPI_DPHY_SUBMODE_RX	1
+
 /**
  * struct phy_configure_opts_mipi_dphy - MIPI D-PHY configuration set
  *
