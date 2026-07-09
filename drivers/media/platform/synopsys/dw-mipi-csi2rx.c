@@ -15,6 +15,7 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/phy/phy.h>
+#include <linux/phy/phy-mipi-dphy.h>
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/property.h>
@@ -387,7 +388,8 @@ static int dw_mipi_csi2rx_start(struct dw_mipi_csi2rx_device *csi2)
 		if (ret)
 			return ret;
 
-		ret = phy_set_mode(csi2->phy, PHY_MODE_MIPI_DPHY);
+		ret = phy_set_mode_ext(csi2->phy, PHY_MODE_MIPI_DPHY,
+				       PHY_MIPI_DPHY_SUBMODE_RX);
 		if (ret)
 			return ret;
 
