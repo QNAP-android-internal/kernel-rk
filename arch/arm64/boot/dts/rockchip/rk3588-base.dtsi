@@ -1516,10 +1516,18 @@
 
 			vicap_mipi0: port@1 {
 				reg = <0x1>;
+
+				vicap_mipi0_input: endpoint {
+					remote-endpoint = <&csi0_output>;
+				};
 			};
 
 			vicap_mipi1: port@2 {
 				reg = <0x2>;
+
+				vicap_mipi1_input: endpoint {
+					remote-endpoint = <&csi1_output>;
+				};
 			};
 
 			vicap_mipi2: port@3 {
@@ -1532,6 +1540,10 @@
 
 			vicap_mipi3: port@4 {
 				reg = <0x4>;
+
+				vicap_mipi3_input: endpoint {
+					remote-endpoint = <&csi3_output>;
+				};
 			};
 
 			vicap_mipi4: port@5 {
@@ -1544,6 +1556,10 @@
 
 			vicap_mipi5: port@6 {
 				reg = <0x6>;
+
+				vicap_mipi5_input: endpoint {
+					remote-endpoint = <&csi5_output>;
+				};
 			};
 
 			vicap_toisp0: port@10 {
@@ -1566,6 +1582,66 @@
 		power-domains = <&power RK3588_PD_VI>;
 		rockchip,disable-mmu-reset;
 		status = "disabled";
+	};
+
+	csi0: csi@fdd10000 {
+		compatible = "rockchip,rk3588-mipi-csi2", "rockchip,rk3568-mipi-csi2";
+		reg = <0x0 0xfdd10000 0x0 0x10000>;
+		interrupts = <GIC_SPI 143 IRQ_TYPE_LEVEL_HIGH 0>,
+			     <GIC_SPI 144 IRQ_TYPE_LEVEL_HIGH 0>;
+		interrupt-names = "err1", "err2";
+		clocks = <&cru PCLK_CSI_HOST_0>;
+		phys = <&mipidcphy0 PHY_TYPE_DPHY>;
+		power-domains = <&power RK3588_PD_VI>;
+		resets = <&cru SRST_P_CSI_HOST_0>;
+		status = "disabled";
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csi0_in: port@0 {
+				reg = <0>;
+			};
+
+			csi0_out: port@1 {
+				reg = <1>;
+
+				csi0_output: endpoint {
+					remote-endpoint = <&vicap_mipi0_input>;
+				};
+			};
+		};
+	};
+
+	csi1: csi@fdd20000 {
+		compatible = "rockchip,rk3588-mipi-csi2", "rockchip,rk3568-mipi-csi2";
+		reg = <0x0 0xfdd20000 0x0 0x10000>;
+		interrupts = <GIC_SPI 145 IRQ_TYPE_LEVEL_HIGH 0>,
+			     <GIC_SPI 146 IRQ_TYPE_LEVEL_HIGH 0>;
+		interrupt-names = "err1", "err2";
+		clocks = <&cru PCLK_CSI_HOST_1>;
+		phys = <&mipidcphy0 PHY_TYPE_DPHY>;
+		power-domains = <&power RK3588_PD_VI>;
+		resets = <&cru SRST_P_CSI_HOST_1>;
+		status = "disabled";
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csi1_in: port@0 {
+				reg = <0>;
+			};
+
+			csi1_out: port@1 {
+				reg = <1>;
+
+				csi1_output: endpoint {
+					remote-endpoint = <&vicap_mipi1_input>;
+				};
+			};
+		};
 	};
 
 	csi2: csi@fdd30000 {
@@ -1598,6 +1674,36 @@
 		};
 	};
 
+	csi3: csi@fdd40000 {
+		compatible = "rockchip,rk3588-mipi-csi2", "rockchip,rk3568-mipi-csi2";
+		reg = <0x0 0xfdd40000 0x0 0x10000>;
+		interrupts = <GIC_SPI 149 IRQ_TYPE_LEVEL_HIGH 0>,
+			     <GIC_SPI 150 IRQ_TYPE_LEVEL_HIGH 0>;
+		interrupt-names = "err1", "err2";
+		clocks = <&cru PCLK_CSI_HOST_3>;
+		phys = <&mipidcphy1 PHY_TYPE_DPHY>;
+		power-domains = <&power RK3588_PD_VI>;
+		resets = <&cru SRST_P_CSI_HOST_3>;
+		status = "disabled";
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csi3_in: port@0 {
+				reg = <0>;
+			};
+
+			csi3_out: port@1 {
+				reg = <1>;
+
+				csi3_output: endpoint {
+					remote-endpoint = <&vicap_mipi3_input>;
+				};
+			};
+		};
+	};
+
 	csi4: csi@fdd50000 {
 		compatible = "rockchip,rk3588-mipi-csi2", "rockchip,rk3568-mipi-csi2";
 		reg = <0x0 0xfdd50000 0x0 0x10000>;
@@ -1623,6 +1729,36 @@
 
 				csi4_output: endpoint {
 					remote-endpoint = <&vicap_mipi4_input>;
+				};
+			};
+		};
+	};
+
+	csi5: csi@fdd60000 {
+		compatible = "rockchip,rk3588-mipi-csi2", "rockchip,rk3568-mipi-csi2";
+		reg = <0x0 0xfdd60000 0x0 0x10000>;
+		interrupts = <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH 0>,
+			     <GIC_SPI 154 IRQ_TYPE_LEVEL_HIGH 0>;
+		interrupt-names = "err1", "err2";
+		clocks = <&cru PCLK_CSI_HOST_5>;
+		phys = <&mipidcphy1 PHY_TYPE_DPHY>;
+		power-domains = <&power RK3588_PD_VI>;
+		resets = <&cru SRST_P_CSI_HOST_5>;
+		status = "disabled";
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			csi5_in: port@0 {
+				reg = <0>;
+			};
+
+			csi5_out: port@1 {
+				reg = <1>;
+
+				csi5_output: endpoint {
+					remote-endpoint = <&vicap_mipi5_input>;
 				};
 			};
 		};
