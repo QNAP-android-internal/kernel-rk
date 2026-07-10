@@ -1,0 +1,103 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Device tree overlay for an OV5640 camera module attached to the
+ * MIPI CSI connector of the IEI WAFER-RK3588.
+ *
+ * Copyright (c) 2026 IEI Integration Corp.
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/clock/rockchip,rk3588-cru.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/rockchip.h>
+
+&{/} {
+	vcc1v5_camera: regulator-vcc1v5-camera {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc1v5_camera";
+		regulator-min-microvolt = <1500000>;
+		regulator-max-microvolt = <1500000>;
+		vin-supply = <&vcc_3v3_s0>;
+	};
+
+	vcc1v8_camera: regulator-vcc1v8-camera {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc1v8_camera";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		vin-supply = <&vcc_3v3_s0>;
+	};
+
+	vcc2v8_camera: regulator-vcc2v8-camera {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc2v8_camera";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+		vin-supply = <&vcc_3v3_s0>;
+	};
+};
+
+&csi0 {
+	status = "okay";
+};
+
+&csi0_in {
+	csi0_input: endpoint {
+		clock-lanes = <0>;
+		data-lanes = <1 2>;
+		remote-endpoint = <&ov5640_out>;
+	};
+};
+
+&i2c3 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c3m2_xfer>;
+	status = "okay";
+
+	camera@3c {
+		compatible = "ovti,ov5640";
+		reg = <0x3c>;
+		clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
+		clock-names = "xclk";
+		assigned-clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
+		assigned-clock-rates = <24000000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&mipim0_camera1_clk &camera_pwdn>;
+		AVDD-supply = <&vcc2v8_camera>;
+		DOVDD-supply = <&vcc1v8_camera>;
+		DVDD-supply = <&vcc1v5_camera>;
+		powerdown-gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_LOW>;
+
+		port {
+			ov5640_out: endpoint {
+				clock-lanes = <0>;
+				data-lanes = <1 2>;
+				remote-endpoint = <&csi0_input>;
+			};
+		};
+	};
+};
+
+&mipidcphy0 {
+	status = "okay";
+};
+
+&pinctrl {
+	camera {
+		camera_pwdn: camera-pwdn {
+			rockchip,pins = <1 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+};
+
+&vicap {
+	status = "okay";
+};
+
+&vicap_mmu {
+	status = "okay";
+};

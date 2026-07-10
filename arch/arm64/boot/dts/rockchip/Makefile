@@ -215,6 +215,7 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-toybrick-x0.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-turing-rk1.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-wafer.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-wafer-imx219.dtbo
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-wafer-ov5640.dtbo
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-wafer-rknpu.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-coolpi-4b.dtb
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-evb1-v10.dtb
@@ -338,3 +339,7 @@ rk3588-tiger-haikou-haikou-video-demo-dtbs := rk3588-tiger-haikou.dtb \
 dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-wafer-imx219.dtb
 rk3588-wafer-imx219-dtbs := rk3588-wafer.dtb \
 	rk3588-wafer-imx219.dtbo
+
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-wafer-ov5640.dtb
+rk3588-wafer-ov5640-dtbs := rk3588-wafer.dtb \
+	rk3588-wafer-ov5640.dtbo
