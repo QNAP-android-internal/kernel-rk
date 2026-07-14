@@ -1023,19 +1023,6 @@
 	pinctrl-0 = <&i2c8m2_xfer>;
 	status = "okay";
 
-	gt911: gt911@5d {
-		compatible = "goodix,gt911";
-		reg = <0x5d>;
-		interrupt-gpios = <&gpio3 RK_PC0 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
-		touchscreen-size-x = <720>;
-		touchscreen-size-y = <1280>;
-		touchscreen-x-mm = <90>;
-		touchscreen-y-mm = <151>;
-		touchscreen-swapped-x-y;
-		touchscreen-inverted-x;
-	};
-
 	rpi_display_v2_mcu: rpi_display_v2_mcu@45 {
 		compatible = "raspberrypi,v2-touchscreen-panel-regulator";
 		reg = <0x45>;
@@ -1047,6 +1034,19 @@
 			gpios = <1 GPIO_ACTIVE_HIGH>;
 			output-high;
 		};
+	};
+
+	gt911: gt911@5d {
+		compatible = "goodix,gt911";
+		reg = <0x5d>;
+		interrupt-gpios = <&gpio3 RK_PC0 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
+		touchscreen-size-x = <720>;
+		touchscreen-size-y = <1280>;
+		touchscreen-x-mm = <90>;
+		touchscreen-y-mm = <151>;
+		touchscreen-swapped-x-y;
+		touchscreen-inverted-x;
 	};
 };
 
