@@ -802,12 +802,6 @@ static const struct ov5640_framesize ov5640_mipi_framesizes[] = {
 		.fps		= 30,
 		.regs		= ov5640_mipi_720P_30fps,
 	},
-	{ /* VGA */
-		.width		= 640,
-		.height		= 480,
-		.fps		= 30,
-		.regs		= ov5640_mipi_640x480_30fps,
-	},
 	{ /* FULL */
 		.width		= 2592,
 		.height		= 1944,
