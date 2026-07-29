@@ -15,7 +15,6 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/phy/phy.h>
-#include <linux/phy/phy-mipi-dphy.h>
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/regmap.h>
@@ -294,7 +293,6 @@ struct samsung_mipi_dcphy {
 	unsigned int lanes;
 	struct phy *phy;
 	u8 type;
-	u8 dir;
 
 	const struct samsung_mipi_dcphy_plat_data *pdata;
 	struct {
@@ -1376,34 +1374,28 @@ static int samsung_mipi_dcphy_power_on(struct phy *phy)
 	udelay(1);
 	reset_control_deassert(samsung->apb_rst);
 
-	if (samsung->type != PHY_TYPE_DPHY) {
+	switch (samsung->type) {
+	case PHY_TYPE_DPHY:
+		return samsung_mipi_dphy_tx_power_on(samsung);
+	default:
 		/* CPHY part to be implemented later */
 		return -EOPNOTSUPP;
 	}
 
-	if (samsung->dir == PHY_MIPI_DPHY_SUBMODE_RX) {
-		/* RX path not yet implemented */
-		return -EOPNOTSUPP;
-	}
-
-	return samsung_mipi_dphy_tx_power_on(samsung);
+	return 0;
 }
 
 static int samsung_mipi_dcphy_power_off(struct phy *phy)
 {
 	struct samsung_mipi_dcphy *samsung = phy_get_drvdata(phy);
 
-	if (samsung->type != PHY_TYPE_DPHY) {
+	switch (samsung->type) {
+	case PHY_TYPE_DPHY:
+		return samsung_mipi_dphy_tx_power_off(samsung);
+	default:
 		/* CPHY part to be implemented later */
 		return -EOPNOTSUPP;
 	}
-
-	if (samsung->dir == PHY_MIPI_DPHY_SUBMODE_RX) {
-		/* RX path not yet implemented, nothing to power off */
-		return 0;
-	}
-
-	return samsung_mipi_dphy_tx_power_off(samsung);
 }
 
 static int
@@ -1501,30 +1493,8 @@ static int samsung_mipi_dcphy_configure(struct phy *phy,
 
 	samsung->lanes = opts->mipi_dphy.lanes > 4 ? 4 : opts->mipi_dphy.lanes;
 
-	if (samsung->dir == PHY_MIPI_DPHY_SUBMODE_RX) {
-		/* RX path not yet implemented */
-		return -EOPNOTSUPP;
-	}
-
 	samsung_mipi_dcphy_pll_calc_rate(samsung, target_rate);
 	opts->mipi_dphy.hs_clk_rate = samsung->pll.rate;
-
-	return 0;
-}
-
-static int samsung_mipi_dcphy_set_mode(struct phy *phy, enum phy_mode mode,
-				       int submode)
-{
-	struct samsung_mipi_dcphy *samsung = phy_get_drvdata(phy);
-
-	if (mode != PHY_MODE_MIPI_DPHY)
-		return -EOPNOTSUPP;
-
-	if (submode != PHY_MIPI_DPHY_SUBMODE_TX &&
-	    submode != PHY_MIPI_DPHY_SUBMODE_RX)
-		return -EINVAL;
-
-	samsung->dir = submode;
 
 	return 0;
 }
@@ -1549,7 +1519,6 @@ static const struct phy_ops samsung_mipi_dcphy_ops = {
 	.configure = samsung_mipi_dcphy_configure,
 	.power_on  = samsung_mipi_dcphy_power_on,
 	.power_off = samsung_mipi_dcphy_power_off,
-	.set_mode  = samsung_mipi_dcphy_set_mode,
 	.init = samsung_mipi_dcphy_init,
 	.exit = samsung_mipi_dcphy_exit,
 	.owner	   = THIS_MODULE,
