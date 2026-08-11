@@ -1591,7 +1591,7 @@
 			     <GIC_SPI 144 IRQ_TYPE_LEVEL_HIGH 0>;
 		interrupt-names = "err1", "err2";
 		clocks = <&cru PCLK_CSI_HOST_0>;
-		phys = <&mipidcphy0 PHY_TYPE_DPHY>;
+		phys = <&mipidcphy0 PHY_TYPE_CSI>;
 		power-domains = <&power RK3588_PD_VI>;
 		resets = <&cru SRST_P_CSI_HOST_0>;
 		status = "disabled";
@@ -1621,7 +1621,7 @@
 			     <GIC_SPI 146 IRQ_TYPE_LEVEL_HIGH 0>;
 		interrupt-names = "err1", "err2";
 		clocks = <&cru PCLK_CSI_HOST_1>;
-		phys = <&mipidcphy0 PHY_TYPE_DPHY>;
+		phys = <&mipidcphy0 PHY_TYPE_CSI>;
 		power-domains = <&power RK3588_PD_VI>;
 		resets = <&cru SRST_P_CSI_HOST_1>;
 		status = "disabled";
@@ -1681,7 +1681,7 @@
 			     <GIC_SPI 150 IRQ_TYPE_LEVEL_HIGH 0>;
 		interrupt-names = "err1", "err2";
 		clocks = <&cru PCLK_CSI_HOST_3>;
-		phys = <&mipidcphy1 PHY_TYPE_DPHY>;
+		phys = <&mipidcphy1 PHY_TYPE_CSI>;
 		power-domains = <&power RK3588_PD_VI>;
 		resets = <&cru SRST_P_CSI_HOST_3>;
 		status = "disabled";
@@ -1741,7 +1741,7 @@
 			     <GIC_SPI 154 IRQ_TYPE_LEVEL_HIGH 0>;
 		interrupt-names = "err1", "err2";
 		clocks = <&cru PCLK_CSI_HOST_5>;
-		phys = <&mipidcphy1 PHY_TYPE_DPHY>;
+		phys = <&mipidcphy1 PHY_TYPE_CSI>;
 		power-domains = <&power RK3588_PD_VI>;
 		resets = <&cru SRST_P_CSI_HOST_5>;
 		status = "disabled";
