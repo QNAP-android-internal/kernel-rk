@@ -286,6 +286,9 @@ static inline struct tc_data *bridge_to_tc(struct drm_bridge *b)
 	return container_of(b, struct tc_data, bridge);
 }
 
+static void tc_bridge_configure(struct drm_bridge *bridge,
+				struct drm_atomic_commit *state);
+
 static void tc_bridge_atomic_pre_enable(struct drm_bridge *bridge,
 					struct drm_atomic_commit *state)
 {
@@ -305,6 +308,9 @@ static void tc_bridge_atomic_pre_enable(struct drm_bridge *bridge,
 
 	gpiod_set_value(tc->stby_gpio, 0);
 	usleep_range(10000, 11000);
+
+	/* The host link is up and still in command mode here. */
+	tc_bridge_configure(bridge, state);
 }
 
 static void tc_bridge_atomic_post_disable(struct drm_bridge *bridge,
@@ -364,8 +370,8 @@ static void d2l_write(struct i2c_client *i2c, u16 addr, u32 val)
 			ret, addr);
 }
 
-static void tc_bridge_atomic_enable(struct drm_bridge *bridge,
-				    struct drm_atomic_commit *state)
+static void tc_bridge_configure(struct drm_bridge *bridge,
+				struct drm_atomic_commit *state)
 {
 	struct tc_data *tc = bridge_to_tc(bridge);
 	u32 hback_porch, hsync_len, hfront_porch, hactive, htime1, htime2;
@@ -589,7 +595,6 @@ static int tc_bridge_attach(struct drm_bridge *bridge,
 static const struct drm_bridge_funcs tc_bridge_funcs = {
 	.attach = tc_bridge_attach,
 	.atomic_pre_enable = tc_bridge_atomic_pre_enable,
-	.atomic_enable = tc_bridge_atomic_enable,
 	.mode_valid = tc_mode_valid,
 	.atomic_post_disable = tc_bridge_atomic_post_disable,
 	.atomic_reset = drm_atomic_helper_bridge_reset,
