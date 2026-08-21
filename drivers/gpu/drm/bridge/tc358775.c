@@ -305,9 +305,6 @@ static void tc_bridge_atomic_pre_enable(struct drm_bridge *bridge,
 
 	gpiod_set_value(tc->stby_gpio, 0);
 	usleep_range(10000, 11000);
-
-	gpiod_set_value(tc->reset_gpio, 0);
-	usleep_range(10, 20);
 }
 
 static void tc_bridge_atomic_post_disable(struct drm_bridge *bridge,
@@ -316,9 +313,6 @@ static void tc_bridge_atomic_post_disable(struct drm_bridge *bridge,
 	struct tc_data *tc = bridge_to_tc(bridge);
 	struct device *dev = &tc->dsi->dev;
 	int ret;
-
-	gpiod_set_value(tc->reset_gpio, 1);
-	usleep_range(10, 20);
 
 	gpiod_set_value(tc->stby_gpio, 1);
 	usleep_range(10000, 11000);
@@ -695,7 +689,11 @@ static int tc_probe(struct i2c_client *client)
 	if (IS_ERR(tc->stby_gpio))
 		return PTR_ERR(tc->stby_gpio);
 
-	tc->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
+	/*
+	 * Deasserted and left alone: the part does not survive being held
+	 * in reset while idle.
+	 */
+	tc->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(tc->reset_gpio)) {
 		ret = PTR_ERR(tc->reset_gpio);
 		dev_err(dev, "cannot get reset-gpios %d\n", ret);
