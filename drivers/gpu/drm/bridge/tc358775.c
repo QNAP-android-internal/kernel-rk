@@ -16,6 +16,7 @@
 #include <linux/media-bus-format.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
+#include <linux/phy/phy-mipi-dphy.h>
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
 
@@ -193,6 +194,15 @@ enum {
 #define LPX_PERIOD		4
 #define TTA_GET			0x40000
 #define TTA_SURE		6
+
+/*
+ * The part counts CLRSIPOCOUNT in HS byte clocks but starts sampling
+ * seven of them into the settle time on its own, so only the remainder
+ * is programmed.  Measured on a TC358775: 3 fails and 4 works at
+ * 933 Mbps/lane, 5 fails and 6 works at 1120 Mbps, which is what this
+ * leaves.
+ */
+#define CLRSIPO_INTERNAL	7
 #define SINGLE_LINK		1
 #define DUAL_LINK		2
 
@@ -378,6 +388,10 @@ static void tc_bridge_configure(struct drm_bridge *bridge,
 	u32 vback_porch, vsync_len, vfront_porch, vactive, vtime1, vtime2;
 	u32 val = 0;
 	u16 dsiclk, clkdiv, byteclk, t1, t2, t3, vsdelay;
+	struct phy_configure_opts_mipi_dphy cfg;
+	unsigned long hs_byte_clk;
+	unsigned long pixelclock;
+	unsigned int clrsipo;
 	struct drm_connector *connector =
 		drm_atomic_get_new_connector_for_encoder(state, bridge->encoder);
 	struct drm_connector_state *conn_state =
@@ -411,12 +425,26 @@ static void tc_bridge_configure(struct drm_bridge *bridge,
 		  SYS_RST_LCD | SYS_RST_I2CM);
 	usleep_range(30000, 40000);
 
+	/*
+	 * The DSI link runs at the rate the host negotiated for this mode,
+	 * not at the maximum the part accepts, so derive the settle time
+	 * from the mode.
+	 */
+	pixelclock = mode->crtc_clock * 1000;
+	if (tc->dsi->mode_flags & MIPI_DSI_MODE_VIDEO_BURST)
+		pixelclock = pixelclock * 10 / 9;
+	phy_mipi_dphy_get_default_config(pixelclock, tc->bpc * 3,
+					 tc->num_dsi_lanes, &cfg);
+	hs_byte_clk = cfg.hs_clk_rate / 8;
+	clrsipo = DIV_ROUND_UP(cfg.hs_settle * hs_byte_clk, PSEC_PER_SEC);
+	clrsipo = clrsipo > CLRSIPO_INTERNAL ? clrsipo - CLRSIPO_INTERNAL : 0;
+
 	d2l_write(tc->i2c, PPI_TX_RX_TA, TTA_GET | TTA_SURE);
 	d2l_write(tc->i2c, PPI_LPTXTIMECNT, LPX_PERIOD);
-	d2l_write(tc->i2c, PPI_D0S_CLRSIPOCOUNT, 3);
-	d2l_write(tc->i2c, PPI_D1S_CLRSIPOCOUNT, 3);
-	d2l_write(tc->i2c, PPI_D2S_CLRSIPOCOUNT, 3);
-	d2l_write(tc->i2c, PPI_D3S_CLRSIPOCOUNT, 3);
+	d2l_write(tc->i2c, PPI_D0S_CLRSIPOCOUNT, clrsipo);
+	d2l_write(tc->i2c, PPI_D1S_CLRSIPOCOUNT, clrsipo);
+	d2l_write(tc->i2c, PPI_D2S_CLRSIPOCOUNT, clrsipo);
+	d2l_write(tc->i2c, PPI_D3S_CLRSIPOCOUNT, clrsipo);
 
 	val = ((L0EN << tc->num_dsi_lanes) - L0EN) | DSI_CLEN_BIT;
 	d2l_write(tc->i2c, PPI_LANEENABLE, val);
