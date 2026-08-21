@@ -159,7 +159,8 @@ dw_mipi_dsi2_get_lane_mbps(void *priv_data, const struct drm_display_mode *mode,
 	*lane_mbps = dsi2->lane_mbps;
 
 	if (dsi2->phy) {
-		target_phyclk = DIV_ROUND_CLOSEST_ULL(lane_rate_kbps * lanes * 1000, bpp);
+		target_phyclk = DIV_ROUND_CLOSEST_ULL((u64)lane_rate_kbps * lanes * 1000,
+						      bpp);
 		phy_mipi_dphy_get_default_config(target_phyclk, bpp, lanes,
 						 &dsi2->phy_opts.mipi_dphy);
 	}
