@@ -1,0 +1,191 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Device tree overlay for a COG-TA10MBZH-01 panel (10.1", 1920x1200)
+ * attached to the LVDS connector of the IEI WAFER-RK3588, driven by DSI1
+ * through the Samsung DCPHY1 transmitter and a TC358775 bridge.
+ *
+ * Copyright (c) 2026 IEI Integration Corp.
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/rockchip.h>
+#include <dt-bindings/clock/rockchip,rk3588-cru.h>
+#include <dt-bindings/soc/rockchip,vop2.h>
+
+&{/} {
+	vcc_lvds: regulator-vcc-lvds {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc_lvds";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&gpio2 RK_PC1 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		/*
+		 * LVDS_EN gates the whole LVDS power domain - the 3.3V load
+		 * switch that feeds the panel and, through an LDO, the
+		 * bridge's 1.8V IO - and releases the bridge's STBY at the
+		 * same time.  Letting the bridge driver switch it leaves the
+		 * panel dark, so hold it from boot.
+		 */
+		regulator-boot-on;
+		regulator-always-on;
+		startup-delay-us = <20000>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lvds_lcd_en>;
+	};
+
+	backlight_lvds: backlight-lvds {
+		compatible = "pwm-backlight";
+		pwms = <&pwm2 0 25000 0>;
+		enable-gpios = <&gpio4 RK_PD1 GPIO_ACTIVE_HIGH>;
+		brightness-levels = <0 255>;
+		num-interpolated-steps = <255>;
+		default-brightness-level = <200>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lvds_bkl_en>;
+	};
+
+	panel_lvds: panel-lvds {
+		compatible = "panel-lvds";
+		width-mm = <217>;
+		height-mm = <136>;
+		data-mapping = "vesa-24";
+		backlight = <&backlight_lvds>;
+
+		panel-timing {
+			clock-frequency = <168000000>;
+			hactive = <1920>;
+			vactive = <1200>;
+			hfront-porch = <72>;
+			hsync-len = <50>;
+			hback-porch = <180>;
+			vfront-porch = <24>;
+			vsync-len = <12>;
+			vback-porch = <24>;
+		};
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				dual-lvds-odd-pixels;
+				panel_in_odd: endpoint {
+					remote-endpoint = <&tc_lvds_out0>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+				dual-lvds-even-pixels;
+				panel_in_even: endpoint {
+					remote-endpoint = <&tc_lvds_out1>;
+				};
+			};
+		};
+	};
+};
+
+/*
+ * dclk_vop2_src carries CLK_SET_RATE_PARENT and its boot-time parent is
+ * GPLL: a vp2 modeset would retune GPLL system-wide, and cclk_emmc is a
+ * GPLL child, so the eMMC gets corrupted mid-transfer.  Parent it to the
+ * display-dedicated V0PLL instead.
+ */
+&vop {
+	assigned-clocks = <&cru DCLK_VOP2_SRC>;
+	assigned-clock-parents = <&cru PLL_V0PLL>;
+};
+
+&dsi1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	bridge@0 {
+		compatible = "toshiba,tc358775";
+		reg = <0>;
+		vdd-supply = <&vcc_lvds>;
+		vddio-supply = <&vcc_lvds>;
+		reset-gpios = <&gpio4 RK_PC2 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lvds_lcd_rst>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				tc_dsi_in: endpoint {
+					data-lanes = <1 2 3 4>;
+					remote-endpoint = <&dsi1_out_bridge>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+				tc_lvds_out0: endpoint {
+					remote-endpoint = <&panel_in_odd>;
+				};
+			};
+
+			port@2 {
+				reg = <2>;
+				tc_lvds_out1: endpoint {
+					remote-endpoint = <&panel_in_even>;
+				};
+			};
+		};
+	};
+};
+
+&dsi1_out {
+	dsi1_out_bridge: endpoint {
+		remote-endpoint = <&tc_dsi_in>;
+	};
+};
+
+&mipidcphy1 {
+	status = "okay";
+};
+
+&dsi1_in {
+	dsi1_in_vp2: endpoint {
+		remote-endpoint = <&vp2_out_dsi1>;
+	};
+};
+
+&vp2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	vp2_out_dsi1: endpoint@ROCKCHIP_VOP2_EP_MIPI1 {
+		reg = <ROCKCHIP_VOP2_EP_MIPI1>;
+		remote-endpoint = <&dsi1_in_vp2>;
+	};
+};
+
+&pwm2 {
+	status = "okay";
+};
+
+&pinctrl {
+	lvds {
+		lvds_lcd_rst: lvds-lcd-rst {
+			rockchip,pins = <4 RK_PC2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		lvds_lcd_en: lvds-lcd-en {
+			rockchip,pins = <2 RK_PC1 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+
+		lvds_bkl_en: lvds-bkl-en {
+			rockchip,pins = <4 RK_PD1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};
