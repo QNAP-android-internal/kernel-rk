@@ -366,17 +366,27 @@ fail:
 		ret, addr);
 }
 
-static void d2l_write(struct i2c_client *i2c, u16 addr, u32 val)
+static void d2l_write(struct tc_data *tc, u16 addr, u32 val)
 {
 	u8 data[6];
 	int ret;
 
-	put_unaligned_be16(addr, data);
-	put_unaligned_le32(val, data + 2);
+	/*
+	 * The same chip takes the register address big-endian over I2C and
+	 * little-endian over DSI; the value is little-endian on both.
+	 */
+	if (tc->i2c) {
+		put_unaligned_be16(addr, data);
+		put_unaligned_le32(val, data + 2);
+		ret = i2c_master_send(tc->i2c, data, ARRAY_SIZE(data));
+	} else {
+		put_unaligned_le16(addr, data);
+		put_unaligned_le32(val, data + 2);
+		ret = mipi_dsi_generic_write(tc->dsi, data, ARRAY_SIZE(data));
+	}
 
-	ret = i2c_master_send(i2c, data, ARRAY_SIZE(data));
 	if (ret < 0)
-		dev_err(&i2c->dev, "Error %d writing to subaddress 0x%x\n",
+		dev_err(tc->dev, "Error %d writing to subaddress 0x%x\n",
 			ret, addr);
 }
 
@@ -416,14 +426,20 @@ static void tc_bridge_configure(struct drm_bridge *bridge,
 	htime2 = (hfront_porch << 16) + hactive;
 	vtime2 = (vfront_porch << 16) + vactive;
 
-	d2l_read(tc->i2c, IDREG, &val);
+	/*
+	 * I2C-only: the identification read needs a bus turnaround, and the
+	 * reset would clear SYS_RST_DSIRX, the receiver carrying the command.
+	 */
+	if (tc->i2c) {
+		d2l_read(tc->i2c, IDREG, &val);
 
-	dev_info(tc->dev, "DSI2LVDS Chip ID.%02x Revision ID. %02x **\n",
-		 (val >> 8) & 0xFF, val & 0xFF);
+		dev_info(tc->dev, "DSI2LVDS Chip ID.%02x Revision ID. %02x **\n",
+			 (val >> 8) & 0xFF, val & 0xFF);
 
-	d2l_write(tc->i2c, SYSRST, SYS_RST_REG | SYS_RST_DSIRX | SYS_RST_BM |
-		  SYS_RST_LCD | SYS_RST_I2CM);
-	usleep_range(30000, 40000);
+		d2l_write(tc, SYSRST, SYS_RST_REG | SYS_RST_DSIRX | SYS_RST_BM |
+			  SYS_RST_LCD | SYS_RST_I2CM);
+		usleep_range(30000, 40000);
+	}
 
 	/*
 	 * The DSI link runs at the rate the host negotiated for this mode,
@@ -439,19 +455,19 @@ static void tc_bridge_configure(struct drm_bridge *bridge,
 	clrsipo = DIV_ROUND_UP(cfg.hs_settle * hs_byte_clk, PSEC_PER_SEC);
 	clrsipo = clrsipo > CLRSIPO_INTERNAL ? clrsipo - CLRSIPO_INTERNAL : 0;
 
-	d2l_write(tc->i2c, PPI_TX_RX_TA, TTA_GET | TTA_SURE);
-	d2l_write(tc->i2c, PPI_LPTXTIMECNT, LPX_PERIOD);
-	d2l_write(tc->i2c, PPI_D0S_CLRSIPOCOUNT, clrsipo);
-	d2l_write(tc->i2c, PPI_D1S_CLRSIPOCOUNT, clrsipo);
-	d2l_write(tc->i2c, PPI_D2S_CLRSIPOCOUNT, clrsipo);
-	d2l_write(tc->i2c, PPI_D3S_CLRSIPOCOUNT, clrsipo);
+	d2l_write(tc, PPI_TX_RX_TA, TTA_GET | TTA_SURE);
+	d2l_write(tc, PPI_LPTXTIMECNT, LPX_PERIOD);
+	d2l_write(tc, PPI_D0S_CLRSIPOCOUNT, clrsipo);
+	d2l_write(tc, PPI_D1S_CLRSIPOCOUNT, clrsipo);
+	d2l_write(tc, PPI_D2S_CLRSIPOCOUNT, clrsipo);
+	d2l_write(tc, PPI_D3S_CLRSIPOCOUNT, clrsipo);
 
 	val = ((L0EN << tc->num_dsi_lanes) - L0EN) | DSI_CLEN_BIT;
-	d2l_write(tc->i2c, PPI_LANEENABLE, val);
-	d2l_write(tc->i2c, DSI_LANEENABLE, val);
+	d2l_write(tc, PPI_LANEENABLE, val);
+	d2l_write(tc, DSI_LANEENABLE, val);
 
-	d2l_write(tc->i2c, PPI_STARTPPI, PPI_START_FUNCTION);
-	d2l_write(tc->i2c, DSI_STARTDSI, DSI_RX_START);
+	d2l_write(tc, PPI_STARTPPI, PPI_START_FUNCTION);
+	d2l_write(tc, DSI_STARTDSI, DSI_RX_START);
 
 	/* Video event mode vs pulse mode bit, does not exist for tc358775 */
 	if (tc->type == TC358765)
@@ -475,16 +491,16 @@ static void tc_bridge_configure(struct drm_bridge *bridge,
 	vsdelay = (clkdiv * (t1 + t3) / byteclk) - hback_porch - hsync_len - hactive;
 
 	val |= TC358775_VPCTRL_VSDELAY(vsdelay);
-	d2l_write(tc->i2c, VPCTRL, val);
+	d2l_write(tc, VPCTRL, val);
 
-	d2l_write(tc->i2c, HTIM1, htime1);
-	d2l_write(tc->i2c, VTIM1, vtime1);
-	d2l_write(tc->i2c, HTIM2, htime2);
-	d2l_write(tc->i2c, VTIM2, vtime2);
+	d2l_write(tc, HTIM1, htime1);
+	d2l_write(tc, VTIM1, vtime1);
+	d2l_write(tc, HTIM2, htime2);
+	d2l_write(tc, VTIM2, vtime2);
 
-	d2l_write(tc->i2c, VFUEN, VFUEN_EN);
-	d2l_write(tc->i2c, SYSRST, SYS_RST_LCD);
-	d2l_write(tc->i2c, LVPHY0, LV_PHY0_PRBS_ON(4) | LV_PHY0_ND(6));
+	d2l_write(tc, VFUEN, VFUEN_EN);
+	d2l_write(tc, SYSRST, SYS_RST_LCD);
+	d2l_write(tc, LVPHY0, LV_PHY0_PRBS_ON(4) | LV_PHY0_ND(6));
 
 	dev_dbg(tc->dev, "bus_formats %04x bpc %d\n",
 		connector->display_info.bus_formats[0],
@@ -492,25 +508,25 @@ static void tc_bridge_configure(struct drm_bridge *bridge,
 	if (connector->display_info.bus_formats[0] ==
 		MEDIA_BUS_FMT_RGB888_1X7X4_SPWG) {
 		/* VESA-24 */
-		d2l_write(tc->i2c, LV_MX0003, LV_MX(LVI_R0, LVI_R1, LVI_R2, LVI_R3));
-		d2l_write(tc->i2c, LV_MX0407, LV_MX(LVI_R4, LVI_R7, LVI_R5, LVI_G0));
-		d2l_write(tc->i2c, LV_MX0811, LV_MX(LVI_G1, LVI_G2, LVI_G6, LVI_G7));
-		d2l_write(tc->i2c, LV_MX1215, LV_MX(LVI_G3, LVI_G4, LVI_G5, LVI_B0));
-		d2l_write(tc->i2c, LV_MX1619, LV_MX(LVI_B6, LVI_B7, LVI_B1, LVI_B2));
-		d2l_write(tc->i2c, LV_MX2023, LV_MX(LVI_B3, LVI_B4, LVI_B5, LVI_L0));
-		d2l_write(tc->i2c, LV_MX2427, LV_MX(LVI_HS, LVI_VS, LVI_DE, LVI_R6));
+		d2l_write(tc, LV_MX0003, LV_MX(LVI_R0, LVI_R1, LVI_R2, LVI_R3));
+		d2l_write(tc, LV_MX0407, LV_MX(LVI_R4, LVI_R7, LVI_R5, LVI_G0));
+		d2l_write(tc, LV_MX0811, LV_MX(LVI_G1, LVI_G2, LVI_G6, LVI_G7));
+		d2l_write(tc, LV_MX1215, LV_MX(LVI_G3, LVI_G4, LVI_G5, LVI_B0));
+		d2l_write(tc, LV_MX1619, LV_MX(LVI_B6, LVI_B7, LVI_B1, LVI_B2));
+		d2l_write(tc, LV_MX2023, LV_MX(LVI_B3, LVI_B4, LVI_B5, LVI_L0));
+		d2l_write(tc, LV_MX2427, LV_MX(LVI_HS, LVI_VS, LVI_DE, LVI_R6));
 	} else {
 		/* JEIDA-18 and JEIDA-24 */
-		d2l_write(tc->i2c, LV_MX0003, LV_MX(LVI_R2, LVI_R3, LVI_R4, LVI_R5));
-		d2l_write(tc->i2c, LV_MX0407, LV_MX(LVI_R6, LVI_R1, LVI_R7, LVI_G2));
-		d2l_write(tc->i2c, LV_MX0811, LV_MX(LVI_G3, LVI_G4, LVI_G0, LVI_G1));
-		d2l_write(tc->i2c, LV_MX1215, LV_MX(LVI_G5, LVI_G6, LVI_G7, LVI_B2));
-		d2l_write(tc->i2c, LV_MX1619, LV_MX(LVI_B0, LVI_B1, LVI_B3, LVI_B4));
-		d2l_write(tc->i2c, LV_MX2023, LV_MX(LVI_B5, LVI_B6, LVI_B7, LVI_L0));
-		d2l_write(tc->i2c, LV_MX2427, LV_MX(LVI_HS, LVI_VS, LVI_DE, LVI_R0));
+		d2l_write(tc, LV_MX0003, LV_MX(LVI_R2, LVI_R3, LVI_R4, LVI_R5));
+		d2l_write(tc, LV_MX0407, LV_MX(LVI_R6, LVI_R1, LVI_R7, LVI_G2));
+		d2l_write(tc, LV_MX0811, LV_MX(LVI_G3, LVI_G4, LVI_G0, LVI_G1));
+		d2l_write(tc, LV_MX1215, LV_MX(LVI_G5, LVI_G6, LVI_G7, LVI_B2));
+		d2l_write(tc, LV_MX1619, LV_MX(LVI_B0, LVI_B1, LVI_B3, LVI_B4));
+		d2l_write(tc, LV_MX2023, LV_MX(LVI_B5, LVI_B6, LVI_B7, LVI_L0));
+		d2l_write(tc, LV_MX2427, LV_MX(LVI_HS, LVI_VS, LVI_DE, LVI_R0));
 	}
 
-	d2l_write(tc->i2c, VFUEN, VFUEN_EN);
+	d2l_write(tc, VFUEN, VFUEN_EN);
 
 	val = LVCFG_LVEN_BIT;
 	if (tc->lvds_link == DUAL_LINK) {
@@ -519,7 +535,7 @@ static void tc_bridge_configure(struct drm_bridge *bridge,
 	} else {
 		val |= TC358775_LVCFG_PCLKDIV(DIVIDE_BY_3);
 	}
-	d2l_write(tc->i2c, LVCFG, val);
+	d2l_write(tc, LVCFG, val);
 }
 
 static enum drm_mode_status
@@ -584,7 +600,7 @@ static int tc358775_parse_dt(struct device_node *np, struct tc_data *tc)
 	tc->num_dsi_lanes = dsi_lanes;
 
 	tc->host_node = of_graph_get_remote_node(np, 0, 0);
-	if (!tc->host_node)
+	if (!tc->host_node && !tc->dsi)
 		return -ENODEV;
 
 	of_node_put(tc->host_node);
@@ -632,26 +648,29 @@ static const struct drm_bridge_funcs tc_bridge_funcs = {
 
 static int tc_attach_host(struct tc_data *tc)
 {
-	struct device *dev = &tc->i2c->dev;
+	struct device *dev = tc->dev;
 	struct mipi_dsi_host *host;
-	struct mipi_dsi_device *dsi;
+	struct mipi_dsi_device *dsi = tc->dsi;
 	int ret;
 	const struct mipi_dsi_device_info info = { .type = "tc358775",
 							.channel = 0,
 							.node = NULL,
 						};
 
-	host = of_find_mipi_dsi_host_by_node(tc->host_node);
-	if (!host)
-		return dev_err_probe(dev, -EPROBE_DEFER, "failed to find dsi host\n");
+	/* A DSI-controlled bridge is already the host's child. */
+	if (!dsi) {
+		host = of_find_mipi_dsi_host_by_node(tc->host_node);
+		if (!host)
+			return dev_err_probe(dev, -EPROBE_DEFER, "failed to find dsi host\n");
 
-	dsi = devm_mipi_dsi_device_register_full(dev, host, &info);
-	if (IS_ERR(dsi)) {
-		dev_err(dev, "failed to create dsi device\n");
-		return PTR_ERR(dsi);
+		dsi = devm_mipi_dsi_device_register_full(dev, host, &info);
+		if (IS_ERR(dsi)) {
+			dev_err(dev, "failed to create dsi device\n");
+			return PTR_ERR(dsi);
+		}
+
+		tc->dsi = dsi;
 	}
-
-	tc->dsi = dsi;
 
 	dsi->lanes = tc->num_dsi_lanes;
 	dsi->format = MIPI_DSI_FMT_RGB888;
@@ -680,19 +699,11 @@ static int tc_attach_host(struct tc_data *tc)
 	return 0;
 }
 
-static int tc_probe(struct i2c_client *client)
+static int tc_probe_common(struct device *dev, struct tc_data *tc)
 {
-	struct device *dev = &client->dev;
-	struct tc_data *tc;
 	int ret;
 
-	tc = devm_drm_bridge_alloc(dev, struct tc_data, bridge,
-				   &tc_bridge_funcs);
-	if (IS_ERR(tc))
-		return PTR_ERR(tc);
-
 	tc->dev = dev;
-	tc->i2c = client;
 	tc->type = (enum tc3587x5_type)(unsigned long)of_device_get_match_data(dev);
 
 	tc->panel_bridge = devm_drm_of_get_bridge(dev, dev->of_node,
@@ -737,8 +748,6 @@ static int tc_probe(struct i2c_client *client)
 	tc->bridge.pre_enable_prev_first = true;
 	drm_bridge_add(&tc->bridge);
 
-	i2c_set_clientdata(client, tc);
-
 	ret = tc_attach_host(tc);
 	if (ret)
 		goto err_bridge_remove;
@@ -748,6 +757,43 @@ static int tc_probe(struct i2c_client *client)
 err_bridge_remove:
 	drm_bridge_remove(&tc->bridge);
 	return ret;
+}
+
+static int tc_probe(struct i2c_client *client)
+{
+	struct tc_data *tc;
+
+	tc = devm_drm_bridge_alloc(&client->dev, struct tc_data, bridge,
+				   &tc_bridge_funcs);
+	if (IS_ERR(tc))
+		return PTR_ERR(tc);
+
+	tc->i2c = client;
+	i2c_set_clientdata(client, tc);
+
+	return tc_probe_common(&client->dev, tc);
+}
+
+static int tc_dsi_probe(struct mipi_dsi_device *dsi)
+{
+	struct tc_data *tc;
+
+	tc = devm_drm_bridge_alloc(&dsi->dev, struct tc_data, bridge,
+				   &tc_bridge_funcs);
+	if (IS_ERR(tc))
+		return PTR_ERR(tc);
+
+	tc->dsi = dsi;
+	mipi_dsi_set_drvdata(dsi, tc);
+
+	return tc_probe_common(&dsi->dev, tc);
+}
+
+static void tc_dsi_remove(struct mipi_dsi_device *dsi)
+{
+	struct tc_data *tc = mipi_dsi_get_drvdata(dsi);
+
+	drm_bridge_remove(&tc->bridge);
 }
 
 static void tc_remove(struct i2c_client *client)
@@ -780,7 +826,38 @@ static struct i2c_driver tc358775_driver = {
 	.probe = tc_probe,
 	.remove	= tc_remove,
 };
-module_i2c_driver(tc358775_driver);
+
+static struct mipi_dsi_driver tc358775_dsi_driver = {
+	.probe = tc_dsi_probe,
+	.remove = tc_dsi_remove,
+	.driver = {
+		.name = "tc358775-dsi",
+		.of_match_table = tc358775_of_ids,
+	},
+};
+
+static int __init tc358775_init(void)
+{
+	int ret;
+
+	ret = i2c_add_driver(&tc358775_driver);
+	if (ret)
+		return ret;
+
+	ret = mipi_dsi_driver_register(&tc358775_dsi_driver);
+	if (ret)
+		i2c_del_driver(&tc358775_driver);
+
+	return ret;
+}
+module_init(tc358775_init);
+
+static void __exit tc358775_exit(void)
+{
+	mipi_dsi_driver_unregister(&tc358775_dsi_driver);
+	i2c_del_driver(&tc358775_driver);
+}
+module_exit(tc358775_exit);
 
 MODULE_AUTHOR("Vinay Simha BN <simhavcs@gmail.com>");
 MODULE_DESCRIPTION("TC358775 DSI/LVDS bridge driver");
