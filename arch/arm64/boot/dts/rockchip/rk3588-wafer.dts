@@ -45,10 +45,10 @@
 			"Headphones Amplifier INR", "ROUT1",
 			"Headphones", "Headphones Amplifier OUTL",
 			"Headphones", "Headphones Amplifier OUTR",
-			"LINPUT1", "Main Microphone",
-			"RINPUT1", "Main Microphone",
-			"LINPUT2", "Headset Microphone",
-			"RINPUT2", "Headset Microphone";
+			"LINPUT1", "Headset Microphone",
+			"RINPUT1", "Headset Microphone",
+			"LINPUT2", "Main Microphone",
+			"RINPUT2", "Main Microphone";
 		simple-audio-card,widgets =
 			"Microphone", "Main Microphone",
 			"Microphone", "Headset Microphone",
