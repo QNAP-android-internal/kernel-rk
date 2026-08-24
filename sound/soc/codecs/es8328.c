@@ -403,6 +403,9 @@ static const struct snd_soc_dapm_route es8328_dapm_routes[] = {
 	{ "Left ADC", NULL, "ADC DIG" },
 	{ "Right ADC", NULL, "ADC DIG" },
 
+	{ "Left ADC", NULL, "ADC Bias Gen" },
+	{ "Right ADC", NULL, "ADC Bias Gen" },
+
 	{ "Mic Bias", NULL, "ADC Bias Gen" },
 
 	{ "Left Mixer", NULL, "Left DAC" },
