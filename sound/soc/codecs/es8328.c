@@ -305,7 +305,7 @@ static const struct snd_soc_dapm_widget es8328_dapm_widgets[] = {
 
 	SND_SOC_DAPM_SUPPLY("Mic Bias", ES8328_ADCPOWER,
 			ES8328_ADCPOWER_MIC_BIAS_OFF, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("Mic Bias Gen", ES8328_ADCPOWER,
+	SND_SOC_DAPM_SUPPLY("ADC Bias Gen", ES8328_ADCPOWER,
 			ES8328_ADCPOWER_ADC_BIAS_GEN_OFF, 1, NULL, 0),
 
 	SND_SOC_DAPM_SUPPLY("DAC STM", ES8328_CHIPPOWER,
@@ -403,7 +403,7 @@ static const struct snd_soc_dapm_route es8328_dapm_routes[] = {
 	{ "Left ADC", NULL, "ADC DIG" },
 	{ "Right ADC", NULL, "ADC DIG" },
 
-	{ "Mic Bias", NULL, "Mic Bias Gen" },
+	{ "Mic Bias", NULL, "ADC Bias Gen" },
 
 	{ "Left Mixer", NULL, "Left DAC" },
 	{ "Left Mixer", "Left Bypass Switch", "Left Line Mux" },
