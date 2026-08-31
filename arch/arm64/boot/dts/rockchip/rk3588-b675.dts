@@ -379,6 +379,8 @@
 	unprepare-delay-ms = <120>;
 	disable-delay-ms = <20>;
 	/delete-property/ reset-delay-ms;
+	/delete-property/ width-mm;
+	/delete-property/ height-mm;
 	pinctrl-names = "default";
 	pinctrl-0 = <&lvds_lcd_rst>;
 	backlight = <&backlight_lvds>;
