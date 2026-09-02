@@ -16,7 +16,7 @@
 	compatible = "iei,wafer-rk3588", "rockchip,rk3588";
 
 	aliases {
-		ethernet0 = &gmac1;
+		ethernet1 = &gmac1;
 		mmc0 = &sdhci;
 	};
 
