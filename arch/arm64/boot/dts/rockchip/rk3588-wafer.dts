@@ -17,6 +17,7 @@
 
 	aliases {
 		ethernet1 = &gmac1;
+		ethernet2 = &rtl8125;
 		mmc0 = &sdhci;
 	};
 
@@ -519,6 +520,19 @@
 	reset-gpios = <&gpio3 RK_PD1 GPIO_ACTIVE_HIGH>;
 	vpcie3v3-supply = <&vcc3v3_pcie30>;
 	status = "okay";
+
+	pcie@0,0 {
+		device_type = "pci";
+		reg = <0x400000 0x0 0x0 0x0 0x0>;
+		bus-range = <0x41 0x41>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges;
+
+		rtl8125: ethernet@0,0 {
+			reg = <0x410000 0x0 0x0 0x0 0x0>;
+		};
+	};
 };
 
 &pcie30phy {
