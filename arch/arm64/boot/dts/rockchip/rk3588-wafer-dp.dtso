@@ -1,0 +1,67 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Device tree overlay for DisplayPort Alternate Mode on the Type-C port
+ * of the IEI WAFER-RK3588, driven by VP2 through DP0 and the USBDP PHY.
+ * VP2 is also what the LVDS overlay drives, so apply only one of the two.
+ *
+ * Copyright (c) 2026 IEI Integration Corp.
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/clock/rockchip,rk3588-cru.h>
+#include <dt-bindings/soc/rockchip,vop2.h>
+
+&usb_con {
+	altmodes {
+		displayport {
+			svid = /bits/ 16 <0xff01>;
+			vdo = <0xffffffff>;
+		};
+	};
+};
+
+&dp0 {
+	status = "okay";
+};
+
+&dp0_in {
+	dp0_in_vp2: endpoint {
+		remote-endpoint = <&vp2_out_dp0>;
+	};
+};
+
+&dp0_out {
+	dp0_out_con: endpoint {
+		remote-endpoint = <&usbdp_phy0_dp_in>;
+	};
+};
+
+&usbdp_phy0 {
+	port {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbdp_phy0_dp_in: endpoint@2 {
+			reg = <2>;
+			remote-endpoint = <&dp0_out_con>;
+		};
+	};
+};
+
+/* Keep vp2 modesets off GPLL, which also clocks the eMMC. */
+&vop {
+	assigned-clocks = <&cru DCLK_VOP2_SRC>;
+	assigned-clock-parents = <&cru PLL_V0PLL>;
+};
+
+&vp2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	vp2_out_dp0: endpoint@a {
+		reg = <ROCKCHIP_VOP2_EP_DP0>;
+		remote-endpoint = <&dp0_in_vp2>;
+	};
+};
