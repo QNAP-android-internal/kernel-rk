@@ -121,9 +121,12 @@ struct rk_iommu {
 	struct iommu_domain *domain; /* domain to which iommu is attached */
 };
 
+#define RK_IOMMU_MAX_PER_DEV 3
+
 struct rk_iommudata {
-	struct device_link *link; /* runtime PM link from IOMMU to master */
-	struct rk_iommu *iommu;
+	struct device_link *link[RK_IOMMU_MAX_PER_DEV];
+	struct rk_iommu *iommu[RK_IOMMU_MAX_PER_DEV];
+	unsigned int num;
 };
 
 static const struct rk_iommu_ops *rk_ops;
@@ -906,7 +909,7 @@ static struct rk_iommu *rk_iommu_from_dev(struct device *dev)
 {
 	struct rk_iommudata *data = dev_iommu_priv_get(dev);
 
-	return data ? data->iommu : NULL;
+	return (data && data->num) ? data->iommu[0] : NULL;
 }
 
 /* Must be called with iommu powered on and attached */
@@ -967,28 +970,17 @@ out_disable_clocks:
 	return ret;
 }
 
-static int rk_iommu_identity_attach(struct iommu_domain *identity_domain,
-				    struct device *dev,
-				    struct iommu_domain *old)
+static void rk_iommu_identity_attach_one(struct rk_iommu *iommu)
 {
-	struct rk_iommu *iommu;
 	struct rk_iommu_domain *rk_domain;
 	unsigned long flags;
 	int ret;
 
-	/* Allow 'virtual devices' (eg drm) to detach from domain */
-	iommu = rk_iommu_from_dev(dev);
-	if (!iommu)
-		return -ENODEV;
+	if (iommu->domain == &rk_identity_domain)
+		return;
 
 	rk_domain = to_rk_domain(iommu->domain);
-
-	dev_dbg(dev, "Detaching from iommu domain\n");
-
-	if (iommu->domain == identity_domain)
-		return 0;
-
-	iommu->domain = identity_domain;
+	iommu->domain = &rk_identity_domain;
 
 	spin_lock_irqsave(&rk_domain->iommus_lock, flags);
 	list_del_init(&iommu->node);
@@ -1000,6 +992,23 @@ static int rk_iommu_identity_attach(struct iommu_domain *identity_domain,
 		rk_iommu_disable(iommu);
 		pm_runtime_put(iommu->dev);
 	}
+}
+
+static int rk_iommu_identity_attach(struct iommu_domain *identity_domain,
+				    struct device *dev,
+				    struct iommu_domain *old)
+{
+	struct rk_iommudata *data = dev_iommu_priv_get(dev);
+	unsigned int i;
+
+	/* Allow 'virtual devices' (eg drm) to detach from domain */
+	if (!data || !data->num)
+		return -ENODEV;
+
+	dev_dbg(dev, "Detaching from iommu domain\n");
+
+	for (i = 0; i < data->num; i++)
+		rk_iommu_identity_attach_one(data->iommu[i]);
 
 	return 0;
 }
@@ -1013,31 +1022,18 @@ static struct iommu_domain rk_identity_domain = {
 	.ops = &rk_identity_ops,
 };
 
-static int rk_iommu_attach_device(struct iommu_domain *domain,
-				  struct device *dev, struct iommu_domain *old)
+static int rk_iommu_attach_one(struct rk_iommu *iommu,
+			       struct iommu_domain *domain)
 {
-	struct rk_iommu *iommu;
 	struct rk_iommu_domain *rk_domain = to_rk_domain(domain);
 	unsigned long flags;
 	int ret;
-
-	/*
-	 * Allow 'virtual devices' (e.g., drm) to attach to domain.
-	 * Such a device does not belong to an iommu group.
-	 */
-	iommu = rk_iommu_from_dev(dev);
-	if (!iommu)
-		return 0;
-
-	dev_dbg(dev, "Attaching to iommu domain\n");
 
 	/* iommu already attached */
 	if (iommu->domain == domain)
 		return 0;
 
-	ret = rk_iommu_identity_attach(&rk_identity_domain, dev, old);
-	if (ret)
-		return ret;
+	rk_iommu_identity_attach_one(iommu);
 
 	iommu->domain = domain;
 
@@ -1050,21 +1046,40 @@ static int rk_iommu_attach_device(struct iommu_domain *domain,
 		return 0;
 
 	ret = rk_iommu_enable(iommu);
-	if (ret) {
-		/*
-		 * Note rk_iommu_identity_attach() might fail before physically
-		 * attaching the dev to iommu->domain, in which case the actual
-		 * old domain for this revert should be rk_identity_domain v.s.
-		 * iommu->domain. Since rk_iommu_identity_attach() does not care
-		 * about the old domain argument for now, this is not a problem.
-		 */
-		WARN_ON(rk_iommu_identity_attach(&rk_identity_domain, dev,
-						 iommu->domain));
-	}
+	if (ret)
+		rk_iommu_identity_attach_one(iommu);
 
 	pm_runtime_put(iommu->dev);
 
 	return ret;
+}
+
+static int rk_iommu_attach_device(struct iommu_domain *domain,
+				  struct device *dev, struct iommu_domain *old)
+{
+	struct rk_iommudata *data = dev_iommu_priv_get(dev);
+	unsigned int i;
+	int ret;
+
+	/*
+	 * Allow 'virtual devices' (e.g., drm) to attach to domain.
+	 * Such a device does not belong to an iommu group.
+	 */
+	if (!data || !data->num)
+		return 0;
+
+	dev_dbg(dev, "Attaching to iommu domain\n");
+
+	for (i = 0; i < data->num; i++) {
+		ret = rk_iommu_attach_one(data->iommu[i], domain);
+		if (ret) {
+			while (i--)
+				rk_iommu_identity_attach_one(data->iommu[i]);
+			return ret;
+		}
+	}
+
+	return 0;
 }
 
 static struct iommu_domain *rk_iommu_domain_alloc_paging(struct device *dev)
@@ -1143,25 +1158,28 @@ static void rk_iommu_domain_free(struct iommu_domain *domain)
 static struct iommu_device *rk_iommu_probe_device(struct device *dev)
 {
 	struct rk_iommudata *data;
-	struct rk_iommu *iommu;
+	unsigned int i;
 
 	data = dev_iommu_priv_get(dev);
-	if (!data)
+	if (!data || !data->num)
 		return ERR_PTR(-ENODEV);
 
-	iommu = rk_iommu_from_dev(dev);
+	for (i = 0; i < data->num; i++)
+		data->link[i] = device_link_add(dev, data->iommu[i]->dev,
+						DL_FLAG_STATELESS |
+							DL_FLAG_PM_RUNTIME);
 
-	data->link = device_link_add(dev, iommu->dev,
-				     DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME);
-
-	return &iommu->iommu;
+	return &data->iommu[0]->iommu;
 }
 
 static void rk_iommu_release_device(struct device *dev)
 {
 	struct rk_iommudata *data = dev_iommu_priv_get(dev);
+	unsigned int i;
 
-	device_link_del(data->link);
+	for (i = 0; i < data->num; i++)
+		if (data->link[i])
+			device_link_del(data->link[i]);
 }
 
 static int rk_iommu_of_xlate(struct device *dev,
@@ -1172,12 +1190,20 @@ static int rk_iommu_of_xlate(struct device *dev,
 
 	iommu_dev = of_find_device_by_node(args->np);
 
-	data = devm_kzalloc(&iommu_dev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = dev_iommu_priv_get(dev);
+	if (!data) {
+		data = devm_kzalloc(&iommu_dev->dev, sizeof(*data), GFP_KERNEL);
+		if (!data) {
+			platform_device_put(iommu_dev);
+			return -ENOMEM;
+		}
+		dev_iommu_priv_set(dev, data);
+	}
 
-	data->iommu = platform_get_drvdata(iommu_dev);
-	dev_iommu_priv_set(dev, data);
+	if (data->num < RK_IOMMU_MAX_PER_DEV)
+		data->iommu[data->num++] = platform_get_drvdata(iommu_dev);
+	else
+		dev_warn(dev, "too many iommus, ignoring %pOF\n", args->np);
 
 	platform_device_put(iommu_dev);
 
