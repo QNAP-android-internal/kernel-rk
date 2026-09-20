@@ -1480,6 +1480,8 @@ void rkvdec2_link_session_deinit(struct mpp_session *session)
 
 	mpp_debug_enter();
 
+	mutex_lock(&session->lock_session);
+
 	rkvdec2_free_session(session);
 
 	if (session->dma) {
@@ -1489,6 +1491,7 @@ void rkvdec2_link_session_deinit(struct mpp_session *session)
 		mpp_iommu_up_write(mpp->iommu_info);
 		session->dma = NULL;
 	}
+	mutex_unlock(&session->lock_session);
 	if (session->srv) {
 		struct mpp_service *srv = session->srv;
 
