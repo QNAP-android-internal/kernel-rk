@@ -164,7 +164,6 @@
 	vcc3v3_lcd_n: vcc3v3-lcd0-n {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc3v3_lcd0_n";
-		regulator-always-on;
 		regulator-boot-on;
 		enable-active-high;
 		gpio = <&gpio3 RK_PA6 GPIO_ACTIVE_HIGH>;
@@ -346,6 +345,7 @@
 &dsi0_panel {
 	reg = <0>;
 	compatible = "raspberrypi,dsi-7inch";
+	power-supply = <&vcc3v3_lcd_n>;
 	reset-gpios = <&rpi_display_v2_mcu 0 GPIO_ACTIVE_LOW>;
 	backlight = <&rpi_display_v2_mcu>;
 };
@@ -1058,6 +1058,8 @@
 	gt911: gt911@5d {
 		compatible = "goodix,gt911";
 		reg = <0x5d>;
+		AVDD28-supply = <&vcc3v3_lcd_n>;
+		VDDIO-supply = <&vcc3v3_lcd_n>;
 		interrupt-gpios = <&gpio3 RK_PC0 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
 		touchscreen-size-x = <720>;
