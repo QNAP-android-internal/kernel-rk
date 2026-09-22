@@ -1366,6 +1366,24 @@ static void goodix_disable_regulators(void *arg)
 	regulator_disable(ts->avdd28);
 }
 
+static int goodix_enable_regulators(struct goodix_ts_data *ts)
+{
+	int error;
+
+	error = regulator_enable(ts->avdd28);
+	if (error)
+		return error;
+
+	error = regulator_enable(ts->vddio);
+	if (error) {
+		regulator_disable(ts->avdd28);
+		return error;
+	}
+
+	msleep(20);
+	return 0;
+}
+
 static int goodix_ts_probe(struct i2c_client *client,
 			   const struct i2c_device_id *id)
 {
@@ -1503,6 +1521,7 @@ static int __maybe_unused goodix_suspend(struct device *dev)
 	/* We need gpio pins to suspend/resume */
 	if (ts->irq_pin_access_method == IRQ_PIN_ACCESS_NONE) {
 		goodix_disable_irq(ts);
+		goodix_disable_regulators(ts);
 		return 0;
 	}
 
@@ -1535,6 +1554,8 @@ static int __maybe_unused goodix_suspend(struct device *dev)
 	 * sooner, delay 58ms here.
 	 */
 	msleep(58);
+
+	goodix_disable_regulators(ts);
 	return 0;
 }
 
@@ -1544,6 +1565,10 @@ static int __maybe_unused goodix_resume(struct device *dev)
 	struct goodix_ts_data *ts = i2c_get_clientdata(client);
 	u8 config_ver;
 	int error;
+
+	error = goodix_enable_regulators(ts);
+	if (error)
+		return error;
 
 	if (ts->irq_pin_access_method == IRQ_PIN_ACCESS_NONE) {
 		goodix_enable_irq(ts);
