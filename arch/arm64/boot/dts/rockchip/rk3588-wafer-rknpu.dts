@@ -12,10 +12,11 @@
  *   rk3588-wafer-rknpu.dtb  -> rknpu  (RKNN/LLM via librknnrt / librkllmrt)
  *
  * This variant pulls in the full board description from rk3588-wafer.dts and
- * then flips the NPU personality: it disables the rocket rknn-core_1/2 and all
- * three per-core MMUs, and repurposes npu@fdab0000 (rknn_core_0) into the
- * vendor single-node "rockchip,rk3588-rknpu" layout. See the rknpu DT notes
- * for why reg is 0x9000/core and why it runs non-iommu at 200 MHz.
+ * then flips the NPU personality: it disables the rocket rknn-core_1/2, keeps
+ * all three per-core MMUs enabled behind rknn_core_0, and repurposes
+ * npu@fdab0000 (rknn_core_0) into the vendor single-node
+ * "rockchip,rk3588-rknpu" layout. See the rknpu DT notes for why reg is
+ * 0x9000/core and for the 200 MHz default clock.
  */
 
 #include "rk3588-wafer.dts"
@@ -29,15 +30,15 @@
 };
 
 &rknn_mmu_0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &rknn_mmu_1 {
-	status = "disabled";
+	status = "okay";
 };
 
 &rknn_mmu_2 {
-	status = "disabled";
+	status = "okay";
 };
 
 &rknn_core_0 {
@@ -67,8 +68,7 @@
 			<&power RK3588_PD_NPU2>;
 	power-domain-names = "npu0", "npu1", "npu2";
 	rknpu-supply = <&vdd_npu_s0>;
-	/* base dtsi inherits iommus = <&rknn_mmu_0>; drop it for non-iommu mode. */
-	/delete-property/ iommus;
+	iommus = <&rknn_mmu_0>, <&rknn_mmu_1>, <&rknn_mmu_2>;
 	/delete-property/ operating-points-v2;
 	status = "okay";
 };
