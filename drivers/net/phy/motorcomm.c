@@ -7,9 +7,12 @@
  */
 
 #include <linux/etherdevice.h>
+#include <linux/gpio/consumer.h>
+#include <linux/irq.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/phy.h>
+#include <linux/pm_wakeirq.h>
 #include <linux/property.h>
 
 #define PHY_ID_YT8511		0x0000010a
@@ -624,7 +627,12 @@ static int ytphy_set_wol(struct phy_device *phydev, struct ethtool_wolinfo *wol)
 	}
 
 err_restore_page:
-	return phy_restore_page(phydev, old_page, ret);
+	ret = phy_restore_page(phydev, old_page, ret);
+	if (!ret && device_can_wakeup(&phydev->mdio.dev))
+		device_set_wakeup_enable(&phydev->mdio.dev,
+					 !!(wol->wolopts & WAKE_MAGIC));
+
+	return ret;
 }
 
 static int yt8531_set_wol(struct phy_device *phydev,
@@ -1054,6 +1062,53 @@ static int yt8531_set_ds(struct phy_device *phydev)
 	return 0;
 }
 
+static void ytphy_release_wake_irq(void *dev)
+{
+	dev_pm_clear_wake_irq(dev);
+	device_init_wakeup(dev, false);
+}
+
+/**
+ * ytphy_request_wake_irq() - set up the pin the PHY signals Wake-on-LAN on
+ * @phydev: a pointer to a &struct phy_device
+ *
+ * The MAC may manage the PHY's power state itself (mac_managed_pm), in which
+ * case the PHY's suspend callback never runs. Use a dedicated wake IRQ so the
+ * PM core arms the pin for every sleep state. A magic packet is the only event
+ * the pin reports.
+ *
+ * returns 0 or negative errno code
+ */
+static int ytphy_request_wake_irq(struct phy_device *phydev)
+{
+	struct device *dev = &phydev->mdio.dev;
+	struct gpio_desc *wakeup;
+	int irq, ret;
+
+	wakeup = devm_gpiod_get_optional(dev, "wakeup", GPIOD_IN);
+	if (IS_ERR(wakeup))
+		return PTR_ERR(wakeup);
+	if (!wakeup)
+		return 0;
+
+	irq = gpiod_to_irq(wakeup);
+	if (irq < 0)
+		return irq;
+
+	ret = irq_set_irq_type(irq, gpiod_is_active_low(wakeup) ?
+				    IRQ_TYPE_EDGE_FALLING : IRQ_TYPE_EDGE_RISING);
+	if (ret)
+		return ret;
+
+	ret = dev_pm_set_dedicated_wake_irq(dev, irq);
+	if (ret)
+		return ret;
+
+	device_set_wakeup_capable(dev, true);
+
+	return devm_add_action_or_reset(dev, ytphy_release_wake_irq, dev);
+}
+
 /**
  * yt8521_probe() - read chip config then set suitable polling_mode
  * @phydev: a pointer to a &struct phy_device
@@ -1074,6 +1129,12 @@ static int yt8521_probe(struct phy_device *phydev)
 		return -ENOMEM;
 
 	phydev->priv = priv;
+
+	ret = ytphy_request_wake_irq(phydev);
+	if (ret == -EPROBE_DEFER)
+		return ret;
+	if (ret)
+		phydev_warn(phydev, "Wake-on-LAN pin unavailable: %d\n", ret);
 
 	chip_config = ytphy_read_ext_with_lock(phydev, YT8521_CHIP_CONFIG_REG);
 	if (chip_config < 0)
