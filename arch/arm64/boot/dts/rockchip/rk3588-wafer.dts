@@ -507,6 +507,14 @@
 	};
 };
 
+/*
+ * The MMU-600 loses its state in system sleep and arm-smmu-v3 does not
+ * restore it on resume, which leaves every PCIe master unable to DMA.
+ */
+&mmu600_pcie {
+	status = "disabled";
+};
+
 &pcie2x1l0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie2x1l0_rst>;
