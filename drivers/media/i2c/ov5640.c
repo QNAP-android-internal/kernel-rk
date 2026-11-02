@@ -78,6 +78,7 @@ struct ov5640_framesize {
 	u16 fps;
 	u16 max_exp_lines;
 	const struct sensor_register *regs;
+	u32 link_freq_idx;
 };
 
 struct ov5640_pll_ctrl {
@@ -120,6 +121,7 @@ struct ov5640 {
 	struct i2c_client *client;
 	struct v4l2_ctrl_handler ctrls;
 	struct v4l2_ctrl *link_frequency;
+	struct v4l2_ctrl *link_freq;
 	struct v4l2_fwnode_endpoint bus_cfg;
 	const struct ov5640_framesize *frame_size;
 	const struct ov5640_framesize *framesize_cfg;
@@ -509,7 +511,7 @@ static const struct sensor_register ov5640_mipi_640x480_30fps[] = {
 	{0x440e, 0x00},
 	{0x460b, 0x35},
 	{0x460c, 0x22},
-//	{0x4837, 0x44},
+	{0x4837, 0x20},
 	{0x3824, 0x02},
 	{0x5000, 0xa7},
 	{0x5001, 0xa3},
@@ -807,6 +809,7 @@ static const struct ov5640_framesize ov5640_mipi_framesizes[] = {
 		.height		= 480,
 		.fps		= 30,
 		.regs		= ov5640_mipi_640x480_30fps,
+		.link_freq_idx	= 1,
 	},
 	{ /* FULL */
 		.width		= 2592,
@@ -817,7 +820,8 @@ static const struct ov5640_framesize ov5640_mipi_framesizes[] = {
 };
 
 static const s64 link_freq_menu_items[] = {
-	240000000
+	240000000,
+	112000000
 };
 
 static const struct ov5640_pixfmt ov5640_formats[] = {
@@ -1108,6 +1112,7 @@ static int ov5640_set_fmt(struct v4l2_subdev *sd,
 
 		ov5640->frame_size = size;
 		ov5640->format = fmt->format;
+		v4l2_ctrl_s_ctrl(ov5640->link_freq, size->link_freq_idx);
 	}
 
 	mutex_unlock(&ov5640->lock);
@@ -1657,8 +1662,11 @@ static int ov5640_probe(struct i2c_client *client,
 					  OV5640_PIXEL_RATE, 1,
 					  OV5640_PIXEL_RATE);
 
-	v4l2_ctrl_new_int_menu(&ov5640->ctrls, NULL, V4L2_CID_LINK_FREQ,
-			       0, 0, link_freq_menu_items);
+	ov5640->link_freq =
+			v4l2_ctrl_new_int_menu(&ov5640->ctrls, NULL,
+					       V4L2_CID_LINK_FREQ,
+					       ARRAY_SIZE(link_freq_menu_items) - 1,
+					       0, link_freq_menu_items);
 	v4l2_ctrl_new_std_menu_items(&ov5640->ctrls, &ov5640_ctrl_ops,
 				     V4L2_CID_TEST_PATTERN,
 				     ARRAY_SIZE(ov5640_test_pattern_menu) - 1,
@@ -1670,6 +1678,7 @@ static int ov5640_probe(struct i2c_client *client,
 			__func__, ov5640->ctrls.error);
 		return  ov5640->ctrls.error;
 	}
+	ov5640->link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 
 	sd = &ov5640->sd;
 	client->flags |= I2C_CLIENT_SCCB;
